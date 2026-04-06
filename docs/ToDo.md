@@ -1,4 +1,4 @@
-Email screenshot change, GANTT
+Email screenshot change, DIR STRUC
 
 In order to save tokens, you may only generate the document for S3 chapter, instead of rewriting the entire report.
 
