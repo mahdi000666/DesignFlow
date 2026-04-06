@@ -15,7 +15,7 @@ Table rows must follow the following pattern: first row (#000000), second row (#
 2. Preserve the textual use case table structure.
 3. Keep spacing clean, avoid cramped layouts, and preserve the report’s formal academic look.
 4. Keep it concise, avoid bloat, filler and repetitions.
-5. Avoid AI-ish language and technical identifiers in prose.
+5. Avoid AI-ish language, em dashes, semicolons and technical identifiers in prose.
 
 ```
 Directory structure:
