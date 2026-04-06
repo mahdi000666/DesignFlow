@@ -17,7 +17,7 @@
 See `docs/SETUP.md` for full setup instructions.
 
 ## Diagrams
-See `diagrams/` for system design.
+See `docs/diagrams/` for system design.
 
 ## Project Structure
 See `docs/ARCHITECTURE.md` for system architecture and API reference.

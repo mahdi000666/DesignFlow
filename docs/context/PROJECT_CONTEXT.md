@@ -8,7 +8,7 @@
 
 A web-based **project management + BI system** for a graphic design agency. Tracks projects, designer time, client feedback, and generates profitability analytics for managers.
 
-**Academic context:** Final year IT internship project · solo developer · 3 months · 6 sprints  
+**Academic context:** Final year IT internship project · solo developer · 3 months · 5 sprints  
 **Core problem solved:** Agencies lose money due to scope creep and no visibility into actual vs. budgeted hours.
 
 ---
@@ -285,24 +285,22 @@ context-aware prose that adapts to the specific combination of metric values.
 
 ## Sprint Plan
 
-6 × 2-week sprints. Estimation in person-days; total: 86.
+5 × 2-week sprints. Estimation in person-days; total: 86.
 
 | Sprint | Weeks | Goal | Days |
 |--------|-------|------|------|
 | **S1** | 1–2 | Foundation & Auth: scaffold Django + React, all models migrated, JWT login, invitation flow, user management | 16 |
-| S2 | 3–4 | Project & Task Management: project/task CRUD, designer assignment, role-scoped views + **AI Task Estimator** | 19 |
+| S2 | 3–4 | Project & Task Management: project/task CRUD, designer assignment, role-scoped views + AI Task Estimator | 19 |
 | S3 | 5–6 | Time Tracking & Deliverables: time logging, task status, file uploads, view client feedback | 13 |
 | S4 | 7–8 | Client Portal & Feedback: client portal, feedback submission & replies, resolution, messaging | 20 |
-| S5 | 9–10 | BI Dashboards: KPI cards, budget vs actual, EHR, client profitability, scope creep + **AI Health Narrative** | 8 |
-| S6 | 11–12 | Reports, Export & Deployment: report generation, PDF/Excel export, tests, Render deploy, README | 10 |
+| S5 | 9–12 | BI Dashboards, Reports & Deployment: KPI cards, budget vs actual, EHR, client profitability, scope creep, AI Health Narrative, report generation, PDF/Excel export, tests, Render deploy, README | 18 |
 
 **Per-sprint risks:**
 - **S1:** Model mistakes cascade — validate every field against ERD before first migration; test Gmail SMTP on day 1
 - **S2:** RBAC queryset filtering must be correct before building client-facing views; implement AI estimator only after task CRUD is solid
 - **S3:** File upload storage — plan Cloudinary/S3 early; Render disk is ephemeral
 - **S4:** Keep messaging UI simple for MVP; scope creep risk is high for this sprint
-- **S5:** Add DB indexes before writing aggregate queries; AI health narrative depends on all analytics endpoints being complete first
-- **S6:** ReportLab (PDF) is fiddly — prioritise it over Excel; add `GROQ_API_KEY` to Render environment variables before deploying
+- **S5:** Add DB indexes before writing aggregate queries; AI health narrative depends on all analytics endpoints being complete first. ReportLab (PDF) is fiddly — prioritise it over Excel. Add GROQ_API_KEY to Render environment variables before deploying
 
 ---
 

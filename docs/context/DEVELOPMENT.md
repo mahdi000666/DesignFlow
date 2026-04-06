@@ -317,8 +317,8 @@ Tick items off as you complete them. Each item maps to a user story in the sprin
 
 ---
 
-### Sprint 5 — BI Dashboards (Weeks 9–10)
-**Goal:** Manager BI dashboards operational with KPI cards, budget vs. actual charts, EHR, client profitability, designer utilisation, and scope creep index. (US-19, 8 days)
+### Sprint 5 — BI Dashboards & Reports (Weeks 9–12)
+**Goal:** Manager BI dashboards operational, report export working, and system deployed. (US-19, US-20, US-21, 18 days)
 
 - [ ] **DB indexes added first** — add all indexes from DATA_MODEL.md before writing any analytics queries
 - [ ] **US-19** Analytics endpoint: KPI summary (total revenue, avg EHR, active project count, pending feedback count)
@@ -333,14 +333,6 @@ Tick items off as you complete them. Each item maps to a user story in the sprin
 - [ ] **US-19** Scope creep index displayed per project
 - [ ] **US-19** Analytics endpoint: designer utilisation (`SUM(hours this week) / available_hours_per_week * 100`)
 - [ ] **US-19** React: designer utilisation display
-
-⚠️ **Risk:** PostgreSQL aggregate queries across multiple joined tables can be slow without indexes — add them before testing, not after.
-
----
-
-### Sprint 6 — Reports, Export & Deployment (Weeks 11–12)
-**Goal:** Report generation with filters, PDF/Excel export, API tests passing, deployed and documented. (US-20 – US-21, 10 days)
-
 - [ ] **US-20** React: line chart — cumulative hours over time (Recharts `LineChart`)
 - [ ] **US-20** React: pie chart — revenue by client (Recharts `PieChart`)
 - [ ] **US-20** React: budget vs actual bar chart from S5 — verify it is polished
@@ -356,4 +348,5 @@ Tick items off as you complete them. Each item maps to a user story in the sprin
 - [ ] Both connected to Render PostgreSQL — end-to-end flow verified on live URLs
 - [ ] README updated with screenshots and setup instructions
 
+⚠️ **Risk:** PostgreSQL aggregate queries across multiple joined tables can be slow without indexes — add them before testing, not after.
 ⚠️ **Risk:** ReportLab (PDF generation) has a steeper learning curve than openpyxl. Prioritise PDF first — if time runs short, Excel export is lower priority.
