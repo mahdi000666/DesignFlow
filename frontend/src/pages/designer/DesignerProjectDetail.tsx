@@ -1,31 +1,28 @@
 import { useParams } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useProject } from '../../hooks/useProjects';
-import { useTasks, useUpdateTask } from '../../hooks/useTasks';
+import { useTasks } from '../../hooks/useTasks';
 import { useTimeLogs, useCreateTimeLog } from '../../hooks/useTimeLogs';
+import { useFiles } from '../../hooks/useFiles';
 import { useAuth } from '../../hooks/useAuth';
 import TimeLogForm from '../../components/TimeLogForm';
 import TimeLogList from '../../components/TimeLogList';
 import FileUploadPanel from '../../components/FileUploadPanel';
 import FeedbackList from '../../components/FeedbackList';
+import TaskRow from '../../components/TaskRow';
 import AppShell from '../../components/AppShell';
 import type { Task } from '../../types/task';
 import type { TimeLogPayload } from '../../types/timelog';
+import type { Project } from '../../types/project';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 type Tab = 'tasks' | 'log' | 'files' | 'feedback';
 
-const STATUS_CYCLE: Record<Task['status'], Task['status']> = {
-  Todo:       'InProgress',
-  InProgress: 'Completed',
-  Completed:  'Todo',
-};
-
-const TASK_STATUS_BADGE: Record<Task['status'], string> = {
-  Todo:       'bg-surface2 text-ink3',
-  InProgress: 'bg-info-light text-info',
-  Completed:  'bg-success-light text-success',
+const STATUS_BADGE: Record<Project['status'], string> = {
+  Active:    'bg-success-light text-success',
+  Completed: 'bg-surface2 text-ink3',
+  OnHold:    'bg-amber-light text-amber-dark',
 };
 
 const barColor = (pct: number) =>
@@ -40,86 +37,77 @@ export default function DesignerProjectDetail() {
 
   const { data: project, isLoading: loadingProject } = useProject(projectId);
   const { data: tasks = [], isLoading: loadingTasks } = useTasks(projectId);
-  const { data: logs = []                           } = useTimeLogs(projectId);
+  const { data: logs  = []                          } = useTimeLogs(projectId);
+  const { data: files = []                          } = useFiles(projectId);
 
-  const updateTask    = useUpdateTask(projectId);
   const createTimeLog = useCreateTimeLog(projectId);
 
-  const [activeTab,    setActiveTab]    = useState<Tab>('tasks');
-  const [showLogForm,  setShowLogForm]  = useState(false);
+  const [activeTab,   setActiveTab]   = useState<Tab>('tasks');
+  const [showLogForm, setShowLogForm] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<Task['status'] | 'All'>('All');
 
-  // Flatten top-level tasks + their subtasks for the time log form — a
-  // designer can log time against any task or subtask.
+  // Logged hours per task from time logs.
+  const taskLogMap = useMemo<Record<number, number>>(() => {
+    const map: Record<number, number> = {};
+    for (const log of logs) {
+      map[log.task] = (map[log.task] ?? 0) + Number(log.hours_spent);
+    }
+    return map;
+  }, [logs]);
+
+  // Flatten top-level + subtasks for the time log task selector.
   const allTasks = tasks.flatMap(t => [t, ...t.subtasks]);
-
-  const handleStatusCycle = (task: Task) => {
-    updateTask.mutate({ id: task.id, payload: { status: STATUS_CYCLE[task.status] } });
-  };
 
   const handleLogTime = (payload: TimeLogPayload) => {
     createTimeLog.mutate(payload, { onSuccess: () => setShowLogForm(false) });
   };
 
+  const filteredTasks = statusFilter === 'All'
+    ? tasks
+    : tasks.filter(t => t.status === statusFilter);
+
   if (loadingProject) {
-    return (
-      <AppShell title="Project">
-        <p className="font-sans text-[13px] text-ink3">Loading…</p>
-      </AppShell>
-    );
+    return <AppShell title="Project"><p className="font-sans text-[13px] text-ink3">Loading…</p></AppShell>;
   }
   if (!project) {
-    return (
-      <AppShell title="Project">
-        <p className="font-sans text-[13px] text-danger">Project not found.</p>
-      </AppShell>
-    );
+    return <AppShell title="Project"><p className="font-sans text-[13px] text-danger">Project not found.</p></AppShell>;
   }
 
-  const budgetPct = project.budget_hours
+  const budgetPct = project.budget_hours && project.actual_hours != null
     ? Math.min(100, Math.round((project.actual_hours / Number(project.budget_hours)) * 100))
     : null;
 
   const TABS: { id: Tab; label: string }[] = [
-    { id: 'tasks',    label: `Tasks (${tasks.length})`  },
-    { id: 'log',      label: 'Log Time'                 },
-    { id: 'files',    label: 'Files'                    },
-    { id: 'feedback', label: 'Feedback'                 },
+    { id: 'tasks',    label: `Tasks (${tasks.length})`   },
+    { id: 'log',      label: `Time Logs (${logs.length})` },
+    { id: 'files',    label: `Files (${files.length})`   },
+    { id: 'feedback', label: 'Feedback'                   },
   ];
 
   return (
-    <AppShell
-      title={project.project_name}
-      breadcrumb={project.client_name}
-    >
-      {/* ── Meta row ─────────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-4 mb-5 flex-wrap">
-        <span className="inline-block px-2 py-[3px] rounded font-sans text-[11px] font-semibold bg-success-light text-success">
-          {project.status}
-        </span>
-        {project.deadline && (
-          <span className="font-sans text-[13px] text-ink3">
-            Due <span className="text-ink">{project.deadline}</span>
+    <AppShell title={project.project_name} breadcrumb={project.client_name}>
+
+      {/* ── Hero card ───────────────────────────────────────────────────── */}
+      <div className="bg-surface border border-border rounded-lg p-6 mb-6">
+        <div className="flex items-center gap-3 mb-3 flex-wrap">
+          <span className={`inline-block px-2 py-[3px] rounded font-sans text-[11px] font-semibold ${STATUS_BADGE[project.status]}`}>
+            {project.status}
           </span>
+          <span className="font-sans text-[13px] text-ink2">
+            {project.client_name}
+            {project.deadline && <> · Due {project.deadline}</>}
+          </span>
+        </div>
+        <h2 className="font-serif text-[22px] font-normal text-ink mb-4">{project.project_name}</h2>
+        {budgetPct !== null && (
+          <div>
+            <div className="font-sans text-[11px] text-ink3 mb-[6px]">Budget utilisation · {budgetPct}%</div>
+            <div className="bg-surface2 rounded-full h-[6px] overflow-hidden">
+              <div className={`h-full rounded-full ${barColor(budgetPct)}`} style={{ width: `${Math.min(budgetPct, 100)}%` }} />
+            </div>
+          </div>
         )}
       </div>
-
-      {/* ── Budget progress bar ──────────────────────────────────────────── */}
-      {budgetPct !== null && (
-        <div className="mb-6">
-          <div className="flex justify-between font-sans text-[11px] text-ink3 mb-[6px]">
-            <span>Budget utilisation</span>
-            <span className="font-mono">
-              {project.actual_hours}h / {project.budget_hours}h — {budgetPct}%
-            </span>
-          </div>
-          <div className="bg-surface2 rounded-full h-[6px] overflow-hidden">
-            <div
-              className={`h-full rounded-full transition-[width] ${barColor(budgetPct)}`}
-              style={{ width: `${Math.min(budgetPct, 100)}%` }}
-            />
-          </div>
-        </div>
-      )}
 
       {/* ── Tabs ─────────────────────────────────────────────────────────── */}
       <div className="flex border-b border-border mb-6">
@@ -141,79 +129,51 @@ export default function DesignerProjectDetail() {
       {/* ── Tab: Tasks ───────────────────────────────────────────────────── */}
       {activeTab === 'tasks' && (
         <div>
+          <div className="flex items-center justify-end mb-4">
+            <select
+              value={statusFilter}
+              onChange={e => setStatusFilter(e.target.value as typeof statusFilter)}
+              className="px-[14px] py-[6px] rounded bg-surface font-sans text-[12px] text-ink2 border border-border-strong outline-none focus:border-amber hover:bg-surface2 cursor-pointer transition-colors"
+            >
+              <option value="All">All statuses</option>
+              <option value="Todo">Todo</option>
+              <option value="InProgress">In Progress</option>
+              <option value="Completed">Completed</option>
+            </select>
+          </div>
+
           {loadingTasks ? (
             <p className="font-sans text-[13px] text-ink3">Loading tasks…</p>
-          ) : tasks.length === 0 ? (
-            <p className="font-sans text-[13px] text-ink3">No tasks assigned yet.</p>
+          ) : filteredTasks.length === 0 ? (
+            <div className="bg-surface border border-border rounded-lg px-4 py-8 text-center">
+              <p className="font-sans text-[13px] text-ink3">No tasks yet.</p>
+            </div>
           ) : (
             <div className="bg-surface border border-border rounded-lg overflow-hidden">
-              {tasks.map((task, i) => (
-                <div key={task.id}>
-                  {/* Parent task */}
-                  <div className={`flex items-center justify-between px-4 py-[13px] ${i > 0 ? 'border-t border-border' : ''}`}>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-sans text-[13px] font-medium text-ink">{task.task_name}</span>
-                        {task.is_unplanned && (
-                          <span className="inline-block px-2 py-[3px] rounded font-sans text-[11px] font-semibold bg-danger-light text-danger">
-                            Scope creep
-                          </span>
-                        )}
-                        {task.estimated_hours && (
-                          <span className="font-mono text-[11px] text-ink3">
-                            Est. {task.estimated_hours}h
-                          </span>
-                        )}
-                      </div>
-                      {task.description && (
-                        <p className="font-sans text-[13px] text-ink3 mt-[2px] truncate">{task.description}</p>
-                      )}
-                    </div>
-                    <button
-                      onClick={() => handleStatusCycle(task)}
-                      disabled={updateTask.isPending}
-                      title="Click to advance status"
-                      className={`ml-4 shrink-0 inline-block px-2 py-[3px] rounded font-sans text-[11px] font-semibold transition-opacity hover:opacity-70 disabled:opacity-40 cursor-pointer ${TASK_STATUS_BADGE[task.status]}`}
-                    >
-                      {task.status}
-                    </button>
-                  </div>
-
-                  {/* Subtasks */}
-                  {task.subtasks.length > 0 && (
-                    <div className="border-t border-border">
-                      {task.subtasks.map(sub => (
-                        <div
-                          key={sub.id}
-                          className="flex items-center justify-between pl-8 pr-4 py-[10px] border-b border-border last:border-b-0 bg-bg"
-                        >
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-sans text-[13px] text-ink2">{sub.task_name}</span>
-                              {sub.is_unplanned && (
-                                <span className="inline-block px-2 py-[3px] rounded font-sans text-[11px] font-semibold bg-danger-light text-danger">
-                                  Scope creep
-                                </span>
-                              )}
-                              {sub.estimated_hours && (
-                                <span className="font-mono text-[11px] text-ink3">Est. {sub.estimated_hours}h</span>
-                              )}
-                            </div>
-                          </div>
-                          <button
-                            onClick={() => handleStatusCycle(sub)}
-                            disabled={updateTask.isPending}
-                            title="Click to advance status"
-                            className={`ml-4 shrink-0 inline-block px-2 py-[3px] rounded font-sans text-[11px] font-semibold transition-opacity hover:opacity-70 disabled:opacity-40 cursor-pointer ${TASK_STATUS_BADGE[sub.status]}`}
-                          >
-                            {sub.status}
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="bg-surface2 border-b border-border">
+                    <th className="w-12 px-4 py-3" />
+                    {['Task', 'Type', 'Estimated', 'Logged', 'Status', ''].map(h => (
+                      <th key={h} className="px-4 py-3 text-left font-sans text-[11px] font-semibold uppercase tracking-[0.5px] text-ink3">
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredTasks.map(task => (
+                    <TaskRow
+                      key={task.id}
+                      task={task}
+                      projectId={projectId}
+                      isManager={false}
+                      loggedHours={taskLogMap[task.id] ?? 0}
+                      taskLogMap={taskLogMap}
+                    />
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </div>
@@ -230,17 +190,11 @@ export default function DesignerProjectDetail() {
               {showLogForm ? 'Cancel' : '+ Log time'}
             </button>
           </div>
-
           {showLogForm && (
             <div className="bg-surface border border-border rounded-lg p-4 mb-4">
-              <TimeLogForm
-                tasks={allTasks}
-                isLoading={createTimeLog.isPending}
-                onSubmit={handleLogTime}
-              />
+              <TimeLogForm tasks={allTasks} isLoading={createTimeLog.isPending} onSubmit={handleLogTime} />
             </div>
           )}
-
           <TimeLogList logs={logs} isManager={false} />
         </div>
       )}

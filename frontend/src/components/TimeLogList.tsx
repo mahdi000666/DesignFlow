@@ -6,43 +6,57 @@ interface Props {
   onDelete?: (id: number) => void;
 }
 
-const TimeLogList = ({ logs, isManager, onDelete }: Props) => {
+const fmt = (iso: string) =>
+  new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+
+export default function TimeLogList({ logs, isManager, onDelete }: Props) {
   if (!logs.length) {
-    return <p className="text-sm text-gray-400">No time logged yet.</p>;
+    return (
+      <p className="font-sans text-[13px] text-ink3 py-4">No time logged yet.</p>
+    );
   }
 
-  const total = logs.reduce((sum, l) => sum + Number(l.hours_spent), 0);
-
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full text-sm">
+    <div className="bg-surface border border-border rounded-lg overflow-hidden">
+      <table className="w-full border-collapse">
         <thead>
-          <tr className="text-left text-xs text-gray-500 border-b">
-            <th className="pb-2 pr-4 font-medium">Task</th>
-            {isManager && <th className="pb-2 pr-4 font-medium">Designer</th>}
-            <th className="pb-2 pr-4 font-medium">Hours</th>
-            <th className="pb-2 pr-4 font-medium">Description</th>
-            <th className="pb-2 pr-4 font-medium">Date</th>
-            {isManager && <th className="pb-2 font-medium" />}
+          <tr className="bg-surface2 border-b border-border">
+            {['Date', 'Designer', 'Task', 'Hours', 'Description'].map(h => (
+              <th
+                key={h}
+                className="px-4 py-3 text-left font-sans text-[11px] font-semibold uppercase tracking-[0.5px] text-ink3"
+              >
+                {h}
+              </th>
+            ))}
+            {isManager && <th className="px-4 py-3 w-16" />}
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-100">
+        <tbody>
           {logs.map(log => (
-            <tr key={log.id} className="hover:bg-gray-50">
-              <td className="py-2 pr-4 font-medium">{log.task_name}</td>
-              {isManager && <td className="py-2 pr-4 text-gray-600">{log.designer_name}</td>}
-              <td className="py-2 pr-4 tabular-nums">{log.hours_spent}h</td>
-              <td className="py-2 pr-4 text-gray-600 max-w-xs truncate">
-                {log.description || <span className="text-gray-300">—</span>}
+            <tr key={log.id} className="border-b border-border last:border-b-0 hover:bg-bg transition-colors">
+              <td className="px-4 py-[14px] font-sans text-[13px] text-ink whitespace-nowrap">
+                {fmt(log.created_at)}
               </td>
-              <td className="py-2 pr-4 text-gray-500 whitespace-nowrap">
-                {new Date(log.created_at).toLocaleDateString()}
+              {/* Designer shown for manager; for designer view this column still renders
+                  but the isManager guard in the header keeps columns aligned */}
+              <td className="px-4 py-[14px] font-sans text-[13px] text-ink">
+                {log.designer_name}
+              </td>
+              <td className="px-4 py-[14px] font-sans text-[13px] text-ink">
+                {log.task_name}
+              </td>
+              <td className="px-4 py-[14px] font-mono text-[13px] text-ink whitespace-nowrap">
+                {Number(log.hours_spent).toFixed(1)}h
+              </td>
+              <td className="px-4 py-[14px] font-sans text-[13px] text-ink3 max-w-xs truncate">
+                {log.description || '—'}
               </td>
               {isManager && (
-                <td className="py-2 text-right">
+                <td className="px-4 py-[14px] text-right">
                   <button
                     onClick={() => onDelete?.(log.id)}
-                    className="text-xs text-red-500 hover:underline"
+                    className="font-sans text-[11px] text-danger/70 hover:text-danger transition-colors"
                   >
                     Delete
                   </button>
@@ -51,19 +65,7 @@ const TimeLogList = ({ logs, isManager, onDelete }: Props) => {
             </tr>
           ))}
         </tbody>
-        <tfoot>
-          <tr className="border-t text-xs text-gray-500">
-            <td className="pt-2 pr-4 font-medium">Total</td>
-            {isManager && <td />}
-            <td className="pt-2 pr-4 tabular-nums font-semibold text-gray-800">
-              {total.toFixed(2)}h
-            </td>
-            <td colSpan={isManager ? 3 : 2} />
-          </tr>
-        </tfoot>
       </table>
     </div>
   );
-};
-
-export default TimeLogList;
+}

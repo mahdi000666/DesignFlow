@@ -1,6 +1,4 @@
-Email screenshot change, DIR STRUC
-
-In order to save tokens, you may only generate the document for S3 chapter, instead of rewriting the entire report.
+In order to save tokens, you may only generate the document for S3 chapter.
 
 1. Use this exact style:
 ```
@@ -60,6 +58,7 @@ Directory structure:
             │   ├── tasks.ts
             │   └── timelogs.ts
             ├── components/
+            │   ├── AppShell.tsx
             │   ├── AssignDesignerPanel.tsx
             │   ├── FeedbackList.tsx
             │   ├── FileUploadPanel.tsx

@@ -9,12 +9,16 @@ interface DesignerOption {
 }
 
 interface Props {
-  project: Project;
+  project: Project | undefined;
 }
 
-const AssignDesignerPanel = ({ project }: Props) => {
-  const assignDesigner = useAssignDesigner(project.id);
-  const removeDesigner = useRemoveDesigner(project.id);
+export default function AssignDesignerPanel({ project }: Props) {
+  // Hooks must be called unconditionally; fall back to -1 (never fires a
+  // real request) when project is briefly undefined during cache revalidation.
+  const assignDesigner = useAssignDesigner(project?.id ?? -1);
+  const removeDesigner = useRemoveDesigner(project?.id ?? -1);
+
+  if (!project) return null;
 
   const { data: designers } = useQuery({
     queryKey: ['designers'],
@@ -25,52 +29,58 @@ const AssignDesignerPanel = ({ project }: Props) => {
   });
 
   const assignedIds = new Set(project.assignments.map(a => a.designer_id));
+  const available   = designers?.filter(d => !assignedIds.has(d.id)) ?? [];
 
   return (
-    <div>
-      <h2 className="text-lg font-medium mb-3">Assigned designers</h2>
+    <div className="bg-surface border border-border rounded-lg p-5">
+      <div className="font-sans text-[11px] uppercase tracking-[0.6px] text-ink3 mb-3">
+        Assigned Designers
+      </div>
 
-      {project.assignments.length === 0
-        ? <p className="text-sm text-gray-400 mb-3">No designers assigned yet.</p>
-        : (
-          <div className="flex flex-wrap gap-2 mb-3">
-            {project.assignments.map(a => (
-              <span
-                key={a.designer_id}
-                className="flex items-center gap-1 px-3 py-1 text-sm rounded-full bg-violet-100 text-violet-800"
+      {/* Assigned chips */}
+      {project.assignments.length === 0 ? (
+        <p className="font-sans text-[13px] text-ink3 mb-3">No designers assigned yet.</p>
+      ) : (
+        <div className="flex flex-wrap gap-2 mb-4">
+          {project.assignments.map(a => (
+            <span
+              key={a.designer_id}
+              className="inline-flex items-center gap-[6px] px-3 py-[5px] rounded-full bg-teal-light font-sans text-[12px] font-medium text-teal"
+            >
+              {a.designer_name}
+              <button
+                onClick={() => removeDesigner.mutate(a.designer_id)}
+                disabled={removeDesigner.isPending}
+                className="leading-none text-teal/60 hover:text-danger transition-colors disabled:opacity-40 text-[14px] font-normal"
+                title="Remove"
               >
-                {a.designer_name}
-                <button
-                  onClick={() => removeDesigner.mutate(a.designer_id)}
-                  disabled={removeDesigner.isPending}
-                  className="ml-1 text-violet-400 hover:text-red-500 font-bold leading-none"
-                >
-                  ×
-                </button>
-              </span>
+                ×
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* Available designers */}
+      {available.length > 0 && (
+        <>
+          <div className="font-sans text-[11px] uppercase tracking-[0.6px] text-ink3 mb-2">
+            Add Designer
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {available.map(d => (
+              <button
+                key={d.id}
+                onClick={() => assignDesigner.mutate(d.id)}
+                disabled={assignDesigner.isPending}
+                className="px-[14px] py-[6px] rounded bg-transparent font-sans text-[12px] text-ink2 border border-border-strong hover:bg-surface2 disabled:opacity-50 transition-colors"
+              >
+                + {d.name}
+              </button>
             ))}
           </div>
-        )
-      }
-
-      {/* Unassigned designers — show as assignable buttons */}
-      <div className="flex gap-2 flex-wrap">
-        {designers
-          ?.filter(d => !assignedIds.has(d.id))
-          .map(d => (
-            <button
-              key={d.id}
-              onClick={() => assignDesigner.mutate(d.id)}
-              disabled={assignDesigner.isPending}
-              className="px-3 py-1 text-sm rounded border border-violet-300 text-violet-700 hover:bg-violet-50 disabled:opacity-50"
-            >
-              + {d.name}
-            </button>
-          ))
-        }
-      </div>
+        </>
+      )}
     </div>
   );
-};
-
-export default AssignDesignerPanel;
+}

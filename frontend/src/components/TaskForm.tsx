@@ -5,7 +5,6 @@ import { z } from 'zod';
 import { estimateTaskHours } from '../api/tasks';
 import type { Task, TaskPayload } from '../types/task';
 
-// Exported so TaskRow can reuse the shape without importing Task wholesale.
 export interface ParentTaskOption {
   id:        number;
   task_name: string;
@@ -27,12 +26,16 @@ interface Props {
   onSubmit:           (payload: TaskPayload) => void;
   isLoading:          boolean;
   defaults?:          Partial<Task>;
-  // When provided and non-empty, renders a "Parent task" select.
-  // Omit (or pass empty) when the parent is already known (subtask creation).
   parentTaskOptions?: ParentTaskOption[];
 }
 
-const TaskForm = ({ projectId, onSubmit, isLoading, defaults, parentTaskOptions }: Props) => {
+const inputCls =
+  'w-full px-[14px] py-[10px] border border-border-strong rounded bg-surface font-sans text-[14px] text-ink outline-none focus:border-amber transition-colors placeholder:text-ink3';
+
+const labelCls =
+  'block font-sans text-[11px] uppercase tracking-[0.6px] text-ink3 mb-[6px]';
+
+export default function TaskForm({ projectId, onSubmit, isLoading, defaults, parentTaskOptions }: Props) {
   const isEdit = defaults !== undefined;
 
   const [estimating,  setEstimating]  = useState(false);
@@ -49,7 +52,6 @@ const TaskForm = ({ projectId, onSubmit, isLoading, defaults, parentTaskOptions 
           ? String(defaults.estimated_hours)
           : '',
         status:          defaults?.status           ?? 'Todo',
-        // Pre-fill parent_task when supplied via defaults (e.g. subtask creation).
         parent_task:     defaults?.parent_task != null
           ? String(defaults.parent_task)
           : '',
@@ -59,10 +61,8 @@ const TaskForm = ({ projectId, onSubmit, isLoading, defaults, parentTaskOptions 
   const handleEstimate = async () => {
     const { task_name, description } = getValues();
     if (!task_name) return;
-
     setEstimating(true);
     setAiReasoning(null);
-
     const result = await estimateTaskHours(task_name, description ?? '', projectId);
     if (result.estimated_hours !== null) {
       setValue('estimated_hours', String(result.estimated_hours));
@@ -88,21 +88,12 @@ const TaskForm = ({ projectId, onSubmit, isLoading, defaults, parentTaskOptions 
   return (
     <form onSubmit={handleSubmit(submit)} className="space-y-4">
 
-      {/*
-        parent_task is always registered so its value (whether pre-filled from
-        defaults or chosen via the select below) is included in the submission.
-        The hidden input is the fallback; the visible select replaces it when
-        parentTaskOptions are available.
-      */}
       {showParentSelect ? (
         <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Parent task <span className="text-gray-400 font-normal">(optional)</span>
+          <label className={labelCls}>
+            Parent task <span className="normal-case text-ink3">(optional)</span>
           </label>
-          <select
-            {...register('parent_task')}
-            className="mt-1 block w-full rounded border-gray-300 shadow-sm"
-          >
+          <select {...register('parent_task')} className={inputCls}>
             <option value="">— None (top-level task) —</option>
             {parentTaskOptions.map(t => (
               <option key={t.id} value={t.id}>{t.task_name}</option>
@@ -110,60 +101,58 @@ const TaskForm = ({ projectId, onSubmit, isLoading, defaults, parentTaskOptions 
           </select>
         </div>
       ) : (
-        // Hidden — carries the pre-filled value when parent is already known.
         <input type="hidden" {...register('parent_task')} />
       )}
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700">Task name</label>
-        <input
-          {...register('task_name')}
-          className="mt-1 block w-full rounded border-gray-300 shadow-sm"
-        />
-        {errors.task_name && (
-          <p className="text-red-500 text-xs mt-1">{errors.task_name.message}</p>
-        )}
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className={labelCls}>Task name</label>
+          <input {...register('task_name')} className={inputCls} placeholder="e.g. Logo refinement" />
+          {errors.task_name && (
+            <p className="font-sans text-[12px] text-danger mt-1">{errors.task_name.message}</p>
+          )}
+        </div>
+
+        <div>
+          <label className={labelCls}>Estimated hours</label>
+          <div className="flex gap-2">
+            <input
+              type="number"
+              step="0.5"
+              {...register('estimated_hours')}
+              placeholder="e.g. 6"
+              className="w-28 px-[14px] py-[10px] border border-border-strong rounded bg-surface font-mono text-[14px] text-ink outline-none focus:border-amber transition-colors placeholder:text-ink3 placeholder:font-sans"
+            />
+            <button
+              type="button"
+              onClick={handleEstimate}
+              disabled={estimating}
+              className="px-[14px] py-[6px] rounded bg-amber-light border border-[#F6D860] font-sans text-[12px] font-medium text-amber-dark hover:bg-[#FEF3C7] disabled:opacity-50 transition-colors whitespace-nowrap"
+            >
+              {estimating ? 'Estimating…' : '✦ AI Suggest'}
+            </button>
+          </div>
+          {aiReasoning && (
+            <p className="font-sans text-[12px] text-ink3 mt-[6px] italic">{aiReasoning}</p>
+          )}
+        </div>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700">Description</label>
+        <label className={labelCls}>Description</label>
         <textarea
           {...register('description')}
           rows={3}
-          className="mt-1 block w-full rounded border-gray-300 shadow-sm"
+          placeholder="What needs to be done?"
+          className={inputCls}
+          style={{ resize: 'vertical' }}
         />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700">Estimated hours</label>
-        <div className="flex gap-2 mt-1">
-          <input
-            type="number"
-            step="0.5"
-            {...register('estimated_hours')}
-            className="block w-32 rounded border-gray-300 shadow-sm"
-          />
-          <button
-            type="button"
-            onClick={handleEstimate}
-            disabled={estimating}
-            className="px-3 py-1.5 text-sm bg-violet-600 text-white rounded hover:bg-violet-700 disabled:opacity-50"
-          >
-            {estimating ? 'Estimating…' : '✦ AI Suggest'}
-          </button>
-        </div>
-        {aiReasoning && (
-          <p className="text-xs text-gray-500 mt-1 italic">{aiReasoning}</p>
-        )}
       </div>
 
       {isEdit && (
         <div>
-          <label className="block text-sm font-medium text-gray-700">Status</label>
-          <select
-            {...register('status')}
-            className="mt-1 block w-full rounded border-gray-300 shadow-sm"
-          >
+          <label className={labelCls}>Status</label>
+          <select {...register('status')} className={inputCls}>
             <option value="Todo">Todo</option>
             <option value="InProgress">In Progress</option>
             <option value="Completed">Completed</option>
@@ -172,22 +161,27 @@ const TaskForm = ({ projectId, onSubmit, isLoading, defaults, parentTaskOptions 
       )}
 
       <div className="flex items-center gap-2">
-        <input type="checkbox" id="is_unplanned" {...register('is_unplanned')} />
-        <label htmlFor="is_unplanned" className="text-sm text-gray-700">
-          Unplanned task <span className="text-orange-500 font-medium">(scope creep)</span>
+        <input
+          type="checkbox"
+          id="is_unplanned"
+          {...register('is_unplanned')}
+          className="w-4 h-4 rounded border-border-strong accent-danger cursor-pointer"
+        />
+        <label htmlFor="is_unplanned" className="font-sans text-[13px] text-ink cursor-pointer select-none">
+          Unplanned task{' '}
+          <span className="inline-block px-2 py-[2px] rounded bg-danger-light text-danger font-semibold text-[11px]">
+            Scope creep
+          </span>
         </label>
       </div>
 
       <button
         type="submit"
         disabled={isLoading}
-        className="w-full py-2 bg-gray-900 text-white rounded hover:bg-gray-700 disabled:opacity-50"
+        className="w-full px-[14px] py-[10px] rounded bg-ink text-white font-sans text-[13px] font-medium border border-ink hover:bg-[#333] disabled:opacity-50 transition-colors"
       >
         {isLoading ? 'Saving…' : isEdit ? 'Save changes' : 'Save task'}
       </button>
-
     </form>
   );
-};
-
-export default TaskForm;
+}

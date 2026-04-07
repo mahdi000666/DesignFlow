@@ -2,25 +2,36 @@ import { useRef, useState } from 'react';
 import { useFiles, useUploadFile, useDeleteFile } from '../hooks/useFiles';
 import type { FileType } from '../types/file';
 
-// Each role may only upload specific file types (enforced server-side too).
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
 const ALLOWED_TYPES: Record<string, { value: FileType; label: string }[]> = {
   Manager:  [
-    { value: 'deliverable',    label: 'Deliverable' },
-    { value: 'reference',      label: 'Reference' },
+    { value: 'deliverable',     label: 'Deliverable'     },
+    { value: 'reference',       label: 'Reference'       },
     { value: 'brand_guideline', label: 'Brand Guideline' },
   ],
   Designer: [{ value: 'deliverable', label: 'Deliverable' }],
   Client:   [
-    { value: 'reference',      label: 'Reference' },
+    { value: 'reference',       label: 'Reference'       },
     { value: 'brand_guideline', label: 'Brand Guideline' },
   ],
 };
 
+const TYPE_BADGE: Record<FileType, string> = {
+  deliverable:     'bg-info-light text-info',
+  reference:       'bg-surface2 text-ink3',
+  brand_guideline: 'bg-teal-light text-teal',
+};
+
 const formatBytes = (bytes: number): string => {
-  if (bytes < 1024)        return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
+
+const fmt = (iso: string) =>
+  new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+
+// ─── Props ───────────────────────────────────────────────────────────────────
 
 interface Props {
   projectId: number;
@@ -28,7 +39,9 @@ interface Props {
   isManager: boolean;
 }
 
-const FileUploadPanel = ({ projectId, role, isManager }: Props) => {
+// ─── Component ───────────────────────────────────────────────────────────────
+
+export default function FileUploadPanel({ projectId, role, isManager }: Props) {
   const { data: files = [], isLoading } = useFiles(projectId);
   const uploadFile  = useUploadFile(projectId);
   const deleteFile  = useDeleteFile(projectId);
@@ -41,10 +54,7 @@ const FileUploadPanel = ({ projectId, role, isManager }: Props) => {
     const file = e.target.files?.[0];
     if (!file) return;
     uploadFile.mutate({ fileType, file }, {
-      onSettled: () => {
-        // Reset the input so the same file can be re-uploaded if needed.
-        if (inputRef.current) inputRef.current.value = '';
-      },
+      onSettled: () => { if (inputRef.current) inputRef.current.value = ''; },
     });
   };
 
@@ -56,7 +66,7 @@ const FileUploadPanel = ({ projectId, role, isManager }: Props) => {
           <select
             value={fileType}
             onChange={e => setFileType(e.target.value as FileType)}
-            className="text-sm rounded border-gray-300 shadow-sm"
+            className="px-[14px] py-[6px] border border-border-strong rounded bg-surface font-sans text-[13px] text-ink outline-none focus:border-amber transition-colors"
           >
             {allowedTypes.map(t => (
               <option key={t.value} value={t.value}>{t.label}</option>
@@ -64,7 +74,7 @@ const FileUploadPanel = ({ projectId, role, isManager }: Props) => {
           </select>
         )}
 
-        <label className="cursor-pointer px-3 py-1.5 text-sm bg-gray-900 text-white rounded hover:bg-gray-700">
+        <label className="inline-flex items-center cursor-pointer px-[14px] py-[6px] rounded bg-ink text-white font-sans text-[12px] font-medium border border-ink hover:bg-[#333] transition-colors">
           {uploadFile.isPending ? 'Uploading…' : '+ Upload file'}
           <input
             ref={inputRef}
@@ -76,48 +86,83 @@ const FileUploadPanel = ({ projectId, role, isManager }: Props) => {
         </label>
 
         {uploadFile.isError && (
-          <span className="text-xs text-red-500">Upload failed.</span>
+          <span className="font-sans text-[12px] text-danger">Upload failed.</span>
         )}
       </div>
 
-      {/* File list */}
+      {/* File table */}
       {isLoading ? (
-        <p className="text-sm text-gray-400">Loading files…</p>
+        <p className="font-sans text-[13px] text-ink3">Loading files…</p>
       ) : files.length === 0 ? (
-        <p className="text-sm text-gray-400">No files uploaded yet.</p>
+        <div className="bg-surface border border-border rounded-lg px-4 py-8 text-center">
+          <p className="font-sans text-[13px] text-ink3">No files uploaded yet.</p>
+        </div>
       ) : (
-        <ul className="divide-y divide-gray-100">
-          {files.map(f => (
-            <li key={f.id} className="flex items-center justify-between py-2 gap-4">
-              <div className="min-w-0">
-                <a
-                  href={f.file_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm font-medium text-blue-600 hover:underline truncate block"
+        <div className="bg-surface border border-border rounded-lg overflow-hidden">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-surface2 border-b border-border">
+                {['Filename', 'Type', 'Uploaded by', 'Size', 'Date'].map(h => (
+                  <th
+                    key={h}
+                    className="px-4 py-3 text-left font-sans text-[11px] font-semibold uppercase tracking-[0.5px] text-ink3"
+                  >
+                    {h}
+                  </th>
+                ))}
+                {/* Download + optional delete */}
+                <th className="px-4 py-3 w-32" />
+              </tr>
+            </thead>
+            <tbody>
+              {files.map(f => (
+                <tr
+                  key={f.id}
+                  className="border-b border-border last:border-b-0 hover:bg-bg transition-colors"
                 >
-                  {f.file_name}
-                </a>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  {f.file_type} · {formatBytes(f.file_size)} · {f.uploaded_by_name} ·{' '}
-                  {new Date(f.uploaded_at).toLocaleDateString()}
-                </p>
-              </div>
-
-              {isManager && (
-                <button
-                  onClick={() => deleteFile.mutate(f.id)}
-                  className="text-xs text-red-500 hover:underline flex-shrink-0"
-                >
-                  Delete
-                </button>
-              )}
-            </li>
-          ))}
-        </ul>
+                  <td className="px-4 py-[13px] font-sans text-[13px] text-ink max-w-[240px] truncate">
+                    {f.file_name}
+                  </td>
+                  <td className="px-4 py-[13px]">
+                    <span className={`inline-block px-2 py-[3px] rounded font-sans text-[11px] font-semibold ${TYPE_BADGE[f.file_type]}`}>
+                      {f.file_type}
+                    </span>
+                  </td>
+                  <td className="px-4 py-[13px] font-sans text-[13px] text-ink2">
+                    {f.uploaded_by_name}
+                  </td>
+                  <td className="px-4 py-[13px] font-mono text-[13px] text-ink whitespace-nowrap">
+                    {formatBytes(f.file_size)}
+                  </td>
+                  <td className="px-4 py-[13px] font-sans text-[13px] text-ink2 whitespace-nowrap">
+                    {fmt(f.uploaded_at)}
+                  </td>
+                  <td className="px-4 py-[13px]">
+                    <div className="flex items-center justify-end gap-3">
+                      <a
+                        href={f.file_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-sans text-[13px] text-amber hover:text-amber-dark transition-colors whitespace-nowrap"
+                      >
+                        ↓ Download
+                      </a>
+                      {isManager && (
+                        <button
+                          onClick={() => deleteFile.mutate(f.id)}
+                          className="font-sans text-[11px] text-danger/60 hover:text-danger transition-colors"
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );
-};
-
-export default FileUploadPanel;
+}
