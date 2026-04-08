@@ -1,3 +1,6 @@
+Evaluation stars
+designer edit logged hours
+
 In order to save tokens, you may only generate the document for S3 chapter.
 
 1. Use this exact style:

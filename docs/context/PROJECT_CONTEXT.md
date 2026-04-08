@@ -311,5 +311,5 @@ context-aware prose that adapts to the specific combination of metric values.
 - **Designer and Client are profile tables** — separate from User, 1:1 via `user_id UNIQUE`; all auth goes through User
 - **`analytics` app has no models** — only views running aggregate queries across other apps
 - **No public signup** — all users created by Manager via Django Admin; invitation email is the only entry point
-- **`budget_amount` stores the monetary amount** (e.g. `2000.00` for $2,000)
+- **`budget_amount` stores the monetary amount** (e.g. `15000.00` for 15000 TND)
 - **Files stored in `MEDIA_ROOT/projects/{project_id}/`** — on Render, use Cloudinary or S3 since Render's disk is ephemeral

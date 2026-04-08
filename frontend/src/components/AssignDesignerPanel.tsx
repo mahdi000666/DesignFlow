@@ -13,12 +13,10 @@ interface Props {
 }
 
 export default function AssignDesignerPanel({ project }: Props) {
-  // Hooks must be called unconditionally; fall back to -1 (never fires a
-  // real request) when project is briefly undefined during cache revalidation.
+  // All hooks unconditional — fall back to -1 when project is briefly
+  // undefined during React Query cache revalidation.
   const assignDesigner = useAssignDesigner(project?.id ?? -1);
   const removeDesigner = useRemoveDesigner(project?.id ?? -1);
-
-  if (!project) return null;
 
   const { data: designers } = useQuery({
     queryKey: ['designers'],
@@ -27,6 +25,9 @@ export default function AssignDesignerPanel({ project }: Props) {
       return data;
     },
   });
+
+  // Guard after all hooks.
+  if (!project) return null;
 
   const assignedIds = new Set(project.assignments.map(a => a.designer_id));
   const available   = designers?.filter(d => !assignedIds.has(d.id)) ?? [];
