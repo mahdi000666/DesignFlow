@@ -4,32 +4,44 @@ export default {
   theme: {
     extend: {
       colors: {
-        bg:              '#F7F5F0',
-        surface:         '#FFFFFF',
-        surface2:        '#F0EDE6',
-        border:          '#E2DDD6',
-        'border-strong': '#C8C2BA',
-        ink:             '#1A1714',
-        ink2:            '#5C5751',
-        ink3:            '#9B948D',
-        sidebar:         '#1A1714',
-        amber:           '#D97706',
-        'amber-light':   '#FEF3C7',
-        'amber-dark':    '#92400E',
-        teal:            '#0F766E',
-        'teal-light':    '#CCFBF1',
-        'teal-dark':     '#0D4E49',
-        danger:          '#DC2626',
-        'danger-light':  '#FEE2E2',
-        info:            '#1D4ED8',
-        'info-light':    '#DBEAFE',
-        success:         '#15803D',
-        'success-light': '#DCFCE7',
+        // Page & surface
+        bg:              '#f8fafc',   // slate-50
+        surface:         '#ffffff',
+        surface2:        '#f1f5f9',   // slate-100
+        border:          '#e2e8f0',   // slate-200
+        'border-strong': '#cbd5e1',   // slate-300
+
+        // Text
+        ink:             '#0f172a',   // slate-900
+        ink2:            '#475569',   // slate-600
+        ink3:            '#94a3b8',   // slate-400
+
+        // Sidebar
+        sidebar:         '#0f172a',   // slate-900
+
+        // Semantic
+        amber:           '#d97706',
+        'amber-light':   '#fef3c7',
+        'amber-dark':    '#92400e',
+        teal:            '#0f766e',
+        'teal-light':    '#ccfbf1',
+        'teal-dark':     '#0d4e49',
+        danger:          '#dc2626',
+        'danger-light':  '#fee2e2',
+        info:            '#1d4ed8',   // blue-700 — primary
+        'info-light':    '#dbeafe',
+        success:         '#15803d',
+        'success-light': '#dcfce7',
       },
       fontFamily: {
-        sans:  ['-apple-system', 'Helvetica Neue', 'Arial', 'sans-serif'],
-        serif: ['Georgia', 'Times New Roman', 'serif'],
-        mono:  ['"Courier New"', 'monospace'],
+        // DM Serif Display — page titles only
+        display: ['"DM Serif Display"', 'Georgia', 'serif'],
+        // Keep serif alias for any existing references
+        serif:   ['"DM Serif Display"', 'Georgia', 'serif'],
+        // Figtree — all UI text
+        sans:    ['Figtree', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        // DM Mono — every number, hour value, currency
+        mono:    ['"DM Mono"', 'ui-monospace', 'monospace'],
       },
       borderRadius: {
         sm:      '4px',

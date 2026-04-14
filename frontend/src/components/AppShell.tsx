@@ -2,36 +2,68 @@ import type { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 
+// ─── Icons ───────────────────────────────────────────────────────────────────
+
+function IconDashboard() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" className="shrink-0">
+      <rect x="1" y="1" width="5.5" height="5.5" rx="1" stroke="currentColor" strokeWidth="1.4" />
+      <rect x="8.5" y="1" width="5.5" height="5.5" rx="1" stroke="currentColor" strokeWidth="1.4" />
+      <rect x="1" y="8.5" width="5.5" height="5.5" rx="1" stroke="currentColor" strokeWidth="1.4" />
+      <rect x="8.5" y="8.5" width="5.5" height="5.5" rx="1" stroke="currentColor" strokeWidth="1.4" />
+    </svg>
+  );
+}
+
+function IconProjects() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" className="shrink-0">
+      <path d="M1.5 3.5a1 1 0 011-1H6l1.5 2H13a1 1 0 011 1v7a1 1 0 01-1 1H2.5a1 1 0 01-1-1v-9z" stroke="currentColor" strokeWidth="1.4" />
+    </svg>
+  );
+}
+
+function IconAnalytics() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" className="shrink-0">
+      <path d="M1.5 11.5l3.5-4.5 3 2 3-5.5 2.5 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function IconReports() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" className="shrink-0">
+      <rect x="2.5" y="1" width="10" height="13" rx="1" stroke="currentColor" strokeWidth="1.4" />
+      <path d="M5.5 5h4M5.5 7.5h4M5.5 10h2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 // ─── Nav config ──────────────────────────────────────────────────────────────
 
 interface NavItem {
   label:     string;
   path:      string;
-  icon:      string;
+  icon:      ReactNode;
   disabled?: boolean;
 }
 
 const NAV_BY_ROLE: Record<string, NavItem[]> = {
   Manager: [
-    { label: 'Dashboard',  path: '/manager',           icon: '◈' },
-    { label: 'Projects',   path: '/manager/projects',  icon: '▣' },
-    { label: 'Analytics',  path: '/manager/analytics', icon: '∑', disabled: true },
-    { label: 'Reports',    path: '/manager/reports',   icon: '≡', disabled: true },
+    { label: 'Dashboard', path: '/manager',           icon: <IconDashboard /> },
+    { label: 'Projects',  path: '/manager/projects',  icon: <IconProjects /> },
+    { label: 'Analytics', path: '/manager/analytics', icon: <IconAnalytics />, disabled: true },
+    { label: 'Reports',   path: '/manager/reports',   icon: <IconReports />,   disabled: true },
   ],
   Designer: [
-    { label: 'Dashboard',   path: '/designer',          icon: '◈' },
-    { label: 'My Projects', path: '/designer/projects', icon: '▣' },
+    { label: 'Dashboard',   path: '/designer',          icon: <IconDashboard /> },
+    { label: 'My Projects', path: '/designer/projects', icon: <IconProjects /> },
   ],
   Client: [
-    { label: 'Dashboard',   path: '/client',          icon: '◈' },
-    { label: 'My Projects', path: '/client/projects', icon: '▣' },
+    { label: 'Dashboard',   path: '/client',          icon: <IconDashboard /> },
+    { label: 'My Projects', path: '/client/projects', icon: <IconProjects /> },
   ],
-};
-
-const ROLE_PILL: Record<string, string> = {
-  Manager:  'bg-amber  text-white',
-  Designer: 'bg-teal   text-white',
-  Client:   'bg-[#7C3AED] text-white',
 };
 
 // ─── Props ───────────────────────────────────────────────────────────────────
@@ -51,7 +83,7 @@ export default function AppShell({ title, breadcrumb, actions, children }: AppSh
   const role             = user?.role ?? 'Manager';
   const navItems         = NAV_BY_ROLE[role] ?? [];
 
-  // Exact match for the root dashboard, prefix match for nested routes.
+  // Exact match for root dashboard; prefix match for nested routes.
   const isActive = (path: string) => {
     const base = `/${role.toLowerCase()}`;
     return path === base
@@ -64,95 +96,104 @@ export default function AppShell({ title, breadcrumb, actions, children }: AppSh
     : '??';
 
   return (
-    <div className="flex h-screen overflow-hidden bg-bg">
+    <div className="flex h-screen overflow-hidden bg-slate-50 font-sans antialiased">
 
       {/* ── Sidebar ─────────────────────────────────────────────────────────── */}
-      <nav className="w-[220px] h-screen bg-sidebar flex flex-col shrink-0 overflow-y-auto">
+      <aside className="w-[220px] bg-slate-900 flex flex-col shrink-0 border-r border-slate-800">
 
-        {/* Brand */}
-        <div className="p-5 border-b border-white/[0.08]">
-          <div className="font-serif text-[17px] text-white tracking-tight">DesignOps</div>
-          <div className="text-[10px] uppercase tracking-[1px] text-[#9B8E84] mt-[2px]">
-            Analytics Platform
+        {/* Logo */}
+        <div className="px-5 pt-5 pb-4 border-b border-slate-800">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-md bg-blue-600 flex items-center justify-center shrink-0">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <rect x="1" y="1" width="5" height="5" rx="1" fill="white" />
+                <rect x="8" y="1" width="5" height="5" rx="1" fill="white" fillOpacity="0.55" />
+                <rect x="1" y="8" width="5" height="5" rx="1" fill="white" fillOpacity="0.55" />
+                <rect x="8" y="8" width="5" height="5" rx="1" fill="white" />
+              </svg>
+            </div>
+            <span className="text-white font-semibold text-sm tracking-tight">DesignOps</span>
           </div>
         </div>
 
-        {/* Role pill */}
-        <div className={`${ROLE_PILL[role]} text-[11px] font-semibold uppercase tracking-[0.5px] text-center rounded-full px-3 py-[6px] mx-4 mt-4 mb-1`}>
-          {role}
-        </div>
-
-        {/* Section label */}
-        <div className="px-5 pt-4 pb-[6px]">
-          <span className="font-sans text-[10px] uppercase tracking-[1px] text-[#6B6058]">
-            Navigation
-          </span>
+        {/* Profile */}
+        <div className="px-4 py-3.5 border-b border-slate-800">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-semibold shrink-0">
+              {initials}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-white text-xs font-medium truncate">{user?.full_name}</p>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-slate-500 text-xs">{role}</p>
+                <button
+                  onClick={logout}
+                  className="text-slate-500 text-[10px] hover:text-slate-300 transition-colors"
+                >
+                  Sign out
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Nav items */}
-        <div className="flex-1">
+        <nav className="flex-1 px-2.5 py-3 space-y-0.5 overflow-y-auto">
           {navItems.map(item =>
             item.disabled ? (
               <div
                 key={item.path}
-                className="flex items-center gap-[10px] px-5 py-2 text-[13px] font-medium text-[#4A4440] border-l-2 border-transparent cursor-not-allowed opacity-40 select-none"
+                className="flex items-center gap-3 px-3 py-2 rounded-md text-slate-600 text-sm cursor-not-allowed opacity-40 select-none"
               >
-                <span className="w-4 text-center text-[14px]">{item.icon}</span>
+                {item.icon}
                 {item.label}
               </div>
             ) : (
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex items-center gap-[10px] px-5 py-2 text-[13px] font-medium border-l-2 transition-all ${
+                className={`flex items-center gap-3 py-2 rounded-md text-sm transition-colors ${
                   isActive(item.path)
-                    ? 'text-white border-amber bg-amber/10'
-                    : 'text-[#B8B0A8] border-transparent hover:text-[#F0EDE6] hover:bg-white/[0.04]'
+                    ? 'bg-slate-800 text-white border-l-[3px] border-blue-500 pl-[9px] pr-3'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800 px-3'
                 }`}
               >
-                <span className="w-4 text-center text-[14px]">{item.icon}</span>
+                {item.icon}
                 {item.label}
               </Link>
             )
           )}
-        </div>
+        </nav>
 
-        {/* Footer avatar */}
-        <div className="mt-auto p-5 border-t border-white/[0.06]">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-amber/20 flex items-center justify-center shrink-0">
-              <span className="font-sans text-[11px] font-semibold text-amber">{initials}</span>
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="font-sans text-[12px] font-medium text-white truncate">
-                {user?.full_name}
-              </div>
-              <button
-                onClick={logout}
-                className="font-sans text-[11px] text-[#9B8E84] hover:text-[#F0EDE6] transition-colors"
-              >
-                Sign out
-              </button>
-            </div>
+        {/* Footer — system status */}
+        <div className="px-5 py-3.5 border-t border-slate-800">
+          <div className="flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+            <span className="text-slate-500 text-xs">System operational</span>
           </div>
         </div>
-      </nav>
+      </aside>
 
       {/* ── Main area ───────────────────────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
 
         {/* Topbar */}
-        <header className="h-14 bg-surface border-b border-border flex items-center px-7 gap-4 shrink-0">
-          <h2 className="font-serif text-[18px] font-normal text-ink">{title}</h2>
-          {breadcrumb && (
-            <span className="font-sans text-[12px] text-ink3 ml-1">{breadcrumb}</span>
+        <header className="bg-white border-b border-slate-200 px-8 py-4 flex items-center gap-4 shrink-0">
+          <div className="flex-1 min-w-0">
+            {breadcrumb && (
+              <p className="text-[11px] text-slate-400 font-medium mb-1">{breadcrumb}</p>
+            )}
+            <h1 className="font-display text-[26px] leading-tight text-slate-900">{title}</h1>
+          </div>
+          {actions && (
+            <div className="flex items-center gap-2.5 shrink-0">
+              {actions}
+            </div>
           )}
-          <div className="flex-1" />
-          {actions}
         </header>
 
         {/* Scrollable content */}
-        <main className="flex-1 overflow-y-auto p-7">
+        <main className="flex-1 overflow-y-auto p-8">
           {children}
         </main>
       </div>

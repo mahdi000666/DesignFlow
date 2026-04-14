@@ -342,6 +342,8 @@ Tick items off as you complete them. Each item maps to a user story in the sprin
 - [ ] **US-21** React: Export PDF button triggers file download
 - [ ] **US-21** Excel export endpoint (openpyxl) — client profitability + budget data
 - [ ] **US-21** React: Export Excel button
+- [ ] Analytics endpoint: profit margin per project (EHR vs weighted avg designer hourly_rate)
+- [ ] React: profit margin displayed per project on manager dashboard
 - [ ] API tests: auth flow, project CRUD, time log, feedback (Django `TestCase`)
 - [ ] Backend deployed to Render Web Service
 - [ ] Frontend deployed to Render Static Site
