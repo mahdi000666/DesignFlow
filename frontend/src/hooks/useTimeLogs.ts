@@ -23,3 +23,12 @@ export const useDeleteTimeLog = (projectId: number) => {
     onSuccess:  () => qc.invalidateQueries({ queryKey: ['timelogs', projectId] }),
   });
 };
+
+export const useUpdateTimeLog = (projectId: number) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: number; payload: Partial<import('../types/timelog').TimeLogPayload> }) =>
+      api.updateTimeLog(id, payload),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['timelogs', projectId] }),
+  });
+};

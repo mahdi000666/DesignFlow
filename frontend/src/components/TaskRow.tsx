@@ -6,12 +6,10 @@ import type { Task, TaskPayload } from '../types/task';
 // ─── Props ───────────────────────────────────────────────────────────────────
 
 interface Props {
-  task:        Task;
-  projectId:   number;
-  isManager:   boolean;
-  /** Pre-computed SUM(hours_spent) for this task from the parent's log map. */
+  task:          Task;
+  projectId:     number;
+  isManager:     boolean;
   loggedHours?:  number;
-  /** Logged hours keyed by task id — passed through for subtask rows. */
   taskLogMap?:   Record<number, number>;
 }
 
@@ -24,39 +22,16 @@ const STATUS_CYCLE: Record<Task['status'], Task['status']> = {
 };
 
 const STATUS_BADGE: Record<Task['status'], string> = {
-  Todo:       'bg-surface2 text-ink3',
-  InProgress: 'bg-info-light text-info',
-  Completed:  'bg-success-light text-success',
+  Todo:       'bg-slate-100 text-slate-600 ring-1 ring-inset ring-slate-200',
+  InProgress: 'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-200',
+  Completed:  'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200',
 };
 
-// Teal filled checkbox for Completed, empty square otherwise.
-const Checkbox = ({
-  status,
-  onClick,
-  disabled,
-}: {
-  status:   Task['status'];
-  onClick:  () => void;
-  disabled: boolean;
-}) => (
-  <button
-    type="button"
-    onClick={onClick}
-    disabled={disabled}
-    title="Click to cycle status"
-    className="flex items-center justify-center w-5 h-5 focus:outline-none disabled:opacity-40 shrink-0"
-  >
-    {status === 'Completed' ? (
-      <span className="w-5 h-5 rounded-sm bg-teal flex items-center justify-center">
-        <svg viewBox="0 0 12 12" width="10" height="10" fill="none">
-          <path d="M2 6l3 3 5-5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </span>
-    ) : (
-      <span className="w-5 h-5 rounded-sm border-2 border-border-strong" />
-    )}
-  </button>
-);
+const STATUS_LABEL: Record<Task['status'], string> = {
+  Todo:       'Todo',
+  InProgress: 'In Progress',
+  Completed:  'Completed',
+};
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
@@ -77,82 +52,84 @@ export default function TaskRow({ task, projectId, isManager, loggedHours = 0, t
   const handleCreateSubtask = (payload: TaskPayload) =>
     createSubtask.mutate(payload, { onSuccess: () => setAddingSubtask(false) });
 
-  // colspan covers: checkbox + task + type + estimated + logged + status + (actions)
-  const SPAN = 7;
+  const handleDelete = (id: number, name: string) => {
+    if (!confirm(`Delete task "${name}"? This cannot be undone.`)) return;
+    deleteTask.mutate(id);
+  };
+
+  // colspan: task + type + estimated + logged + status + actions = 6
+  const SPAN = 6;
 
   return (
     <>
       {/* ── Parent task row ─────────────────────────────────────────────── */}
-      <tr className="border-b border-border last:border-b-0 hover:bg-bg transition-colors group">
+      <tr className="hover:bg-slate-50/70 transition-colors group">
 
-        {/* Checkbox */}
-        <td className="px-4 py-[13px] w-12">
-          <Checkbox
-            status={task.status}
-            onClick={() => cycleStatus(task.id, task.status)}
-            disabled={updateTask.isPending}
-          />
-        </td>
-
-        {/* Task name + optional edit-trigger */}
-        <td className="px-4 py-[13px]">
-          <span className="font-sans text-[13px] font-medium text-ink">
-            {task.task_name}
-          </span>
+        {/* Task name */}
+        <td className="px-4 py-3.5 align-middle">
+          <span className="text-sm font-medium text-slate-900">{task.task_name}</span>
           {task.description && (
-            <p className="font-sans text-[12px] text-ink3 mt-[2px] truncate max-w-xs">
-              {task.description}
-            </p>
+            <p className="text-xs text-slate-400 mt-0.5 truncate max-w-xs">{task.description}</p>
           )}
         </td>
 
-        {/* Type — scope creep badge only */}
-        <td className="px-4 py-[13px] w-36">
+        {/* Type */}
+        <td className="px-4 py-3.5 w-36 align-middle text-center">
           {task.is_unplanned && (
-            <span className="inline-block px-2 py-[3px] rounded font-sans text-[11px] font-semibold bg-danger-light text-danger">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-50 text-rose-600 ring-1 ring-inset ring-rose-200">
               Scope creep
             </span>
           )}
         </td>
 
         {/* Estimated */}
-        <td className="px-4 py-[13px] w-24 font-mono text-[13px] text-ink">
-          {task.estimated_hours != null ? `${task.estimated_hours}h` : <span className="text-ink3">—</span>}
+        <td className="px-4 py-3.5 w-28 align-middle font-mono text-sm text-slate-900 text-center">
+          {task.estimated_hours != null
+            ? `${task.estimated_hours}h`
+            : <span className="text-slate-300">—</span>}
         </td>
 
-        {/* Logged (from parent's time-log map) */}
-        <td className="px-4 py-[13px] w-24 font-mono text-[13px] text-ink">
-          {loggedHours > 0 ? `${loggedHours.toFixed(1)}h` : <span className="text-ink3">0h</span>}
+        {/* Logged */}
+        <td className="px-4 py-3.5 w-24 align-middle font-mono text-sm text-slate-900 text-center">
+          {loggedHours > 0
+            ? `${loggedHours.toFixed(1)}h`
+            : <span className="text-slate-300">0h</span>}
         </td>
 
-        {/* Status badge */}
-        <td className="px-4 py-[13px] w-28">
-          <span className={`inline-block px-2 py-[3px] rounded font-sans text-[11px] font-semibold ${STATUS_BADGE[task.status]}`}>
-            {task.status}
-          </span>
+        {/* Status — click to cycle */}
+        <td className="px-4 py-3.5 w-32 align-middle text-center">
+          <button
+            type="button"
+            onClick={() => cycleStatus(task.id, task.status)}
+            disabled={updateTask.isPending}
+            title="Click to cycle status"
+            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium cursor-pointer hover:opacity-70 transition-opacity disabled:opacity-40 ${STATUS_BADGE[task.status]}`}
+          >
+            {STATUS_LABEL[task.status]}
+          </button>
         </td>
 
-        {/* Manager actions — revealed on row hover */}
-        <td className="px-4 py-[13px] w-36">
+        {/* Manager actions */}
+        <td className="px-4 py-3.5 w-36 align-middle">
           <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
             {isManager && (
               <>
                 <button
                   onClick={() => { setAddingSubtask(v => !v); setEditing(false); }}
-                  className="font-sans text-[11px] text-ink3 hover:text-amber transition-colors"
+                  className="text-xs text-slate-400 hover:text-amber-600 transition-colors font-medium"
                 >
                   {addingSubtask ? 'Cancel' : '+ Sub'}
                 </button>
                 <button
                   onClick={() => { setEditing(v => !v); setAddingSubtask(false); }}
-                  className="font-sans text-[11px] text-ink3 hover:text-ink transition-colors"
+                  className="text-xs text-slate-400 hover:text-slate-900 transition-colors font-medium"
                 >
                   {editing ? 'Cancel' : 'Edit'}
                 </button>
                 <button
-                  onClick={() => deleteTask.mutate(task.id)}
+                  onClick={() => handleDelete(task.id, task.task_name)}
                   disabled={deleteTask.isPending}
-                  className="font-sans text-[11px] text-danger/60 hover:text-danger transition-colors disabled:opacity-40"
+                  className="text-xs text-rose-400 hover:text-rose-600 transition-colors font-medium disabled:opacity-40"
                 >
                   Delete
                 </button>
@@ -164,9 +141,9 @@ export default function TaskRow({ task, projectId, isManager, loggedHours = 0, t
 
       {/* ── Inline edit form ────────────────────────────────────────────── */}
       {editing && isManager && (
-        <tr className="border-b border-border bg-bg">
+        <tr className="bg-slate-50/50">
           <td colSpan={SPAN} className="px-6 py-4">
-            <p className="font-sans text-[11px] uppercase tracking-[0.6px] text-ink3 mb-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-3">
               Editing: {task.task_name}
             </p>
             <TaskForm
@@ -179,65 +156,63 @@ export default function TaskRow({ task, projectId, isManager, loggedHours = 0, t
         </tr>
       )}
 
-      {/* ── Subtask rows (always visible, indented) ─────────────────────── */}
+      {/* ── Subtask rows ────────────────────────────────────────────────── */}
       {task.subtasks.map(sub => (
         <tr
           key={sub.id}
-          className="border-b border-border last:border-b-0 bg-bg hover:bg-surface2/50 transition-colors group/sub"
+          className="bg-slate-50/30 hover:bg-slate-50/70 transition-colors group/sub"
         >
-          {/* Indent checkbox */}
-          <td className="py-[10px] pl-10 pr-4 w-12">
-            <Checkbox
-              status={sub.status}
-              onClick={() => cycleStatus(sub.id, sub.status)}
-              disabled={updateTask.isPending}
-            />
-          </td>
-
-          {/* Sub task name — with a small visual indent marker */}
-          <td className="px-4 py-[10px]">
+          {/* Subtask name — indented */}
+          <td className="px-4 py-3 pl-10 align-middle">
             <div className="flex items-center gap-2">
-              <span className="text-ink3 text-[11px]">↳</span>
-              <span className="font-sans text-[13px] text-ink2">{sub.task_name}</span>
+              <span className="text-slate-300 text-xs">↳</span>
+              <span className="text-sm text-slate-600">{sub.task_name}</span>
             </div>
           </td>
 
           {/* Type */}
-          <td className="px-4 py-[10px] w-36">
+          <td className="px-4 py-3 w-36 align-middle text-center">
             {sub.is_unplanned && (
-              <span className="inline-block px-2 py-[3px] rounded font-sans text-[11px] font-semibold bg-danger-light text-danger">
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-50 text-rose-600 ring-1 ring-inset ring-rose-200">
                 Scope creep
               </span>
             )}
           </td>
 
           {/* Estimated */}
-          <td className="px-4 py-[10px] w-24 font-mono text-[13px] text-ink2">
-            {sub.estimated_hours != null ? `${sub.estimated_hours}h` : <span className="text-ink3">—</span>}
+          <td className="px-4 py-3 w-28 align-middle font-mono text-sm text-slate-600 text-center">
+            {sub.estimated_hours != null
+              ? `${sub.estimated_hours}h`
+              : <span className="text-slate-300">—</span>}
           </td>
 
           {/* Logged */}
-          <td className="px-4 py-[10px] w-24 font-mono text-[13px] text-ink2">
+          <td className="px-4 py-3 w-24 align-middle font-mono text-sm text-slate-600 text-center">
             {(taskLogMap[sub.id] ?? 0) > 0
               ? `${(taskLogMap[sub.id]!).toFixed(1)}h`
-              : <span className="text-ink3">0h</span>
-            }
+              : <span className="text-slate-300">0h</span>}
           </td>
 
-          {/* Status */}
-          <td className="px-4 py-[10px] w-28">
-            <span className={`inline-block px-2 py-[3px] rounded font-sans text-[11px] font-semibold ${STATUS_BADGE[sub.status]}`}>
-              {sub.status}
-            </span>
+          {/* Status — click to cycle */}
+          <td className="px-4 py-3 w-32 align-middle text-center">
+            <button
+              type="button"
+              onClick={() => cycleStatus(sub.id, sub.status)}
+              disabled={updateTask.isPending}
+              title="Click to cycle status"
+              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium cursor-pointer hover:opacity-70 transition-opacity disabled:opacity-40 ${STATUS_BADGE[sub.status]}`}
+            >
+              {STATUS_LABEL[sub.status]}
+            </button>
           </td>
 
           {/* Manager actions */}
-          <td className="px-4 py-[10px] w-36">
+          <td className="px-4 py-3 w-36 align-middle">
             {isManager && (
               <button
-                onClick={() => deleteTask.mutate(sub.id)}
+                onClick={() => handleDelete(sub.id, sub.task_name)}
                 disabled={deleteTask.isPending}
-                className="font-sans text-[11px] text-danger/60 hover:text-danger transition-colors opacity-0 group-hover/sub:opacity-100 disabled:opacity-40"
+                className="text-xs text-rose-400 hover:text-rose-600 transition-colors opacity-0 group-hover/sub:opacity-100 font-medium disabled:opacity-40"
               >
                 Delete
               </button>
@@ -248,9 +223,9 @@ export default function TaskRow({ task, projectId, isManager, loggedHours = 0, t
 
       {/* ── Add-subtask form ────────────────────────────────────────────── */}
       {addingSubtask && isManager && (
-        <tr className="border-b border-border bg-bg">
-          <td colSpan={SPAN} className="px-6 py-4 pl-10">
-            <p className="font-sans text-[11px] uppercase tracking-[0.6px] text-ink3 mb-3">
+        <tr className="bg-slate-50/50">
+          <td colSpan={SPAN} className="px-6 py-4 pl-12">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-3">
               New subtask of: {task.task_name}
             </p>
             <TaskForm

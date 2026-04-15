@@ -125,10 +125,10 @@ export default function AppShell({ title, breadcrumb, actions, children }: AppSh
             <div className="min-w-0 flex-1">
               <p className="text-white text-xs font-medium truncate">{user?.full_name}</p>
               <div className="flex items-center justify-between gap-2">
-                <p className="text-slate-500 text-xs">{role}</p>
+                <p className="text-slate-300 text-xs">{role}</p>
                 <button
                   onClick={logout}
-                  className="text-slate-500 text-[10px] hover:text-slate-300 transition-colors"
+                  className="text-slate-300 text-[10px] hover:text-slate-100 transition-colors"
                 >
                   Sign out
                 </button>
@@ -164,14 +164,6 @@ export default function AppShell({ title, breadcrumb, actions, children }: AppSh
             )
           )}
         </nav>
-
-        {/* Footer — system status */}
-        <div className="px-5 py-3.5 border-t border-slate-800">
-          <div className="flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
-            <span className="text-slate-500 text-xs">System operational</span>
-          </div>
-        </div>
       </aside>
 
       {/* ── Main area ───────────────────────────────────────────────────────── */}

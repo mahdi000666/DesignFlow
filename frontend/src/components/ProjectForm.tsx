@@ -29,6 +29,12 @@ interface ClientOption {
   name: string;
 }
 
+const inputCls =
+  'w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-colors placeholder:text-slate-400 bg-white';
+
+const labelCls =
+  'block text-xs font-semibold text-slate-500 mb-1.5';
+
 const ProjectForm = ({ onSubmit, isLoading, defaults }: Props) => {
   const { register, handleSubmit, formState: { errors } } = useForm<FormValues>({
     resolver:      zodResolver(schema),
@@ -44,97 +50,96 @@ const ProjectForm = ({ onSubmit, isLoading, defaults }: Props) => {
   });
 
   const submit = (values: FormValues) => {
-  onSubmit({
-    project_name:  values.project_name,
-    client:        parseInt(values.client, 10),
-    description:   values.description,
-    budget_hours:  values.budget_hours  ? parseFloat(values.budget_hours)  : undefined,
-    budget_amount: values.budget_amount ? parseFloat(values.budget_amount) : undefined,
-    deadline:      values.deadline || undefined,
-    status:        values.status,
-    category:      values.category,
-  });
-};
+    onSubmit({
+      project_name:  values.project_name,
+      client:        parseInt(values.client, 10),
+      description:   values.description,
+      budget_hours:  values.budget_hours  ? parseFloat(values.budget_hours)  : undefined,
+      budget_amount: values.budget_amount ? parseFloat(values.budget_amount) : undefined,
+      deadline:      values.deadline || undefined,
+      status:        values.status,
+      category:      values.category,
+    });
+  };
 
   return (
     <form onSubmit={handleSubmit(submit)} className="space-y-4">
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700">Project name</label>
+          <label className={labelCls}>Project name</label>
           <input
             {...register('project_name')}
-            className="mt-1 block w-full rounded border-gray-300 shadow-sm"
+            placeholder="e.g. Brand Refresh 2025"
+            className={inputCls}
           />
           {errors.project_name && (
-            <p className="text-red-500 text-xs mt-1">{errors.project_name.message}</p>
+            <p className="text-xs text-rose-600 mt-1">{errors.project_name.message}</p>
           )}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Client</label>
-          <select
-            {...register('client')}
-            className="mt-1 block w-full rounded border-gray-300 shadow-sm"
-          >
+          <label className={labelCls}>Client</label>
+          <select {...register('client')} className={inputCls}>
             <option value="">Select a client…</option>
             {clients?.map(c => (
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
           </select>
           {errors.client && (
-            <p className="text-red-500 text-xs mt-1">{errors.client.message}</p>
+            <p className="text-xs text-rose-600 mt-1">{errors.client.message}</p>
           )}
         </div>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700">Description</label>
+        <label className={labelCls}>Description</label>
         <textarea
           {...register('description')}
           rows={3}
-          className="mt-1 block w-full rounded border-gray-300 shadow-sm"
+          placeholder="Brief overview of the project scope…"
+          className={inputCls}
+          style={{ resize: 'vertical' }}
         />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700">Budget (hours)</label>
+          <label className={labelCls}>Budget (Hours)</label>
           <input
             type="number"
             step="0.5"
+            placeholder="e.g. 80"
             {...register('budget_hours')}
-            className="mt-1 block w-full rounded border-gray-300 shadow-sm"
+            className={inputCls}
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Budget (amount $)</label>
+          <label className={labelCls}>Budget (TND)</label>
           <input
             type="number"
             step="0.01"
+            placeholder="e.g. 15000"
             {...register('budget_amount')}
-            className="mt-1 block w-full rounded border-gray-300 shadow-sm"
+            className={inputCls}
           />
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700">Deadline</label>
+          <label className={labelCls}>Deadline</label>
           <input
             type="date"
             {...register('deadline')}
-            className="mt-1 block w-full rounded border-gray-300 shadow-sm"
+            className={inputCls}
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Status</label>
-          <select
-            {...register('status')}
-            className="mt-1 block w-full rounded border-gray-300 shadow-sm"
-          >
+          <label className={labelCls}>Status</label>
+          <select {...register('status')} className={inputCls}>
             <option value="Active">Active</option>
             <option value="Completed">Completed</option>
             <option value="OnHold">On Hold</option>
@@ -143,22 +148,23 @@ const ProjectForm = ({ onSubmit, isLoading, defaults }: Props) => {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700">Category</label>
+        <label className={labelCls}>Category</label>
         <input
           {...register('category')}
           placeholder="e.g. Branding, Web, Print"
-          className="mt-1 block w-full rounded border-gray-300 shadow-sm"
+          className={inputCls}
         />
       </div>
 
-      <button
-        type="submit"
-        disabled={isLoading}
-        className="w-full py-2 bg-gray-900 text-white rounded hover:bg-gray-700 disabled:opacity-50"
-      >
-        {isLoading ? 'Saving…' : 'Save project'}
-      </button>
-
+      <div className="pt-1">
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="bg-blue-700 text-white px-3.5 py-2 rounded-lg text-sm font-semibold hover:bg-blue-800 disabled:opacity-50 transition-colors w-full"
+        >
+          {isLoading ? 'Saving…' : 'Save project'}
+        </button>
+      </div>
     </form>
   );
 };

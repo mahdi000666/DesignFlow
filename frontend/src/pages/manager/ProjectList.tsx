@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useState, useMemo } from 'react';
 import { useProjects, useCreateProject } from '../../hooks/useProjects';
 import ProjectForm from '../../components/ProjectForm';
@@ -8,22 +8,49 @@ import type { Project, ProjectPayload } from '../../types/project';
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 const STATUS_BADGE: Record<Project['status'], string> = {
-  Active:    'bg-success-light text-success',
-  Completed: 'bg-surface2 text-ink3',
-  OnHold:    'bg-amber-light text-amber-dark',
+  // Now matches Task 'InProgress' (Blue)
+  Active:    'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-200', 
+  // Now matches Task 'Completed' (Green)
+  Completed: 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200', 
+  // Stays distinct or matches 'Todo' (Violet/Gray)
+  OnHold:    'bg-violet-50 text-violet-700 ring-1 ring-inset ring-violet-200', 
+};
+
+const STATUS_DOT: Record<Project['status'], string> = {
+  Active:    'bg-blue-500',
+  Completed: 'bg-emerald-500',
+  OnHold:    'bg-violet-500',
+};
+
+const CATEGORY_COLORS = [
+  'bg-purple-50 text-purple-700',
+  'bg-blue-50 text-blue-700',
+  'bg-teal-50 text-teal-700',
+  'bg-orange-50 text-orange-700',
+  'bg-pink-50 text-pink-700',
+  'bg-indigo-50 text-indigo-700',
+  'bg-cyan-50 text-cyan-700',
+  'bg-rose-50 text-rose-700',
+];
+
+const categoryColor = (cat: string) => {
+  let hash = 0;
+  for (let i = 0; i < cat.length; i++) hash = cat.charCodeAt(i) + ((hash << 5) - hash);
+  return CATEGORY_COLORS[Math.abs(hash) % CATEGORY_COLORS.length];
 };
 
 const barColor = (pct: number) =>
-  pct >= 100 ? 'bg-danger' : pct >= 80 ? 'bg-amber' : 'bg-teal';
+  pct >= 100 ? '#ef4444' : pct >= 80 ? '#f59e0b' : '#0d9488';
 
 const formatTND = (n: number) =>
-  `${Math.round(n).toLocaleString()} TND`;
+  `${Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '\u00A0')} TND`;
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function ProjectList() {
   const { data: projects = [], isLoading } = useProjects();
   const createProject = useCreateProject();
+  const navigate = useNavigate();
   const [showForm,     setShowForm]     = useState(false);
   const [search,       setSearch]       = useState('');
   const [statusFilter, setStatusFilter] = useState<Project['status'] | 'All'>('All');
@@ -49,7 +76,7 @@ export default function ProjectList() {
   };
 
   const selectCls =
-    'px-[14px] py-[6px] rounded bg-surface font-sans text-[12px] text-ink2 border border-border-strong outline-none focus:border-amber hover:bg-surface2 cursor-pointer transition-colors';
+    'px-3 py-2 border border-slate-200 rounded-lg bg-white text-sm text-slate-600 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 cursor-pointer transition-colors hover:bg-slate-50';
 
   return (
     <AppShell
@@ -57,7 +84,11 @@ export default function ProjectList() {
       actions={
         <button
           onClick={() => setShowForm(v => !v)}
-          className="px-[14px] py-[6px] rounded bg-ink text-white font-sans text-[12px] font-medium border border-ink hover:bg-[#333] transition-colors"
+          className={
+            showForm
+              ? 'border border-slate-200 text-slate-600 px-3.5 py-2 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors'
+              : 'bg-blue-700 text-white px-3.5 py-2 rounded-lg text-sm font-semibold hover:bg-blue-800 transition-colors'
+          }
         >
           {showForm ? 'Cancel' : '+ New project'}
         </button>
@@ -65,21 +96,26 @@ export default function ProjectList() {
     >
       {/* Inline create form */}
       {showForm && (
-        <div className="bg-surface border border-border rounded-lg p-5 mb-6">
-          <h3 className="font-serif text-[17px] font-normal text-ink mb-4">Create project</h3>
+        <div className="bg-white rounded-xl border border-slate-200 p-6 mb-6">
+          <h3 className="text-base font-semibold text-slate-900 mb-4">Create project</h3>
           <ProjectForm onSubmit={handleCreate} isLoading={createProject.isPending} />
         </div>
       )}
 
       {/* ── Filter bar ──────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-3 mb-5 flex-wrap">
+      <div className="flex items-center gap-2.5 mb-5 flex-wrap">
         <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-ink3 text-[13px]">🔍</span>
+          <svg
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+            width="14" height="14" viewBox="0 0 15 15" fill="none"
+          >
+            <path d="M10 6.5a3.5 3.5 0 11-7 0 3.5 3.5 0 017 0zm-.7 3.8l2.9 2.9" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+          </svg>
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search projects…"
-            className="pl-9 pr-4 py-[6px] border border-border-strong rounded bg-surface font-sans text-[13px] text-ink outline-none focus:border-amber transition-colors placeholder:text-ink3 w-52"
+            className="pl-9 pr-4 py-2 border border-slate-200 rounded-lg bg-white text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-colors placeholder:text-slate-400 w-52"
           />
         </div>
         <select value={statusFilter} onChange={e => setStatusFilter(e.target.value as typeof statusFilter)} className={selectCls}>
@@ -96,23 +132,23 @@ export default function ProjectList() {
 
       {/* ── Table ───────────────────────────────────────────────────────── */}
       {isLoading ? (
-        <p className="font-sans text-[13px] text-ink3">Loading projects…</p>
+        <p className="text-sm text-slate-400">Loading projects…</p>
       ) : (
-        <div className="bg-surface border border-border rounded-lg overflow-hidden">
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
           <table className="w-full border-collapse">
             <thead>
-              <tr className="bg-surface2 border-b border-border">
+              <tr className="bg-slate-50 border-b border-slate-200">
                 {['Project', 'Client', 'Budget', 'Budget Hrs', 'Logged Hrs', 'Utilisation', 'Deadline', 'Status'].map(h => (
-                  <th key={h} className="px-4 py-3 text-left font-sans text-[11px] font-semibold uppercase tracking-[0.5px] text-ink3">
+                  <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
                     {h}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-slate-100">
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center font-sans text-[13px] text-ink3">
+                  <td colSpan={8} className="px-4 py-10 text-center text-sm text-slate-400">
                     {search || statusFilter !== 'All' || clientFilter !== 'All'
                       ? 'No projects match the current filters.'
                       : 'No projects yet. Create one above.'}
@@ -124,36 +160,47 @@ export default function ProjectList() {
                   ? Math.round((p.actual_hours / Number(p.budget_hours)) * 100)
                   : null;
                 return (
-                  <tr key={p.id} className="border-b border-border last:border-b-0 hover:bg-bg transition-colors">
-                    <td className="px-4 py-[13px]">
-                      <Link to={`/manager/projects/${p.id}`} className="font-sans text-[13px] font-medium text-amber hover:underline underline-offset-2">
+                  <tr key={p.id} onClick={() => navigate(`/manager/projects/${p.id}`)} className="hover:bg-slate-50/70 transition-colors cursor-pointer group">
+                    <td className="px-4 py-3.5">
+                      <span className="text-sm font-medium text-slate-900 group-hover:text-blue-700 transition-colors">
                         {p.project_name}
-                      </Link>
-                    </td>
-                    <td className="px-4 py-[13px] font-sans text-[13px] text-ink2">{p.client_name}</td>
-                    <td className="px-4 py-[13px] font-mono text-[13px] text-ink whitespace-nowrap">
-                      {p.budget_amount != null ? formatTND(Number(p.budget_amount)) : <span className="text-ink3">—</span>}
-                    </td>
-                    <td className="px-4 py-[13px] font-mono text-[13px] text-ink">
-                      {p.budget_hours != null ? `${p.budget_hours}h` : <span className="text-ink3">—</span>}
-                    </td>
-                    <td className="px-4 py-[13px] font-mono text-[13px] text-ink">{p.actual_hours}h</td>
-                    <td className="px-4 py-[13px]">
-                      {budgetPct !== null ? (
-                        <div className="flex items-center gap-2">
-                          <div className="w-16 h-[4px] bg-surface2 rounded-full overflow-hidden shrink-0">
-                            <div className={`h-full rounded-full ${barColor(budgetPct)}`} style={{ width: `${Math.min(budgetPct, 100)}%` }} />
-                          </div>
-                          <span className="font-mono text-[12px] text-ink2">{budgetPct}%</span>
+                      </span>
+                      {p.category && (
+                        <div className="mt-1">
+                          <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide ${categoryColor(p.category)}`}>
+                            {p.category}
+                          </span>
                         </div>
-                      ) : <span className="font-sans text-[13px] text-ink3">—</span>}
+                      )}
                     </td>
-                    <td className="px-4 py-[13px] font-sans text-[13px] text-ink2 whitespace-nowrap">
-                      {p.deadline ?? <span className="text-ink3">—</span>}
+                    <td className="px-4 py-3.5 text-sm text-slate-600">{p.client_name}</td>
+                    <td className="px-4 py-3.5 font-mono text-sm text-slate-900 whitespace-nowrap">
+                      {p.budget_amount != null ? formatTND(Number(p.budget_amount)) : <span className="text-slate-300">—</span>}
                     </td>
-                    <td className="px-4 py-[13px]">
-                      <span className={`inline-block px-2 py-[3px] rounded font-sans text-[11px] font-semibold ${STATUS_BADGE[p.status]}`}>
-                        {p.status}
+                    <td className="px-4 py-3.5 font-mono text-sm text-slate-900">
+                      {p.budget_hours != null ? `${p.budget_hours}h` : <span className="text-slate-300">—</span>}
+                    </td>
+                    <td className="px-4 py-3.5 font-mono text-sm text-slate-900">{p.actual_hours}h</td>
+                    <td className="px-4 py-3.5">
+                      {budgetPct !== null ? (
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden shrink-0">
+                            <div
+                              className="h-full rounded-full"
+                              style={{ width: `${Math.min(budgetPct, 100)}%`, backgroundColor: barColor(budgetPct) }}
+                              />
+                          </div>
+                          <span className="font-mono text-xs text-slate-600">{budgetPct}%</span>
+                        </div>
+                      ) : <span className="text-sm text-slate-300">—</span>}
+                    </td>
+                    <td className="px-4 py-3.5 text-sm text-slate-600 whitespace-nowrap">
+                      {p.deadline ?? <span className="text-slate-300">—</span>}
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_BADGE[p.status]}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${STATUS_DOT[p.status]}`} />
+                        {p.status === 'OnHold' ? 'On Hold' : p.status}
                       </span>
                     </td>
                   </tr>

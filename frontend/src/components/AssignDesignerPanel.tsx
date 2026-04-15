@@ -13,8 +13,6 @@ interface Props {
 }
 
 export default function AssignDesignerPanel({ project }: Props) {
-  // All hooks unconditional — fall back to -1 when project is briefly
-  // undefined during React Query cache revalidation.
   const assignDesigner = useAssignDesigner(project?.id ?? -1);
   const removeDesigner = useRemoveDesigner(project?.id ?? -1);
 
@@ -26,55 +24,49 @@ export default function AssignDesignerPanel({ project }: Props) {
     },
   });
 
-  // Guard after all hooks.
   if (!project) return null;
 
   const assignedIds = new Set(project.assignments.map(a => a.designer_id));
   const available   = designers?.filter(d => !assignedIds.has(d.id)) ?? [];
 
   return (
-    <div className="bg-surface border border-border rounded-lg p-5">
-      <div className="font-sans text-[11px] uppercase tracking-[0.6px] text-ink3 mb-3">
+    <div className="bg-white rounded-xl border border-slate-200 p-5">
+      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-3">
         Assigned Designers
-      </div>
+      </p>
 
-      {/* Assigned chips */}
       {project.assignments.length === 0 ? (
-        <p className="font-sans text-[13px] text-ink3 mb-3">No designers assigned yet.</p>
+        <p className="text-sm text-slate-400 mb-3">No designers assigned yet.</p>
       ) : (
-        <div className="flex flex-wrap gap-2 mb-4">
-          {project.assignments.map(a => (
-            <span
-              key={a.designer_id}
-              className="inline-flex items-center gap-[6px] px-3 py-[5px] rounded-full bg-teal-light font-sans text-[12px] font-medium text-teal"
-            >
-              {a.designer_name}
+        <>
+          <div className="flex flex-wrap gap-2 mb-4">
+            {project.assignments.map(a => (
               <button
+                key={a.designer_id}
                 onClick={() => removeDesigner.mutate(a.designer_id)}
                 disabled={removeDesigner.isPending}
-                className="leading-none text-teal/60 hover:text-danger transition-colors disabled:opacity-40 text-[14px] font-normal"
-                title="Remove"
+                title="Click to remove"
+                className="inline-flex items-center px-3 py-1 rounded-full bg-teal-50 text-teal-700 ring-1 ring-inset ring-teal-200 text-xs font-medium hover:bg-rose-50 hover:text-rose-600 hover:ring-rose-200 disabled:opacity-40 transition-colors cursor-pointer"
               >
-                ×
+                {a.designer_name}
               </button>
-            </span>
-          ))}
-        </div>
+            ))}
+          </div>
+        </>
       )}
 
-      {/* Available designers */}
       {available.length > 0 && (
         <>
-          <div className="font-sans text-[11px] uppercase tracking-[0.6px] text-ink3 mb-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-2">
             Add Designer
-          </div>
+          </p>
           <div className="flex flex-wrap gap-2">
             {available.map(d => (
               <button
                 key={d.id}
                 onClick={() => assignDesigner.mutate(d.id)}
                 disabled={assignDesigner.isPending}
-                className="px-[14px] py-[6px] rounded bg-transparent font-sans text-[12px] text-ink2 border border-border-strong hover:bg-surface2 disabled:opacity-50 transition-colors"
+                className="border border-slate-200 text-slate-600 px-3.5 py-1.5 rounded-lg text-xs font-medium hover:bg-slate-50 disabled:opacity-50 transition-colors"
               >
                 + {d.name}
               </button>

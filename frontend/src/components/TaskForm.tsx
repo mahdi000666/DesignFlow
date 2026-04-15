@@ -30,10 +30,10 @@ interface Props {
 }
 
 const inputCls =
-  'w-full px-[14px] py-[10px] border border-border-strong rounded bg-surface font-sans text-[14px] text-ink outline-none focus:border-amber transition-colors placeholder:text-ink3';
+  'w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-colors placeholder:text-slate-400 bg-white';
 
 const labelCls =
-  'block font-sans text-[11px] uppercase tracking-[0.6px] text-ink3 mb-[6px]';
+  'block text-xs font-semibold text-slate-500 mb-1.5';
 
 export default function TaskForm({ projectId, onSubmit, isLoading, defaults, parentTaskOptions }: Props) {
   const isEdit = defaults !== undefined;
@@ -91,7 +91,7 @@ export default function TaskForm({ projectId, onSubmit, isLoading, defaults, par
       {showParentSelect ? (
         <div>
           <label className={labelCls}>
-            Parent task <span className="normal-case text-ink3">(optional)</span>
+            Parent task <span className="font-normal text-slate-400">(optional)</span>
           </label>
           <select {...register('parent_task')} className={inputCls}>
             <option value="">— None (top-level task) —</option>
@@ -107,9 +107,13 @@ export default function TaskForm({ projectId, onSubmit, isLoading, defaults, par
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className={labelCls}>Task name</label>
-          <input {...register('task_name')} className={inputCls} placeholder="e.g. Logo refinement" />
+          <input
+            {...register('task_name')}
+            placeholder="e.g. Logo refinement"
+            className={inputCls}
+          />
           {errors.task_name && (
-            <p className="font-sans text-[12px] text-danger mt-1">{errors.task_name.message}</p>
+            <p className="text-xs text-rose-600 mt-1">{errors.task_name.message}</p>
           )}
         </div>
 
@@ -121,19 +125,19 @@ export default function TaskForm({ projectId, onSubmit, isLoading, defaults, par
               step="0.5"
               {...register('estimated_hours')}
               placeholder="e.g. 6"
-              className="w-28 px-[14px] py-[10px] border border-border-strong rounded bg-surface font-mono text-[14px] text-ink outline-none focus:border-amber transition-colors placeholder:text-ink3 placeholder:font-sans"
+              className="w-28 px-3 py-2 border border-slate-200 rounded-lg font-mono text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-colors placeholder:text-slate-400 bg-white"
             />
             <button
               type="button"
               onClick={handleEstimate}
               disabled={estimating}
-              className="px-[14px] py-[6px] rounded bg-amber-light border border-[#F6D860] font-sans text-[12px] font-medium text-amber-dark hover:bg-[#FEF3C7] disabled:opacity-50 transition-colors whitespace-nowrap"
+              className="px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-xs font-semibold text-amber-700 hover:bg-amber-100 disabled:opacity-50 transition-colors whitespace-nowrap"
             >
               {estimating ? 'Estimating…' : '✦ AI Suggest'}
             </button>
           </div>
           {aiReasoning && (
-            <p className="font-sans text-[12px] text-ink3 mt-[6px] italic">{aiReasoning}</p>
+            <p className="text-xs text-slate-400 mt-1.5 italic leading-relaxed">{aiReasoning}</p>
           )}
         </div>
       </div>
@@ -160,28 +164,30 @@ export default function TaskForm({ projectId, onSubmit, isLoading, defaults, par
         </div>
       )}
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2.5">
         <input
           type="checkbox"
           id="is_unplanned"
           {...register('is_unplanned')}
-          className="w-4 h-4 rounded border-border-strong accent-danger cursor-pointer"
+          className="w-4 h-4 rounded border-slate-300 text-rose-600 accent-rose-600 cursor-pointer"
         />
-        <label htmlFor="is_unplanned" className="font-sans text-[13px] text-ink cursor-pointer select-none">
-          Unplanned task{' '}
-          <span className="inline-block px-2 py-[2px] rounded bg-danger-light text-danger font-semibold text-[11px]">
+        <label htmlFor="is_unplanned" className="text-sm text-slate-700 cursor-pointer select-none flex items-center gap-2">
+          Unplanned task
+          <span className="inline-block px-2 py-0.5 rounded-full bg-rose-50 text-rose-600 ring-1 ring-inset ring-rose-200 text-xs font-semibold">
             Scope creep
           </span>
         </label>
       </div>
 
-      <button
-        type="submit"
-        disabled={isLoading}
-        className="w-full px-[14px] py-[10px] rounded bg-ink text-white font-sans text-[13px] font-medium border border-ink hover:bg-[#333] disabled:opacity-50 transition-colors"
-      >
-        {isLoading ? 'Saving…' : isEdit ? 'Save changes' : 'Save task'}
-      </button>
+      <div className="pt-1">
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="bg-blue-700 text-white px-3.5 py-2 rounded-lg text-sm font-semibold hover:bg-blue-800 disabled:opacity-50 transition-colors w-full"
+        >
+          {isLoading ? 'Saving…' : isEdit ? 'Save changes' : 'Save task'}
+        </button>
+      </div>
     </form>
   );
 }

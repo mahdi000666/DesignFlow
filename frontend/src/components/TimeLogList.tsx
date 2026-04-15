@@ -1,69 +1,153 @@
-import type { TimeLog } from '../types/timelog';
+import { useState } from 'react';
+import type { TimeLog, TimeLogPayload } from '../types/timelog';
 
 interface Props {
-  logs:      TimeLog[];
-  isManager: boolean;
-  onDelete?: (id: number) => void;
+  logs:       TimeLog[];
+  isManager:  boolean;
+  onDelete?:  (id: number) => void;
+  onUpdate?:  (id: number, payload: Partial<TimeLogPayload>) => void;
 }
 
 const fmt = (iso: string) =>
   new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 
-export default function TimeLogList({ logs, isManager, onDelete }: Props) {
+const inputCls =
+  'px-2 py-1 border border-slate-200 rounded text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-colors bg-white w-full';
+
+export default function TimeLogList({ logs, isManager, onDelete, onUpdate }: Props) {
+  const [editingId,    setEditingId]    = useState<number | null>(null);
+  const [editHours,    setEditHours]    = useState('');
+  const [editDesc,     setEditDesc]     = useState('');
+
+  const startEdit = (log: TimeLog) => {
+    setEditingId(log.id);
+    setEditHours(String(log.hours_spent));
+    setEditDesc(log.description ?? '');
+  };
+
+  const cancelEdit = () => setEditingId(null);
+
+  const saveEdit = (id: number) => {
+    onUpdate?.(id, {
+      hours_spent: parseFloat(editHours),
+      description: editDesc,
+    });
+    setEditingId(null);
+  };
+
   if (!logs.length) {
     return (
-      <p className="font-sans text-[13px] text-ink3 py-4">No time logged yet.</p>
+      <div className="bg-white rounded-xl border border-slate-200 px-4 py-10 text-center">
+        <p className="text-sm text-slate-400">No time logged yet.</p>
+      </div>
     );
   }
 
   return (
-    <div className="bg-surface border border-border rounded-lg overflow-hidden">
+    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
       <table className="w-full border-collapse">
         <thead>
-          <tr className="bg-surface2 border-b border-border">
+          <tr className="bg-slate-50 border-b border-slate-200">
             {['Date', 'Designer', 'Task', 'Hours', 'Description'].map(h => (
               <th
                 key={h}
-                className="px-4 py-3 text-left font-sans text-[11px] font-semibold uppercase tracking-[0.5px] text-ink3"
+                className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400"
               >
                 {h}
               </th>
             ))}
-            {isManager && <th className="px-4 py-3 w-16" />}
+            <th className="px-4 py-3 w-24" />
           </tr>
         </thead>
-        <tbody>
-          {logs.map(log => (
-            <tr key={log.id} className="border-b border-border last:border-b-0 hover:bg-bg transition-colors">
-              <td className="px-4 py-[14px] font-sans text-[13px] text-ink whitespace-nowrap">
-                {fmt(log.created_at)}
-              </td>
-              {/* Designer shown for manager; for designer view this column still renders
-                  but the isManager guard in the header keeps columns aligned */}
-              <td className="px-4 py-[14px] font-sans text-[13px] text-ink">
-                {log.designer_name}
-              </td>
-              <td className="px-4 py-[14px] font-sans text-[13px] text-ink">
-                {log.task_name}
-              </td>
-              <td className="px-4 py-[14px] font-mono text-[13px] text-ink whitespace-nowrap">
-                {Number(log.hours_spent).toFixed(1)}h
-              </td>
-              <td className="px-4 py-[14px] font-sans text-[13px] text-ink3 max-w-xs truncate">
-                {log.description || '—'}
-              </td>
-              {isManager && (
-                <td className="px-4 py-[14px] text-right">
-                  <button
-                    onClick={() => onDelete?.(log.id)}
-                    className="font-sans text-[11px] text-danger/70 hover:text-danger transition-colors"
-                  >
-                    Delete
-                  </button>
+        <tbody className="divide-y divide-slate-100">
+          {logs.map(log => {
+            const isEditing = editingId === log.id;
+            return (
+              <tr key={log.id} className="hover:bg-slate-50/70 transition-colors group">
+                <td className="px-4 py-3.5 text-sm text-slate-600 whitespace-nowrap align-middle">
+                  {fmt(log.created_at)}
                 </td>
-              )}
-            </tr>
-          ))}
+                <td className="px-4 py-3.5 text-sm font-medium text-slate-900 align-middle">
+                  {log.designer_name}
+                </td>
+                <td className="px-4 py-3.5 text-sm text-slate-600 align-middle">
+                  {log.task_name}
+                </td>
+
+                {/* Hours — editable inline */}
+                <td className="px-4 py-3.5 align-middle w-28">
+                  {isEditing ? (
+                    <input
+                      type="number"
+                      min="0.25"
+                      step="0.25"
+                      value={editHours}
+                      onChange={e => setEditHours(e.target.value)}
+                      className={`${inputCls} font-mono w-20`}
+                    />
+                  ) : (
+                    <span className="font-mono text-sm text-slate-900 whitespace-nowrap">
+                      {Number(log.hours_spent).toFixed(1)}h
+                    </span>
+                  )}
+                </td>
+
+                {/* Description — editable inline */}
+                <td className="px-4 py-3.5 align-middle">
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={editDesc}
+                      onChange={e => setEditDesc(e.target.value)}
+                      placeholder="Description…"
+                      className={inputCls}
+                    />
+                  ) : (
+                    <span className="text-sm text-slate-400 max-w-xs truncate block">
+                      {log.description || <span className="text-slate-300">—</span>}
+                    </span>
+                  )}
+                </td>
+
+                {/* Actions */}
+                <td className="px-4 py-3.5 align-middle">
+                  {isEditing ? (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => saveEdit(log.id)}
+                        className="text-xs font-medium text-blue-700 hover:text-blue-900 transition-colors"
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={cancelEdit}
+                        className="text-xs font-medium text-slate-400 hover:text-slate-600 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => startEdit(log)}
+                        className="text-xs font-medium text-slate-400 hover:text-slate-700 transition-colors"
+                      >
+                        Edit
+                      </button>
+                      {isManager && (
+                        <button
+                          onClick={() => onDelete?.(log.id)}
+                          className="text-xs font-medium text-rose-400 hover:text-rose-600 transition-colors"
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
