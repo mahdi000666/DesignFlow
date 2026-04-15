@@ -44,17 +44,24 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
 
         {/* Brand mark */}
-        <div className="text-center mb-8">
-          <div className="font-serif text-[30px] text-ink tracking-tight">DesignOps</div>
-          <div className="font-sans text-[10px] uppercase tracking-[2px] text-ink3 mt-1">
-            Analytics Platform
+        <div className="flex flex-col items-center mb-8 gap-3">
+          <div className="w-11 h-11 rounded-xl bg-blue-600 flex items-center justify-center shadow-sm">
+            <svg width="22" height="22" viewBox="0 0 14 14" fill="none">
+              <rect x="1" y="1" width="5" height="5" rx="1" fill="white" />
+              <rect x="8" y="1" width="5" height="5" rx="1" fill="white" fillOpacity="0.55" />
+              <rect x="1" y="8" width="5" height="5" rx="1" fill="white" fillOpacity="0.55" />
+              <rect x="8" y="8" width="5" height="5" rx="1" fill="white" />
+            </svg>
+          </div>
+          <div className="text-center">
+            <div className="font-display text-[26px] text-ink leading-tight">DesignOps</div>
           </div>
         </div>
 
         <div className="bg-surface border border-border rounded-lg p-8">
           <div className="mb-6">
-            <h1 className="font-serif text-[20px] font-normal text-ink">Sign in</h1>
-            <p className="font-sans text-[13px] text-ink3 mt-1">Access your workspace</p>
+            <h1 className="font-sans text-[15px] font-semibold text-ink">Sign in</h1>
+            <p className="font-sans text-[13px] text-ink3 mt-0.5">Access your workspace</p>
           </div>
 
           {justActivated && (
@@ -79,7 +86,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className="w-full px-[14px] py-[10px] border border-border-strong rounded bg-surface font-sans text-[14px] text-ink outline-none focus:border-amber transition-colors placeholder:text-ink3"
+                className="w-full px-[14px] py-[10px] border border-slate-200 rounded-lg bg-surface font-sans text-[14px] text-ink outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors placeholder:text-ink3"
               />
             </div>
 
@@ -93,7 +100,7 @@ export default function LoginPage() {
                 onChange={e => setPassword(e.target.value)}
                 placeholder="••••••••"
                 onKeyDown={e => e.key === 'Enter' && handleSubmit()}
-                className="w-full px-[14px] py-[10px] border border-border-strong rounded bg-surface font-sans text-[14px] text-ink outline-none focus:border-amber transition-colors placeholder:text-ink3"
+                className="w-full px-[14px] py-[10px] border border-slate-200 rounded-lg bg-surface font-sans text-[14px] text-ink outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors placeholder:text-ink3"
               />
             </div>
           </div>
@@ -101,7 +108,7 @@ export default function LoginPage() {
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className="mt-6 w-full px-[14px] py-[10px] rounded bg-ink text-white font-sans text-[13px] font-medium border border-ink hover:bg-[#333] disabled:opacity-50 transition-colors"
+            className="mt-6 w-full px-3.5 py-2 rounded-lg bg-blue-700 text-white font-sans text-sm font-semibold hover:bg-blue-800 disabled:opacity-50 transition-colors"
           >
             {loading ? 'Signing in…' : 'Sign in'}
           </button>

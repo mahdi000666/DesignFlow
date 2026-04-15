@@ -14,10 +14,30 @@ interface TokenInfo {
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
 const inputCls =
-  'w-full px-[14px] py-[10px] border border-border-strong rounded bg-surface font-sans text-[14px] text-ink outline-none focus:border-amber transition-colors placeholder:text-ink3';
+  'w-full px-[14px] py-[10px] border border-slate-200 rounded-lg bg-surface font-sans text-[14px] text-ink outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors placeholder:text-ink3';
 
 const labelCls =
   'block font-sans text-[11px] uppercase tracking-[0.6px] text-ink3 mb-[6px]';
+
+// ─── Shared brand mark ───────────────────────────────────────────────────────
+
+function BrandMark() {
+  return (
+    <div className="flex flex-col items-center mb-8 gap-3">
+      <div className="w-11 h-11 rounded-xl bg-blue-600 flex items-center justify-center shadow-sm">
+        <svg width="22" height="22" viewBox="0 0 14 14" fill="none">
+          <rect x="1" y="1" width="5" height="5" rx="1" fill="white" />
+          <rect x="8" y="1" width="5" height="5" rx="1" fill="white" fillOpacity="0.55" />
+          <rect x="1" y="8" width="5" height="5" rx="1" fill="white" fillOpacity="0.55" />
+          <rect x="8" y="8" width="5" height="5" rx="1" fill="white" />
+        </svg>
+      </div>
+      <div className="text-center">
+        <div className="font-display text-[26px] text-ink leading-tight">DesignOps</div>
+      </div>
+    </div>
+  );
+}
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
@@ -106,9 +126,12 @@ export default function ActivatePage() {
   if (tokenError) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-bg">
-        <div className="bg-surface border border-border rounded-lg px-8 py-6 max-w-sm w-full text-center">
-          <div className="font-serif text-[20px] text-ink mb-2">Invalid link</div>
-          <p className="font-sans text-[13px] text-ink3">{tokenError}</p>
+        <div className="w-full max-w-sm">
+          <BrandMark />
+          <div className="bg-surface border border-border rounded-lg px-8 py-6 text-center">
+            <div className="font-sans text-[15px] font-semibold text-ink mb-1.5">Invalid link</div>
+            <p className="font-sans text-[13px] text-ink3">{tokenError}</p>
+          </div>
         </div>
       </div>
     );
@@ -117,23 +140,17 @@ export default function ActivatePage() {
   const role = tokenInfo!.role;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-bg">
+    <div className="min-h-screen flex items-center justify-center bg-bg py-12">
       <div className="w-full max-w-sm">
 
-        {/* Brand mark */}
-        <div className="text-center mb-8">
-          <div className="font-serif text-[30px] text-ink tracking-tight">DesignOps</div>
-          <div className="font-sans text-[10px] uppercase tracking-[2px] text-ink3 mt-1">
-            Analytics Platform
-          </div>
-        </div>
+        <BrandMark />
 
         <div className="bg-surface border border-border rounded-lg p-8">
           <div className="mb-6">
-            <h1 className="font-serif text-[20px] font-normal text-ink">
+            <h1 className="font-sans text-[15px] font-semibold text-ink">
               Welcome, {tokenInfo!.full_name}
             </h1>
-            <p className="font-sans text-[13px] text-ink3 mt-1">
+            <p className="font-sans text-[13px] text-ink3 mt-0.5">
               Set your password to activate your {role} account.
             </p>
           </div>
@@ -173,9 +190,6 @@ export default function ActivatePage() {
             {role === 'Designer' && (
               <>
                 <hr className="border-border" />
-                <p className="font-sans text-[11px] uppercase tracking-[0.6px] text-ink3">
-                  Your profile — you can update these later
-                </p>
 
                 <div>
                   <label className={labelCls}>Specialization</label>
@@ -186,9 +200,6 @@ export default function ActivatePage() {
                     placeholder="e.g. Branding & Identity"
                     className={inputCls}
                   />
-                  <p className="font-sans text-[11px] text-ink3 mt-[6px]">
-                    Other examples: UI/UX Design · Motion Graphics · Packaging
-                  </p>
                 </div>
 
                 <div>
@@ -202,9 +213,6 @@ export default function ActivatePage() {
                     placeholder="e.g. 40"
                     className={inputCls}
                   />
-                  <p className="font-sans text-[11px] text-ink3 mt-[6px]">
-                    Your total billable capacity. Used for utilisation tracking.
-                  </p>
                 </div>
               </>
             )}
@@ -213,9 +221,6 @@ export default function ActivatePage() {
             {role === 'Client' && (
               <>
                 <hr className="border-border" />
-                <p className="font-sans text-[11px] uppercase tracking-[0.6px] text-ink3">
-                  Your profile — you can update these later
-                </p>
 
                 <div>
                   <label className={labelCls}>Phone</label>
@@ -237,9 +242,6 @@ export default function ActivatePage() {
                     placeholder="e.g. Food & Beverage"
                     className={inputCls}
                   />
-                  <p className="font-sans text-[11px] text-ink3 mt-[6px]">
-                    Other examples: Retail · Healthcare · Technology · Finance
-                  </p>
                 </div>
               </>
             )}
@@ -249,7 +251,7 @@ export default function ActivatePage() {
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className="mt-6 w-full px-[14px] py-[10px] rounded bg-ink text-white font-sans text-[13px] font-medium border border-ink hover:bg-[#333] disabled:opacity-50 transition-colors"
+            className="mt-6 w-full px-3.5 py-2 rounded-lg bg-blue-700 text-white font-sans text-sm font-semibold hover:bg-blue-800 disabled:opacity-50 transition-colors"
           >
             {loading ? 'Activating…' : 'Activate account'}
           </button>

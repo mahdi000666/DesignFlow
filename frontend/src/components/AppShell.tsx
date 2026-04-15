@@ -178,8 +178,8 @@ export default function AppShell({ title, breadcrumb, actions, children }: AppSh
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
 
         {/* Topbar */}
-        <header className="bg-white border-b border-slate-200 px-8 py-4 flex items-center gap-4 shrink-0">
-          <div className="flex-1 min-w-0">
+        <header className="bg-white border-b border-slate-200 px-8 py-4 flex items-center justify-between shrink-0">
+          <div className="min-w-0">
             {breadcrumb && (
               <p className="text-[11px] text-slate-400 font-medium mb-1">{breadcrumb}</p>
             )}
