@@ -1,17 +1,24 @@
 import { Link } from 'react-router-dom';
 import { useProjects } from '../../hooks/useProjects';
 import AppShell from '../../components/AppShell';
+import type { Project } from '../../types/project';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-const STATUS_BADGE: Record<string, string> = {
-  Active:    'bg-success-light text-success',
-  Completed: 'bg-surface2 text-ink3',
-  OnHold:    'bg-amber-light text-amber-dark',
+const STATUS_BADGE: Record<Project['status'], string> = {
+  Active:    'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-200',
+  Completed: 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200',
+  OnHold:    'bg-violet-50 text-violet-700 ring-1 ring-inset ring-violet-200',
+};
+
+const STATUS_DOT: Record<Project['status'], string> = {
+  Active:    'bg-blue-500',
+  Completed: 'bg-emerald-500',
+  OnHold:    'bg-violet-500',
 };
 
 const barColor = (pct: number) =>
-  pct >= 100 ? 'bg-danger' : pct >= 80 ? 'bg-amber' : 'bg-teal';
+  pct >= 100 ? '#ef4444' : pct >= 80 ? '#f59e0b' : '#0d9488';
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
@@ -22,10 +29,10 @@ export default function DesignerProjects() {
   return (
     <AppShell title="My Projects">
       {isLoading ? (
-        <p className="font-sans text-[13px] text-ink3">Loading…</p>
+        <p className="text-sm text-slate-400">Loading…</p>
       ) : projects?.length === 0 ? (
-        <div className="bg-surface border border-border rounded-lg px-5 py-10 text-center">
-          <p className="font-sans text-[13px] text-ink3">
+        <div className="bg-white rounded-xl border border-slate-200 px-5 py-10 text-center">
+          <p className="text-sm text-slate-400">
             You have not been assigned to any projects yet.
           </p>
         </div>
@@ -40,32 +47,33 @@ export default function DesignerProjects() {
               <Link
                 key={p.id}
                 to={`/designer/projects/${p.id}`}
-                className="bg-surface border border-border rounded-lg p-5 hover:border-amber/60 hover:shadow-sm transition-all block"
+                className="bg-white rounded-xl border border-slate-200 p-5 hover:border-blue-300 hover:shadow-sm transition-all block group"
               >
                 {/* Header row */}
                 <div className="flex items-start justify-between gap-3 mb-2">
-                  <div className="font-serif text-[17px] font-normal text-ink leading-snug">
+                  <div className="text-base font-semibold text-slate-900 leading-snug group-hover:text-blue-700 transition-colors">
                     {p.project_name}
                   </div>
-                  <span className={`inline-block shrink-0 px-2 py-[3px] rounded font-sans text-[11px] font-semibold ${STATUS_BADGE[p.status]}`}>
-                    {p.status}
+                  <span className={`inline-flex items-center gap-1.5 shrink-0 px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_BADGE[p.status]}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${STATUS_DOT[p.status]}`} />
+                    {p.status === 'OnHold' ? 'On Hold' : p.status}
                   </span>
                 </div>
 
                 {/* Client */}
-                <p className="font-sans text-[13px] text-ink2 mb-3">{p.client_name}</p>
+                <p className="text-sm text-slate-500 mb-3">{p.client_name}</p>
 
                 {/* Budget progress */}
                 {budgetPct !== null && (
                   <div className="mb-3">
-                    <div className="flex justify-between font-sans text-[11px] text-ink3 mb-[5px]">
+                    <div className="flex justify-between text-xs text-slate-400 mb-1.5">
                       <span>Budget</span>
                       <span className="font-mono">{p.actual_hours}h / {p.budget_hours}h</span>
                     </div>
-                    <div className="bg-surface2 rounded-full h-[4px] overflow-hidden">
+                    <div className="bg-slate-100 rounded-full h-1.5 overflow-hidden">
                       <div
-                        className={`h-full rounded-full ${barColor(budgetPct)}`}
-                        style={{ width: `${Math.min(budgetPct, 100)}%` }}
+                        className="h-full rounded-full transition-[width]"
+                        style={{ width: `${Math.min(budgetPct, 100)}%`, backgroundColor: barColor(budgetPct) }}
                       />
                     </div>
                   </div>
@@ -73,8 +81,8 @@ export default function DesignerProjects() {
 
                 {/* Deadline */}
                 {p.deadline && (
-                  <p className="font-sans text-[11px] text-ink3 mt-2">
-                    Due <span className="text-ink">{p.deadline}</span>
+                  <p className="text-xs text-slate-400 mt-2">
+                    Due <span className="text-slate-600">{p.deadline}</span>
                   </p>
                 )}
               </Link>

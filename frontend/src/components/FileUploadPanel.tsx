@@ -18,9 +18,9 @@ const ALLOWED_TYPES: Record<string, { value: FileType; label: string }[]> = {
 };
 
 const TYPE_BADGE: Record<FileType, string> = {
-  deliverable:     'bg-info-light text-info',
-  reference:       'bg-surface2 text-ink3',
-  brand_guideline: 'bg-teal-light text-teal',
+  deliverable:     'bg-blue-50 text-blue-700',
+  reference:       'bg-slate-100 text-slate-600',
+  brand_guideline: 'bg-teal-50 text-teal-700',
 };
 
 const formatBytes = (bytes: number): string => {
@@ -66,7 +66,7 @@ export default function FileUploadPanel({ projectId, role, isManager }: Props) {
           <select
             value={fileType}
             onChange={e => setFileType(e.target.value as FileType)}
-            className="px-[14px] py-[6px] border border-border-strong rounded bg-surface font-sans text-[13px] text-ink outline-none focus:border-amber transition-colors"
+            className="px-3 py-2 border border-slate-200 rounded-lg bg-white text-sm text-slate-600 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 cursor-pointer transition-colors hover:bg-slate-50"
           >
             {allowedTypes.map(t => (
               <option key={t.value} value={t.value}>{t.label}</option>
@@ -74,7 +74,7 @@ export default function FileUploadPanel({ projectId, role, isManager }: Props) {
           </select>
         )}
 
-        <label className="inline-flex items-center cursor-pointer px-[14px] py-[6px] rounded bg-ink text-white font-sans text-[12px] font-medium border border-ink hover:bg-[#333] transition-colors">
+        <label className="inline-flex items-center cursor-pointer bg-blue-700 text-white px-3.5 py-2 rounded-lg text-sm font-semibold hover:bg-blue-800 transition-colors">
           {uploadFile.isPending ? 'Uploading…' : '+ Upload file'}
           <input
             ref={inputRef}
@@ -86,26 +86,26 @@ export default function FileUploadPanel({ projectId, role, isManager }: Props) {
         </label>
 
         {uploadFile.isError && (
-          <span className="font-sans text-[12px] text-danger">Upload failed.</span>
+          <span className="text-sm text-rose-600">Upload failed.</span>
         )}
       </div>
 
       {/* File table */}
       {isLoading ? (
-        <p className="font-sans text-[13px] text-ink3">Loading files…</p>
+        <p className="text-sm text-slate-400">Loading files…</p>
       ) : files.length === 0 ? (
-        <div className="bg-surface border border-border rounded-lg px-4 py-8 text-center">
-          <p className="font-sans text-[13px] text-ink3">No files uploaded yet.</p>
+        <div className="bg-white rounded-xl border border-slate-200 px-4 py-10 text-center">
+          <p className="text-sm text-slate-400">No files uploaded yet.</p>
         </div>
       ) : (
-        <div className="bg-surface border border-border rounded-lg overflow-hidden">
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
           <table className="w-full border-collapse">
             <thead>
-              <tr className="bg-surface2 border-b border-border">
+              <tr className="bg-slate-50 border-b border-slate-200">
                 {['Filename', 'Type', 'Uploaded by', 'Size', 'Date'].map(h => (
                   <th
                     key={h}
-                    className="px-4 py-3 text-left font-sans text-[11px] font-semibold uppercase tracking-[0.5px] text-ink3"
+                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400"
                   >
                     {h}
                   </th>
@@ -114,43 +114,43 @@ export default function FileUploadPanel({ projectId, role, isManager }: Props) {
                 <th className="px-4 py-3 w-32" />
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-slate-100">
               {files.map(f => (
                 <tr
                   key={f.id}
-                  className="border-b border-border last:border-b-0 hover:bg-bg transition-colors"
+                  className="hover:bg-slate-50/70 transition-colors"
                 >
-                  <td className="px-4 py-[13px] font-sans text-[13px] text-ink max-w-[240px] truncate">
+                  <td className="px-4 py-3.5 text-sm text-slate-900 max-w-[240px] truncate">
                     {f.file_name}
                   </td>
-                  <td className="px-4 py-[13px]">
-                    <span className={`inline-block px-2 py-[3px] rounded font-sans text-[11px] font-semibold ${TYPE_BADGE[f.file_type]}`}>
+                  <td className="px-4 py-3.5">
+                    <span className={`inline-block px-2 py-0.5 rounded text-xs font-semibold ${TYPE_BADGE[f.file_type]}`}>
                       {f.file_type}
                     </span>
                   </td>
-                  <td className="px-4 py-[13px] font-sans text-[13px] text-ink2">
+                  <td className="px-4 py-3.5 text-sm text-slate-600">
                     {f.uploaded_by_name}
                   </td>
-                  <td className="px-4 py-[13px] font-mono text-[13px] text-ink whitespace-nowrap">
+                  <td className="px-4 py-3.5 font-mono text-sm text-slate-900 whitespace-nowrap">
                     {formatBytes(f.file_size)}
                   </td>
-                  <td className="px-4 py-[13px] font-sans text-[13px] text-ink2 whitespace-nowrap">
+                  <td className="px-4 py-3.5 text-sm text-slate-600 whitespace-nowrap">
                     {fmt(f.uploaded_at)}
                   </td>
-                  <td className="px-4 py-[13px]">
+                  <td className="px-4 py-3.5">
                     <div className="flex items-center justify-end gap-3">
                       <a
                         href={f.file_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="font-sans text-[13px] text-amber hover:text-amber-dark transition-colors whitespace-nowrap"
+                        className="text-sm text-blue-700 hover:text-blue-800 transition-colors whitespace-nowrap font-medium"
                       >
                         ↓ Download
                       </a>
                       {isManager && (
                         <button
                           onClick={() => deleteFile.mutate(f.id)}
-                          className="font-sans text-[11px] text-danger/60 hover:text-danger transition-colors"
+                          className="text-xs text-rose-400 hover:text-rose-600 transition-colors"
                         >
                           Delete
                         </button>
