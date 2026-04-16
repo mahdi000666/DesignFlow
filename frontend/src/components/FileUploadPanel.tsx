@@ -17,10 +17,19 @@ const ALLOWED_TYPES: Record<string, { value: FileType; label: string }[]> = {
   ],
 };
 
-const TYPE_BADGE: Record<FileType, string> = {
-  deliverable:     'bg-blue-50 text-blue-700',
-  reference:       'bg-slate-100 text-slate-600',
-  brand_guideline: 'bg-teal-50 text-teal-700',
+const TYPE_BADGE: Record<FileType, { cls: string; label: string }> = {
+  deliverable: {
+    cls: 'bg-sky-50 text-sky-700 ring-1 ring-inset ring-sky-200',
+    label: 'Deliverable',
+  },
+  reference: {
+    cls: 'bg-zinc-100 text-zinc-600 ring-1 ring-inset ring-zinc-200',
+    label: 'Reference',
+  },
+  brand_guideline: {
+    cls: 'bg-violet-50 text-violet-700 ring-1 ring-inset ring-violet-200',
+    label: 'Brand Guideline',
+  },
 };
 
 const formatBytes = (bytes: number): string => {
@@ -43,8 +52,8 @@ interface Props {
 
 export default function FileUploadPanel({ projectId, role, isManager }: Props) {
   const { data: files = [], isLoading } = useFiles(projectId);
-  const uploadFile  = useUploadFile(projectId);
-  const deleteFile  = useDeleteFile(projectId);
+  const uploadFile = useUploadFile(projectId);
+  const deleteFile = useDeleteFile(projectId);
 
   const allowedTypes = ALLOWED_TYPES[role] ?? ALLOWED_TYPES['Manager'];
   const [fileType, setFileType] = useState<FileType>(allowedTypes[0].value);
@@ -56,6 +65,11 @@ export default function FileUploadPanel({ projectId, role, isManager }: Props) {
     uploadFile.mutate({ fileType, file }, {
       onSettled: () => { if (inputRef.current) inputRef.current.value = ''; },
     });
+  };
+
+  const handleDelete = (id: number, fileName: string) => {
+    if (!confirm(`Delete "${fileName}"? This cannot be undone.`)) return;
+    deleteFile.mutate(id);
   };
 
   return (
@@ -110,55 +124,60 @@ export default function FileUploadPanel({ projectId, role, isManager }: Props) {
                     {h}
                   </th>
                 ))}
-                {/* Download + optional delete */}
-                <th className="px-4 py-3 w-32" />
+                {/* Delete column — always present to keep layout stable; cell is empty for non-managers */}
+                <th className="px-4 py-3 w-20" />
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {files.map(f => (
-                <tr
-                  key={f.id}
-                  className="hover:bg-slate-50/70 transition-colors"
-                >
-                  <td className="px-4 py-3.5 text-sm text-slate-900 max-w-[240px] truncate">
-                    {f.file_name}
-                  </td>
-                  <td className="px-4 py-3.5">
-                    <span className={`inline-block px-2 py-0.5 rounded text-xs font-semibold ${TYPE_BADGE[f.file_type]}`}>
-                      {f.file_type}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3.5 text-sm text-slate-600">
-                    {f.uploaded_by_name}
-                  </td>
-                  <td className="px-4 py-3.5 font-mono text-sm text-slate-900 whitespace-nowrap">
-                    {formatBytes(f.file_size)}
-                  </td>
-                  <td className="px-4 py-3.5 text-sm text-slate-600 whitespace-nowrap">
-                    {fmt(f.uploaded_at)}
-                  </td>
-                  <td className="px-4 py-3.5">
-                    <div className="flex items-center justify-end gap-3">
+              {files.map(f => {
+                const badge = TYPE_BADGE[f.file_type];
+                return (
+                  <tr key={f.id} className="hover:bg-slate-50/70 transition-colors group">
+
+                    {/* Filename — the whole name is the download link */}
+                    <td className="px-4 py-3.5 max-w-[240px]">
                       <a
                         href={f.file_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm text-blue-700 hover:text-blue-800 transition-colors whitespace-nowrap font-medium"
+                        className="text-sm font-medium text-blue-700 hover:text-blue-900 hover:underline transition-colors truncate block"
+                        title={f.file_name}
                       >
-                        ↓ Download
+                        {f.file_name}
                       </a>
+                    </td>
+
+                    {/* Type badge — rounded-full pill, proper label */}
+                    <td className="px-4 py-3.5">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${badge.cls}`}>
+                        {badge.label}
+                      </span>
+                    </td>
+
+                    <td className="px-4 py-3.5 text-sm text-slate-600">
+                      {f.uploaded_by_name}
+                    </td>
+                    <td className="px-4 py-3.5 font-mono text-sm text-slate-900 whitespace-nowrap">
+                      {formatBytes(f.file_size)}
+                    </td>
+                    <td className="px-4 py-3.5 text-sm text-slate-600 whitespace-nowrap">
+                      {fmt(f.uploaded_at)}
+                    </td>
+
+                    {/* Delete — only rendered for managers; fades in on row hover */}
+                    <td className="px-1 py-3.5 text-left">
                       {isManager && (
                         <button
-                          onClick={() => deleteFile.mutate(f.id)}
-                          className="text-xs text-rose-400 hover:text-rose-600 transition-colors"
+                          onClick={() => handleDelete(f.id, f.file_name)}
+                          className="text-xs font-medium text-rose-400 hover:text-rose-600 transition-colors opacity-0 group-hover:opacity-100"
                         >
                           Delete
                         </button>
                       )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

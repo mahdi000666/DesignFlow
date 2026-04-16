@@ -2,7 +2,7 @@ import { useParams } from 'react-router-dom';
 import { useState, useMemo } from 'react';
 import { useProject } from '../../hooks/useProjects';
 import { useTasks } from '../../hooks/useTasks';
-import { useTimeLogs, useCreateTimeLog } from '../../hooks/useTimeLogs';
+import { useTimeLogs, useCreateTimeLog, useUpdateTimeLog } from '../../hooks/useTimeLogs';
 import { useFiles } from '../../hooks/useFiles';
 import { useAuth } from '../../hooks/useAuth';
 import TimeLogForm from '../../components/TimeLogForm';
@@ -52,6 +52,7 @@ export default function DesignerProjectDetail() {
   const { data: files = []                          } = useFiles(projectId);
 
   const createTimeLog = useCreateTimeLog(projectId);
+  const updateTimeLog = useUpdateTimeLog(projectId);
 
   const [activeTab,    setActiveTab]    = useState<Tab>('tasks');
   const [showLogForm,  setShowLogForm]  = useState(false);
@@ -130,16 +131,14 @@ export default function DesignerProjectDetail() {
             )}
           </div>
 
-          {/* Right: metrics */}
-          <div className="flex items-start gap-8 shrink-0">
-            <div className="text-center">
-              <p className="font-mono text-lg font-semibold text-slate-900 leading-none">
-                {project.actual_hours}h
-              </p>
-              <p className="text-xs text-slate-400 mt-1">
-                {project.budget_hours ? `of ${project.budget_hours}h` : 'logged'}
-              </p>
-            </div>
+          {/* Right: hours metric */}
+          <div className="shrink-0 text-center">
+            <p className="font-mono text-lg font-semibold text-slate-900 leading-none">
+              {project.actual_hours}h
+            </p>
+            <p className="text-xs text-slate-400 mt-1">
+              {project.budget_hours ? `of ${project.budget_hours}h` : 'logged'}
+            </p>
           </div>
         </div>
 
@@ -252,7 +251,11 @@ export default function DesignerProjectDetail() {
               <TimeLogForm tasks={allTasks} isLoading={createTimeLog.isPending} onSubmit={handleLogTime} />
             </div>
           )}
-          <TimeLogList logs={logs} isManager={false} />
+          <TimeLogList
+            logs={logs}
+            isManager={false}
+            onUpdate={(id, payload) => updateTimeLog.mutate({ id, payload })}
+          />
         </div>
       )}
 

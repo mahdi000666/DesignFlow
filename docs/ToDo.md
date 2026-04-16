@@ -1,4 +1,12 @@
 Evaluation stars
+Create the full mockup for all roles.
+Upload main.tsx, index.css, App.tsx, App.css, AppShell.tsx, tailwind.config.js
+Ask about index.css problem.
+
+Good job, my feedback:
+1. For FileUploadPanel, change the colors of the file type into something nicer looking, as you can see in the screenshot it doesn't look or maybe something went wrong. I would also like it to display the types in uppercase (Reference, Brand Guideline, Deliverable).
+2. Instead of having a Download button, I would rather click on the file name itself so it takes me to its download page. Also add a confirmation for the file Delete button to prevent accidental deletes.
+3. Designer is unable to update timelog for some reason, the edit button shows, and i modify the value but when i click save, it doesnt get saved (this work perfectly fine for the manager).
 
 
 In order to save tokens, you may only generate the document for S3 chapter.
