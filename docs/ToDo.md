@@ -3,11 +3,16 @@ Create the full mockup for all roles.
 Upload main.tsx, index.css, App.tsx, App.css, AppShell.tsx, tailwind.config.js
 Ask about index.css problem.
 
-Good job, my feedback:
-1. For FileUploadPanel, change the colors of the file type into something nicer looking, as you can see in the screenshot it doesn't look or maybe something went wrong. I would also like it to display the types in uppercase (Reference, Brand Guideline, Deliverable).
-2. Instead of having a Download button, I would rather click on the file name itself so it takes me to its download page. Also add a confirmation for the file Delete button to prevent accidental deletes.
-3. Designer is unable to update timelog for some reason, the edit button shows, and i modify the value but when i click save, it doesnt get saved (this work perfectly fine for the manager).
+check own file deletion for designer and client.
 
+Good job, my feedback:
+1. Im not sure whats supposed to change after the IsOwn fix, take a look at the screenshot.
+2. What benefit could stars on feedback add? is it meaningful? Should we leave a note or maybe a user story for sprint 5?
+3. Should we allow the client to delete feedbacks in case they changed their mind? Should we allow all roles to delete their own messages?
+4. Im new to this language, why did u add "Partial" to Fix 3? what does it? would omitting "Approval" not have been enough? Either way, it no longer allows me to update the status of Approval but it still shows "Pending" next to it.
+5. As for the unread badges, its working but i noticed a small problem. If the user types a message, they will get the red badge while they are still on that tab. it will only dissapear if they click on another tab then go back to to messages tab for it to dissapear. My point is that in most apps who have this feature, if you are on that tab, it doesn't make sense for it to have that badge because its supposed to alert you. Fix this.
+
+Note: if any change is a few lines of code, just tell me where to copy and paste. If it requires a lot of changes, then you can do it yourself.
 
 In order to save tokens, you may only generate the document for S3 chapter.
 

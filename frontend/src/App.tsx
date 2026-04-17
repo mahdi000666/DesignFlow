@@ -9,6 +9,8 @@ import DesignerProjects from './pages/designer/DesignerProjects';
 import ManagerDashboard from './pages/manager/ManagerDashboard';
 import DesignerDashboard from './pages/designer/DesignerDashboard';
 import ClientDashboard from './pages/client/ClientDashboard';
+import ClientProjects from './pages/client/ClientProjects';
+import ClientProjectDetail from './pages/client/ClientProjectDetail';
 import DesignerProjectDetail from './pages/designer/DesignerProjectDetail';
 
 function RootRedirect() {
@@ -63,6 +65,14 @@ export default function App() {
 
           {/* Client */}
           <Route path="/client" element={<ProtectedRoute allowedRoles={['Client']}><ClientDashboard /></ProtectedRoute>} />
+          <Route
+            path="/client/projects"
+            element={<ProtectedRoute allowedRoles={['Client']}><ClientProjects /></ProtectedRoute>}
+          />
+          <Route
+            path="/client/projects/:id"
+            element={<ProtectedRoute allowedRoles={['Client']}><ClientProjectDetail /></ProtectedRoute>}
+          />
 
           <Route path="/" element={<RootRedirect />} />
 

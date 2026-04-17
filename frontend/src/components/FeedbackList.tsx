@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { useFeedback, useUpdateFeedbackStatus } from '../hooks/useFeedback';
+import { useCreateMessage } from '../hooks/useMessages';
 import type { FeedbackStatus } from '../types/feedback';
 
 const STATUS_STYLES: Record<FeedbackStatus, string> = {
@@ -13,30 +15,48 @@ const CATEGORY_STYLES: Record<string, string> = {
   Question: 'bg-gray-100 text-gray-700',
 };
 
+// Approval items are intentionally omitted — an Approval is already a
+// positive signal; progressing it through Pending→InProgress→Resolved
+// is semantically meaningless.
+const NEXT_STATUS: Partial<Record<FeedbackStatus, FeedbackStatus>> = {
+  Pending:    'InProgress',
+  InProgress: 'Resolved',
+};
+
 interface Props {
   projectId: number;
-  canUpdate: boolean;   // true for Manager and Designer
+  canUpdate: boolean;    // true for Manager and Designer
+  canReply?:  boolean;   // true for Designer/Manager (reply stored as a project message)
 }
 
-const FeedbackList = ({ projectId, canUpdate }: Props) => {
+export default function FeedbackList({ projectId, canUpdate, canReply = false }: Props) {
   const { data: items = [], isLoading } = useFeedback(projectId);
-  const updateStatus = useUpdateFeedbackStatus(projectId);
+  const updateStatus  = useUpdateFeedbackStatus(projectId);
+  const createMessage = useCreateMessage(projectId);
+
+  const [replyingTo, setReplyingTo] = useState<number | null>(null);
+  const [replyText,  setReplyText]  = useState('');
+
+  const handleReply = (feedbackId: number, category: string) => {
+    const trimmed = replyText.trim();
+    if (!trimmed) return;
+    createMessage.mutate(
+      { project: projectId, content_text: `[Re: ${category} #${feedbackId}] ${trimmed}` },
+      { onSuccess: () => { setReplyingTo(null); setReplyText(''); } },
+    );
+  };
 
   if (isLoading) return <p className="text-sm text-gray-400">Loading feedback…</p>;
   if (!items.length) return <p className="text-sm text-gray-400">No feedback yet.</p>;
 
-  const NEXT_STATUS: Record<FeedbackStatus, FeedbackStatus | null> = {
-    Pending:    'InProgress',
-    InProgress: 'Resolved',
-    Resolved:   null,
-  };
-
   return (
     <ul className="space-y-3">
       {items.map(item => {
-        const next = NEXT_STATUS[item.status];
+        const next = item.category !== 'Approval' ? NEXT_STATUS[item.status] : undefined;
         return (
           <li key={item.id} className="border rounded-lg p-4 bg-white shadow-sm">
+
+            {/* Top row: badges + status button */}
             <div className="flex items-start justify-between gap-4">
               <div className="space-y-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -68,11 +88,48 @@ const FeedbackList = ({ projectId, canUpdate }: Props) => {
                 </button>
               )}
             </div>
+
+            {/* Reply section */}
+            {canReply && (
+              <div className="mt-3 border-t border-slate-100 pt-3">
+                {replyingTo === item.id ? (
+                  <div className="flex gap-2 items-end">
+                    <textarea
+                      value={replyText}
+                      onChange={e => setReplyText(e.target.value)}
+                      placeholder="Write a reply…"
+                      rows={2}
+                      className="flex-1 resize-none rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-colors"
+                    />
+                    <div className="flex flex-col gap-1.5 shrink-0">
+                      <button
+                        onClick={() => handleReply(item.id, item.category)}
+                        disabled={!replyText.trim() || createMessage.isPending}
+                        className="text-xs px-3 py-1.5 bg-blue-700 text-white rounded-lg font-medium hover:bg-blue-800 disabled:opacity-50 transition-colors"
+                      >
+                        Send
+                      </button>
+                      <button
+                        onClick={() => { setReplyingTo(null); setReplyText(''); }}
+                        className="text-xs px-3 py-1.5 border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => { setReplyingTo(item.id); setReplyText(''); }}
+                    className="text-xs text-slate-500 hover:text-blue-700 transition-colors"
+                  >
+                    ↩ Reply
+                  </button>
+                )}
+              </div>
+            )}
           </li>
         );
       })}
     </ul>
   );
-};
-
-export default FeedbackList;
+}

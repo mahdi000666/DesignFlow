@@ -1,9 +1,13 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useMemo } from 'react';
+import type { ReactNode } from 'react';
 import { useProject, useUpdateProject, useDeleteProject } from '../../hooks/useProjects';
 import { useTasks, useCreateTask } from '../../hooks/useTasks';
 import { useTimeLogs, useDeleteTimeLog, useUpdateTimeLog  } from '../../hooks/useTimeLogs';
 import { useFiles } from '../../hooks/useFiles';
+import { useMessages } from '../../hooks/useMessages';
+import { useFeedback } from '../../hooks/useFeedback';
+import { useUnreadCount } from '../../hooks/useUnreadCount';
 import { useAuth } from '../../hooks/useAuth';
 import TaskForm from '../../components/TaskForm';
 import TaskRow from '../../components/TaskRow';
@@ -11,21 +15,19 @@ import AssignDesignerPanel from '../../components/AssignDesignerPanel';
 import TimeLogList from '../../components/TimeLogList';
 import FileUploadPanel from '../../components/FileUploadPanel';
 import FeedbackList from '../../components/FeedbackList';
+import MessageBoard from '../../components/MessageBoard';
 import AppShell from '../../components/AppShell';
 import type { TaskPayload, Task } from '../../types/task';
 import type { Project } from '../../types/project';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-type Tab = 'tasks' | 'logs' | 'files' | 'feedback';
+type Tab = 'tasks' | 'logs' | 'files' | 'feedback' | 'messages';
 
 const STATUS_BADGE: Record<Project['status'], string> = {
-  // Now matches Task 'InProgress' (Blue)
-  Active:    'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-200', 
-  // Now matches Task 'Completed' (Green)
-  Completed: 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200', 
-  // Stays distinct or matches 'Todo' (Violet/Gray)
-  OnHold:    'bg-violet-50 text-violet-700 ring-1 ring-inset ring-violet-200', 
+  Active:    'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-200',
+  Completed: 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200',
+  OnHold:    'bg-violet-50 text-violet-700 ring-1 ring-inset ring-violet-200',
 };
 
 const STATUS_DOT: Record<Project['status'], string> = {
@@ -45,6 +47,15 @@ const fmtDate = (iso: string | null) => {
   return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 };
 
+function UnreadBadge({ count }: { count: number }) {
+  if (count === 0) return null;
+  return (
+    <span className="ml-1.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold leading-none">
+      {count}
+    </span>
+  );
+}
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function ProjectDetail() {
@@ -57,8 +68,15 @@ export default function ProjectDetail() {
   const { data: project, isLoading: loadingProject } = useProject(projectId);
   const { data: rawTasks = [], isLoading: loadingTasks } = useTasks(projectId);
   const tasks = useMemo(() => [...rawTasks].sort((a, b) => a.id - b.id), [rawTasks]);
-  const { data: logs  = []                            } = useTimeLogs(projectId);
-  const { data: files = []                            } = useFiles(projectId);
+  const { data: logs     = [] } = useTimeLogs(projectId);
+  const { data: files    = [] } = useFiles(projectId);
+  const { data: messages = [] } = useMessages(projectId);
+  const { data: feedback = [] } = useFeedback(projectId);
+
+  const { count: unreadMessages, markRead: markMessagesRead } =
+    useUnreadCount(messages, projectId, 'messages');
+  const { count: unreadFeedback, markRead: markFeedbackRead } =
+    useUnreadCount(feedback, projectId, 'feedback');
 
   const createTask    = useCreateTask(projectId);
   const updateProject = useUpdateProject(projectId);
@@ -78,6 +96,12 @@ export default function ProjectDetail() {
     }
     return map;
   }, [logs]);
+
+  const handleTabClick = (tab: Tab) => {
+    setActiveTab(tab);
+    if (tab === 'messages') markMessagesRead();
+    if (tab === 'feedback') markFeedbackRead();
+  };
 
   if (loadingProject) {
     return <AppShell title="Project"><p className="text-sm text-slate-400">Loading…</p></AppShell>;
@@ -109,16 +133,17 @@ export default function ProjectDetail() {
     ? tasks
     : tasks.filter(t => t.status === statusFilter);
 
-  const tabLabel = (tab: Tab) => {
+  const tabContent = (tab: Tab): ReactNode => {
     switch (tab) {
       case 'tasks':    return `Tasks (${tasks.length})`;
       case 'logs':     return `Time Logs (${logs.length})`;
       case 'files':    return `Files (${files.length})`;
-      case 'feedback': return 'Feedback';
+      case 'feedback': return <span className="flex items-center">Feedback<UnreadBadge count={unreadFeedback} /></span>;
+      case 'messages': return <span className="flex items-center">Messages<UnreadBadge count={unreadMessages} /></span>;
     }
   };
 
-  const TABS: Tab[] = ['tasks', 'logs', 'files', 'feedback'];
+  const TABS: Tab[] = ['tasks', 'logs', 'files', 'feedback', 'messages'];
 
   return (
     <AppShell
@@ -153,7 +178,6 @@ export default function ProjectDetail() {
         </div>
       }
     >
-      {/* ── Assign designer panel (toggled) ─────────────────────────────── */}
       {showAssignPanel && isManager && (
         <div className="mb-6">
           <AssignDesignerPanel project={project} />
@@ -162,8 +186,6 @@ export default function ProjectDetail() {
 
       {/* ── Hero card ───────────────────────────────────────────────────── */}
       <div className="bg-white rounded-xl border border-slate-200 p-6 mb-6">
-
-        {/* Top row: status/name/desc on left, metrics on right */}
         <div className="flex items-start justify-between gap-8 mb-4">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2.5 mb-3 flex-wrap">
@@ -171,10 +193,8 @@ export default function ProjectDetail() {
                 <select
                   value={project.status}
                   onChange={e => updateProject.mutate({ status: e.target.value as Project['status'] })}
-                  // This class controls the "closed" state appearance
                   className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border-0 outline-none cursor-pointer ${STATUS_BADGE[project.status]}`}
                 >
-                  {/* Explicitly style options to override the parent's background */}
                   <option value="Active" className="bg-white text-slate-700">Active</option>
                   <option value="Completed" className="bg-white text-slate-700">Completed</option>
                   <option value="OnHold" className="bg-white text-slate-700">On Hold</option>
@@ -190,19 +210,12 @@ export default function ProjectDetail() {
                 {project.deadline && <> · Due {fmtDate(project.deadline)}</>}
               </span>
             </div>
-
-            <h2 className="text-xl font-semibold text-slate-900 mb-1">
-              {project.project_name}
-            </h2>
-
+            <h2 className="text-xl font-semibold text-slate-900 mb-1">{project.project_name}</h2>
             {project.description && (
-              <p className="text-sm text-slate-500 leading-relaxed">
-                {project.description}
-              </p>
+              <p className="text-sm text-slate-500 leading-relaxed">{project.description}</p>
             )}
           </div>
 
-          {/* Right: metrics */}
           <div className="flex items-start gap-8 shrink-0">
             <div className="text-center">
               <p className="font-mono text-lg font-semibold text-amber-600 leading-none">
@@ -229,7 +242,6 @@ export default function ProjectDetail() {
           </div>
         </div>
 
-        {/* Full-width progress bar — outside the flex row so it spans the entire card */}
         {budgetPct !== null && (
           <div>
             <div className="flex items-center justify-between mb-1.5">
@@ -251,14 +263,14 @@ export default function ProjectDetail() {
         {TABS.map(tab => (
           <button
             key={tab}
-            onClick={() => setActiveTab(tab)}
+            onClick={() => handleTabClick(tab)}
             className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
               activeTab === tab
                 ? 'text-blue-700 border-blue-600'
                 : 'text-slate-500 border-transparent hover:text-slate-900'
             }`}
           >
-            {tabLabel(tab)}
+            {tabContent(tab)}
           </button>
         ))}
       </div>
@@ -291,7 +303,6 @@ export default function ProjectDetail() {
             </select>
           </div>
 
-          {/* Inline create form */}
           {showTaskForm && isManager && (
             <div className="bg-white rounded-xl border border-slate-200 p-5 mb-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-3">New task</p>
@@ -304,7 +315,6 @@ export default function ProjectDetail() {
             </div>
           )}
 
-          {/* Task table */}
           {loadingTasks ? (
             <p className="text-sm text-slate-400">Loading tasks…</p>
           ) : filteredTasks.length === 0 ? (
@@ -365,7 +375,12 @@ export default function ProjectDetail() {
 
       {/* ── Tab: Feedback ────────────────────────────────────────────────── */}
       {activeTab === 'feedback' && (
-        <FeedbackList projectId={projectId} canUpdate={true} />
+        <FeedbackList projectId={projectId} canUpdate={true} canReply={true} />
+      )}
+
+      {/* ── Tab: Messages ────────────────────────────────────────────────── */}
+      {activeTab === 'messages' && (
+        <MessageBoard projectId={projectId} />
       )}
     </AppShell>
   );

@@ -1,14 +1,19 @@
 import { useParams } from 'react-router-dom';
 import { useState, useMemo } from 'react';
+import type { ReactNode } from 'react';
 import { useProject } from '../../hooks/useProjects';
 import { useTasks } from '../../hooks/useTasks';
 import { useTimeLogs, useCreateTimeLog, useUpdateTimeLog } from '../../hooks/useTimeLogs';
 import { useFiles } from '../../hooks/useFiles';
+import { useMessages } from '../../hooks/useMessages';
+import { useFeedback } from '../../hooks/useFeedback';
+import { useUnreadCount } from '../../hooks/useUnreadCount';
 import { useAuth } from '../../hooks/useAuth';
 import TimeLogForm from '../../components/TimeLogForm';
 import TimeLogList from '../../components/TimeLogList';
 import FileUploadPanel from '../../components/FileUploadPanel';
 import FeedbackList from '../../components/FeedbackList';
+import MessageBoard from '../../components/MessageBoard';
 import TaskRow from '../../components/TaskRow';
 import AppShell from '../../components/AppShell';
 import type { Task } from '../../types/task';
@@ -17,7 +22,7 @@ import type { Project } from '../../types/project';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-type Tab = 'tasks' | 'log' | 'files' | 'feedback';
+type Tab = 'tasks' | 'log' | 'files' | 'feedback' | 'messages';
 
 const STATUS_BADGE: Record<Project['status'], string> = {
   Active:    'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-200',
@@ -39,6 +44,15 @@ const fmtDate = (iso: string | null) => {
   return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 };
 
+function UnreadBadge({ count }: { count: number }) {
+  if (count === 0) return null;
+  return (
+    <span className="ml-1.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold leading-none">
+      {count}
+    </span>
+  );
+}
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function DesignerProjectDetail() {
@@ -48,8 +62,15 @@ export default function DesignerProjectDetail() {
 
   const { data: project, isLoading: loadingProject } = useProject(projectId);
   const { data: tasks = [], isLoading: loadingTasks } = useTasks(projectId);
-  const { data: logs  = []                          } = useTimeLogs(projectId);
-  const { data: files = []                          } = useFiles(projectId);
+  const { data: logs     = [] } = useTimeLogs(projectId);
+  const { data: files    = [] } = useFiles(projectId);
+  const { data: messages = [] } = useMessages(projectId);
+  const { data: feedback = [] } = useFeedback(projectId);
+
+  const { count: unreadMessages, markRead: markMessagesRead } =
+    useUnreadCount(messages, projectId, 'messages');
+  const { count: unreadFeedback, markRead: markFeedbackRead } =
+    useUnreadCount(feedback, projectId, 'feedback');
 
   const createTimeLog = useCreateTimeLog(projectId);
   const updateTimeLog = useUpdateTimeLog(projectId);
@@ -58,7 +79,6 @@ export default function DesignerProjectDetail() {
   const [showLogForm,  setShowLogForm]  = useState(false);
   const [statusFilter, setStatusFilter] = useState<Task['status'] | 'All'>('All');
 
-  // Logged hours per task from time logs.
   const taskLogMap = useMemo<Record<number, number>>(() => {
     const map: Record<number, number> = {};
     for (const log of logs) {
@@ -67,11 +87,16 @@ export default function DesignerProjectDetail() {
     return map;
   }, [logs]);
 
-  // Flatten top-level + subtasks for the time log task selector.
   const allTasks = tasks.flatMap(t => [t, ...t.subtasks]);
 
   const handleLogTime = (payload: TimeLogPayload) => {
     createTimeLog.mutate(payload, { onSuccess: () => setShowLogForm(false) });
+  };
+
+  const handleTabClick = (tab: Tab) => {
+    setActiveTab(tab);
+    if (tab === 'messages') markMessagesRead();
+    if (tab === 'feedback') markFeedbackRead();
   };
 
   const filteredTasks = statusFilter === 'All'
@@ -89,24 +114,23 @@ export default function DesignerProjectDetail() {
     ? Math.min(100, Math.round((project.actual_hours / Number(project.budget_hours)) * 100))
     : null;
 
-  const tabLabel = (tab: Tab) => {
+  const tabContent = (tab: Tab): ReactNode => {
     switch (tab) {
       case 'tasks':    return `Tasks (${tasks.length})`;
       case 'log':      return `Time Logs (${logs.length})`;
       case 'files':    return `Files (${files.length})`;
-      case 'feedback': return 'Feedback';
+      case 'feedback': return <span className="flex items-center">Feedback<UnreadBadge count={unreadFeedback} /></span>;
+      case 'messages': return <span className="flex items-center">Messages<UnreadBadge count={unreadMessages} /></span>;
     }
   };
 
-  const TABS: Tab[] = ['tasks', 'log', 'files', 'feedback'];
+  const TABS: Tab[] = ['tasks', 'log', 'files', 'feedback', 'messages'];
 
   return (
     <AppShell title={project.project_name} breadcrumb={`Projects / ${project.project_name}`}>
 
       {/* ── Hero card ───────────────────────────────────────────────────── */}
       <div className="bg-white rounded-xl border border-slate-200 p-6 mb-6">
-
-        {/* Top row */}
         <div className="flex items-start justify-between gap-8 mb-4">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2.5 mb-3 flex-wrap">
@@ -119,30 +143,24 @@ export default function DesignerProjectDetail() {
                 {project.deadline && <> · Due {fmtDate(project.deadline)}</>}
               </span>
             </div>
-
-            <h2 className="text-xl font-semibold text-slate-900 mb-1">
-              {project.project_name}
-            </h2>
-
+            <h2 className="text-xl font-semibold text-slate-900 mb-1">{project.project_name}</h2>
             {project.description && (
-              <p className="text-sm text-slate-500 leading-relaxed">
-                {project.description}
-              </p>
+              <p className="text-sm text-slate-500 leading-relaxed">{project.description}</p>
             )}
           </div>
 
-          {/* Right: hours metric */}
-          <div className="shrink-0 text-center">
-            <p className="font-mono text-lg font-semibold text-slate-900 leading-none">
-              {project.actual_hours}h
-            </p>
-            <p className="text-xs text-slate-400 mt-1">
-              {project.budget_hours ? `of ${project.budget_hours}h` : 'logged'}
-            </p>
+          <div className="flex items-start gap-8 shrink-0">
+            <div className="text-center">
+              <p className="font-mono text-lg font-semibold text-slate-900 leading-none">
+                {project.actual_hours}h
+              </p>
+              <p className="text-xs text-slate-400 mt-1">
+                {project.budget_hours ? `of ${project.budget_hours}h` : 'logged'}
+              </p>
+            </div>
           </div>
         </div>
 
-        {/* Budget progress bar */}
         {budgetPct !== null && (
           <div>
             <div className="flex items-center justify-between mb-1.5">
@@ -164,14 +182,14 @@ export default function DesignerProjectDetail() {
         {TABS.map(tab => (
           <button
             key={tab}
-            onClick={() => setActiveTab(tab)}
+            onClick={() => handleTabClick(tab)}
             className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
               activeTab === tab
                 ? 'text-blue-700 border-blue-600'
                 : 'text-slate-500 border-transparent hover:text-slate-900'
             }`}
           >
-            {tabLabel(tab)}
+            {tabContent(tab)}
           </button>
         ))}
       </div>
@@ -270,7 +288,12 @@ export default function DesignerProjectDetail() {
 
       {/* ── Tab: Feedback ────────────────────────────────────────────────── */}
       {activeTab === 'feedback' && (
-        <FeedbackList projectId={projectId} canUpdate={true} />
+        <FeedbackList projectId={projectId} canUpdate={true} canReply={true} />
+      )}
+
+      {/* ── Tab: Messages ────────────────────────────────────────────────── */}
+      {activeTab === 'messages' && (
+        <MessageBoard projectId={projectId} />
       )}
     </AppShell>
   );

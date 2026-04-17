@@ -12,6 +12,7 @@ urlpatterns = [
     path('api/timelogs/',  include('apps.timelog.urls')),
     path('api/feedback/',  include('apps.feedback.urls')),
     path('api/files/',     include('apps.files.urls')),
+    path('api/messages/',  include('apps.messages.urls')),
     path('api/analytics/', include('apps.analytics.urls'))
 ]
 
