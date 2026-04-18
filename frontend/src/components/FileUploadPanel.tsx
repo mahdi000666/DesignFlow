@@ -77,7 +77,7 @@ export default function FileUploadPanel({ projectId, role, isManager }: Props) {
   return (
     <div className="space-y-4">
       {/* Upload controls */}
-      <div className="flex items-center gap-3">
+      <div className="flex justify-end gap-3 mb-4">
         {allowedTypes.length > 1 && (
           <select
             value={fileType}

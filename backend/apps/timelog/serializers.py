@@ -7,12 +7,13 @@ class TimeLogReadSerializer(serializers.ModelSerializer):
     project_id    = serializers.IntegerField(source='task.project_id',       read_only=True)
     project_name  = serializers.CharField(source='task.project.project_name', read_only=True)
     designer_name = serializers.CharField(source='designer.user.full_name',  read_only=True)
+    designer_user_id = serializers.IntegerField(source='designer.user.id', read_only=True)
 
     class Meta:
         model  = TimeLog
         fields = [
             'id', 'task', 'task_name', 'project_id', 'project_name',
-            'designer', 'designer_name', 'hours_spent', 'description', 'created_at',
+            'designer', 'designer_name', 'designer_user_id', 'hours_spent', 'description', 'created_at',
         ]
 
 

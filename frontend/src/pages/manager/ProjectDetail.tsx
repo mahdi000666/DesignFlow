@@ -281,7 +281,7 @@ export default function ProjectDetail() {
       {/* ── Tab: Tasks ───────────────────────────────────────────────────── */}
       {activeTab === 'tasks' && (
         <div>
-          <div className="flex items-center gap-2.5 mb-4">
+          <div className="flex justify-end gap-3 mb-4">
             {isManager && (
               <button
                 onClick={() => setShowTaskForm(v => !v)}

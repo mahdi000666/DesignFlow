@@ -1,15 +1,9 @@
-Evaluation stars
-Create the full mockup for all roles.
-Upload main.tsx, index.css, App.tsx, App.css, AppShell.tsx, tailwind.config.js
-Ask about index.css problem.
+1. Add input validation for account activation + ADMINPANEL hourly rate + full name numberless.
+3. CANT EDIT TIMELOG
 
-check own file deletion for designer and client.
+reply to feedback goes to messages + name
 
-1. Isn't Approval like the final state? Correct me if im wrong but it doesn't make sense to have it Pending no? You mentioned that it needs backend handling, can't we just not show "Pending" on Approval feedbacks in frontend?
-2. Since we both agree on feedback pending deletion, proceed to add this feature.
-3. As for the isOwn problem, the Number solution worked, but I would like it to be the opposite, meaning that my messages appear on left while theirs on right.
-4. As for the messages tab, i noticed that after a specific amount of messages typed, it no longer lets me or any other user/role send more. was this intended?
-5. Currently only the manager can delete files. We should allow client and designer to only delete their own uploaded files. I uploaded FileUploadPanel.tsx, if this feature requires more files let me know.
+Check button placement later.
 
 In order to save tokens, you may only generate the document for S3 chapter.
 

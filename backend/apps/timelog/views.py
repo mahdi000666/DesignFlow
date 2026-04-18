@@ -21,9 +21,8 @@ class TimeLogViewSet(viewsets.ModelViewSet):
                 'task__project', 'designer__user'
             ).all()
         elif user.role == 'Designer':
-            # Designers only see logs they created.
             qs = TimeLog.objects.filter(
-                designer__user=user
+                task__project__assignments__designer__user=user
             ).select_related('task__project', 'designer__user')
         else:
             qs = TimeLog.objects.none()

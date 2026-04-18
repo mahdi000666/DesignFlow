@@ -4,6 +4,7 @@ export interface TimeLog {
   readonly project_id:    number;
   readonly project_name:  string;
   readonly designer_name: string;
+  readonly designer_user_id: number;
   readonly created_at:    string;
   task:        number;
   designer:    number;

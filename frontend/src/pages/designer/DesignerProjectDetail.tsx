@@ -61,7 +61,8 @@ export default function DesignerProjectDetail() {
   const { user }  = useAuth();
 
   const { data: project, isLoading: loadingProject } = useProject(projectId);
-  const { data: tasks = [], isLoading: loadingTasks } = useTasks(projectId);
+  const { data: rawTasks = [], isLoading: loadingTasks } = useTasks(projectId);
+  const tasks = useMemo(() => [...rawTasks].sort((a, b) => a.id - b.id), [rawTasks]);
   const { data: logs     = [] } = useTimeLogs(projectId);
   const { data: files    = [] } = useFiles(projectId);
   const { data: messages = [] } = useMessages(projectId);
@@ -275,6 +276,7 @@ export default function DesignerProjectDetail() {
           <TimeLogList
             logs={logs}
             isManager={false}
+            currentUserId={Number(user?.user_id)}
             onUpdate={(id, payload) => updateTimeLog.mutate({ id, payload })}
           />
         </div>

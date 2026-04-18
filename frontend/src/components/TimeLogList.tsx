@@ -15,7 +15,7 @@ const fmt = (iso: string) =>
 const inputCls =
   'px-2 py-1 border border-slate-200 rounded text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-colors bg-white w-full';
 
-export default function TimeLogList({ logs, isManager, onDelete, onUpdate }: Props) {
+export default function TimeLogList({ logs, isManager, currentUserId, onDelete, onUpdate }: Props) {
   const [editingId,    setEditingId]    = useState<number | null>(null);
   const [editHours,    setEditHours]    = useState('');
   const [editDesc,     setEditDesc]     = useState('');
@@ -129,7 +129,7 @@ export default function TimeLogList({ logs, isManager, onDelete, onUpdate }: Pro
                     </div>
                   ) : (
                     <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        {(isManager || log.designer === currentUserId) && (
+                        {(isManager || log.designer_user_id === currentUserId) && (
                           <button
                             onClick={() => startEdit(log)}
                             className="text-xs font-medium text-slate-400 hover:text-slate-700 transition-colors"
@@ -137,6 +137,12 @@ export default function TimeLogList({ logs, isManager, onDelete, onUpdate }: Pro
                             Edit
                           </button>
                         )}
+                        {/* <button
+                            onClick={() => startEdit(log)}
+                            className="text-xs font-medium text-slate-400 hover:text-slate-700 transition-colors"
+                          >
+                            Edit
+                          </button> */}
                       {isManager && (
                         <button
                           onClick={() => onDelete?.(log.id)}
