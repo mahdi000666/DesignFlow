@@ -48,14 +48,20 @@ class FeedbackViewSet(viewsets.ModelViewSet):
             return [IsClient()]
         if self.action == 'partial_update':
             return [IsManagerOrDesigner()]
+        if self.action == 'destroy':
+            return [IsClient()]
         return [permissions.IsAuthenticated()]
+    
+    def perform_create(self, serializer):
+        project = serializer.validated_data['project']
+        if project.client.user != self.request.user:
+            raise PermissionDenied('You can only submit feedback on your own projects.')
+        serializer.save()
 
     def perform_destroy(self, instance):
         user = self.request.user
         # Only the client who submitted the feedback can delete it,
         # and only while it is still Pending (not yet actioned).
-        if user.role != 'Client':
-            raise PermissionDenied('Only the submitting client can delete feedback.')
         if instance.project.client.user != user:
             raise PermissionDenied('You can only delete your own feedback.')
         if instance.status != 'Pending':

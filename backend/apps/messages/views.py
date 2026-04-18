@@ -1,5 +1,5 @@
 from rest_framework import viewsets, permissions
-from rest_framework.pagination import PageNumberPagination
+from rest_framework.exceptions import PermissionDenied
 from .models import Message
 from .serializers import MessageSerializer
 
@@ -36,4 +36,12 @@ class MessageViewSet(viewsets.ModelViewSet):
         return qs.distinct()
 
     def perform_create(self, serializer):
-        serializer.save(sender=self.request.user)
+        project = serializer.validated_data['project']
+        user = self.request.user
+        if user.role == 'Designer':
+            if not project.assignments.filter(designer__user=user).exists():
+                raise PermissionDenied('You are not assigned to this project.')
+        elif user.role == 'Client':
+            if project.client.user != user:
+                raise PermissionDenied('You can only message on your own projects.')
+        serializer.save(sender=user)

@@ -49,8 +49,11 @@ class TimeLogViewSet(viewsets.ModelViewSet):
         return [permissions.IsAuthenticated()]
 
     def perform_create(self, serializer):
-        # Attach the authenticated designer's profile automatically.
-        serializer.save(designer=self.request.user.designer_profile)
+        task = serializer.validated_data['task']
+        designer = self.request.user.designer_profile
+        if not task.project.assignments.filter(designer=designer).exists():
+            raise PermissionDenied('You are not assigned to this project.')
+        serializer.save(designer=designer)
 
     def perform_update(self, serializer):
         # serializer.instance is the already-fetched object — no second DB hit.

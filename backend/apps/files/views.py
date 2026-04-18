@@ -38,6 +38,17 @@ class FileUploadViewSet(viewsets.ModelViewSet):
         if self.action == 'create':
             return FileUploadWriteSerializer
         return FileUploadReadSerializer
+    
+    def perform_create(self, serializer):
+        project = serializer.validated_data['project']
+        user = self.request.user
+        if user.role == 'Designer':
+            if not project.assignments.filter(designer__user=user).exists():
+                raise PermissionDenied('You are not assigned to this project.')
+        elif user.role == 'Client':
+            if project.client.user != user:
+                raise PermissionDenied('You can only upload to your own projects.')
+        serializer.save()
 
     def perform_destroy(self, instance):
         user = self.request.user

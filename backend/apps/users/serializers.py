@@ -28,18 +28,18 @@ class ActivateAccountSerializer(serializers.Serializer):
 
     def validate_token(self, value):
         try:
-            invitation = InvitationToken.objects.get(token=value)
+            self._invitation = InvitationToken.objects.select_related('user').get(token=value)
         except InvitationToken.DoesNotExist:
             raise serializers.ValidationError('Invalid token.')
-        if invitation.is_used:
+        if self._invitation.is_used:
             raise serializers.ValidationError('This token has already been used.')
-        if invitation.expires_at < timezone.now():
+        if self._invitation.expires_at < timezone.now():
             raise serializers.ValidationError('This token has expired.')
         return value
 
     def save(self):
         data       = self.validated_data
-        invitation = InvitationToken.objects.get(token=data['token'])
+        invitation = self._invitation
         user       = invitation.user
 
         user.set_password(data['password'])

@@ -41,7 +41,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
     # --- permissions ----------------------------------------------------
 
     def get_permissions(self):
-        if self.action in ('create', 'destroy', 'assign_designer'):
+        if self.action in ('create', 'destroy', 'assign_designer', 'remove_designer'):
             return [IsManager()]
         if self.action in ('update', 'partial_update'):
             return [IsManagerOrDesigner()]
