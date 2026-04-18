@@ -1,4 +1,5 @@
 from rest_framework import viewsets, permissions
+from rest_framework.pagination import PageNumberPagination
 from .models import Message
 from .serializers import MessageSerializer
 
@@ -8,6 +9,9 @@ class MessageViewSet(viewsets.ModelViewSet):
     # Messages are immutable once sent — no PATCH/PUT/DELETE.
     http_method_names  = ['get', 'post', 'head', 'options']
     serializer_class   = MessageSerializer
+    # Disable pagination — all messages for a project are loaded at once.
+    # A project's message history is bounded and needs to render in full for the chat UI.
+    pagination_class   = None
 
     def get_queryset(self):
         user       = self.request.user
@@ -32,5 +36,4 @@ class MessageViewSet(viewsets.ModelViewSet):
         return qs.distinct()
 
     def perform_create(self, serializer):
-        # sender is always the authenticated user — never taken from the request body
         serializer.save(sender=self.request.user)

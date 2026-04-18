@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { useFiles, useUploadFile, useDeleteFile } from '../hooks/useFiles';
+import { useAuth } from '../hooks/useAuth';
 import type { FileType } from '../types/file';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -19,15 +20,15 @@ const ALLOWED_TYPES: Record<string, { value: FileType; label: string }[]> = {
 
 const TYPE_BADGE: Record<FileType, { cls: string; label: string }> = {
   deliverable: {
-    cls: 'bg-sky-50 text-sky-700 ring-1 ring-inset ring-sky-200',
+    cls:   'bg-sky-50 text-sky-700 ring-1 ring-inset ring-sky-200',
     label: 'Deliverable',
   },
   reference: {
-    cls: 'bg-zinc-100 text-zinc-600 ring-1 ring-inset ring-zinc-200',
+    cls:   'bg-zinc-100 text-zinc-600 ring-1 ring-inset ring-zinc-200',
     label: 'Reference',
   },
   brand_guideline: {
-    cls: 'bg-violet-50 text-violet-700 ring-1 ring-inset ring-violet-200',
+    cls:   'bg-violet-50 text-violet-700 ring-1 ring-inset ring-violet-200',
     label: 'Brand Guideline',
   },
 };
@@ -51,9 +52,10 @@ interface Props {
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function FileUploadPanel({ projectId, role, isManager }: Props) {
+  const { user }                        = useAuth();
   const { data: files = [], isLoading } = useFiles(projectId);
-  const uploadFile = useUploadFile(projectId);
-  const deleteFile = useDeleteFile(projectId);
+  const uploadFile                      = useUploadFile(projectId);
+  const deleteFile                      = useDeleteFile(projectId);
 
   const allowedTypes = ALLOWED_TYPES[role] ?? ALLOWED_TYPES['Manager'];
   const [fileType, setFileType] = useState<FileType>(allowedTypes[0].value);
@@ -124,17 +126,18 @@ export default function FileUploadPanel({ projectId, role, isManager }: Props) {
                     {h}
                   </th>
                 ))}
-                {/* Delete column — always present to keep layout stable; cell is empty for non-managers */}
                 <th className="px-4 py-3 w-20" />
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {files.map(f => {
                 const badge = TYPE_BADGE[f.file_type];
+                // Manager can delete any file.
+                // Designer and Client can only delete files they uploaded themselves.
+                const canDelete = isManager || f.uploaded_by === Number(user?.user_id);
                 return (
                   <tr key={f.id} className="hover:bg-slate-50/70 transition-colors group">
 
-                    {/* Filename — the whole name is the download link */}
                     <td className="px-4 py-3.5 max-w-[240px]">
                       <a
                         href={f.file_url}
@@ -147,7 +150,6 @@ export default function FileUploadPanel({ projectId, role, isManager }: Props) {
                       </a>
                     </td>
 
-                    {/* Type badge — rounded-full pill, proper label */}
                     <td className="px-4 py-3.5">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${badge.cls}`}>
                         {badge.label}
@@ -164,9 +166,8 @@ export default function FileUploadPanel({ projectId, role, isManager }: Props) {
                       {fmt(f.uploaded_at)}
                     </td>
 
-                    {/* Delete — only rendered for managers; fades in on row hover */}
                     <td className="px-1 py-3.5 text-left">
-                      {isManager && (
+                      {canDelete && (
                         <button
                           onClick={() => handleDelete(f.id, f.file_name)}
                           className="text-xs font-medium text-rose-400 hover:text-rose-600 transition-colors opacity-0 group-hover:opacity-100"

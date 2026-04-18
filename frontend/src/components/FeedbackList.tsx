@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { useFeedback, useUpdateFeedbackStatus } from '../hooks/useFeedback';
+import { useFeedback, useUpdateFeedbackStatus, useDeleteFeedback } from '../hooks/useFeedback';
 import { useCreateMessage } from '../hooks/useMessages';
+import { useAuth } from '../hooks/useAuth';
 import type { FeedbackStatus } from '../types/feedback';
 
 const STATUS_STYLES: Record<FeedbackStatus, string> = {
@@ -15,23 +16,44 @@ const CATEGORY_STYLES: Record<string, string> = {
   Question: 'bg-gray-100 text-gray-700',
 };
 
-// Approval items are intentionally omitted — an Approval is already a
-// positive signal; progressing it through Pending→InProgress→Resolved
-// is semantically meaningless.
+// Approval items are excluded from status progression — they are self-contained signals.
+// Revision and Question follow: Pending → InProgress → Resolved.
 const NEXT_STATUS: Partial<Record<FeedbackStatus, FeedbackStatus>> = {
   Pending:    'InProgress',
   InProgress: 'Resolved',
 };
 
+// For Approval items, "Resolved" is shown as "Acknowledged" since they aren't
+// resolved in the same sense as a Revision. "Pending" is hidden — an unacknowledged
+// approval just shows no status badge rather than implying something is wrong.
+function StatusBadge({ category, status }: { category: string; status: FeedbackStatus }) {
+  if (category === 'Approval') {
+    if (status === 'Pending') return null;
+    const label = status === 'Resolved' ? 'Acknowledged' : status;
+    return (
+      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_STYLES[status]}`}>
+        {label}
+      </span>
+    );
+  }
+  return (
+    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_STYLES[status]}`}>
+      {status}
+    </span>
+  );
+}
+
 interface Props {
   projectId: number;
-  canUpdate: boolean;    // true for Manager and Designer
-  canReply?:  boolean;   // true for Designer/Manager (reply stored as a project message)
+  canUpdate: boolean;   // true for Manager and Designer
+  canReply?:  boolean;  // true for Designer/Manager
 }
 
 export default function FeedbackList({ projectId, canUpdate, canReply = false }: Props) {
+  const { user }                        = useAuth();
   const { data: items = [], isLoading } = useFeedback(projectId);
   const updateStatus  = useUpdateFeedbackStatus(projectId);
+  const deleteFeedback = useDeleteFeedback(projectId);
   const createMessage = useCreateMessage(projectId);
 
   const [replyingTo, setReplyingTo] = useState<number | null>(null);
@@ -46,47 +68,67 @@ export default function FeedbackList({ projectId, canUpdate, canReply = false }:
     );
   };
 
+  const handleDelete = (id: number) => {
+    if (!confirm('Delete this feedback? This cannot be undone.')) return;
+    deleteFeedback.mutate(id);
+  };
+
   if (isLoading) return <p className="text-sm text-gray-400">Loading feedback…</p>;
   if (!items.length) return <p className="text-sm text-gray-400">No feedback yet.</p>;
+
+  const isClient = user?.role === 'Client';
 
   return (
     <ul className="space-y-3">
       {items.map(item => {
         const next = item.category !== 'Approval' ? NEXT_STATUS[item.status] : undefined;
+        // Client can only delete their own Pending feedback.
+        const canDelete = isClient && item.status === 'Pending';
+
         return (
           <li key={item.id} className="border rounded-lg p-4 bg-white shadow-sm">
 
-            {/* Top row: badges + status button */}
+            {/* Top row: badges + action buttons */}
             <div className="flex items-start justify-between gap-4">
               <div className="space-y-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${CATEGORY_STYLES[item.category]}`}>
                     {item.category}
                   </span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_STYLES[item.status]}`}>
-                    {item.status}
-                  </span>
+                  <StatusBadge category={item.category} status={item.status} />
                   <span className="text-xs text-gray-400">
                     {new Date(item.submitted_at).toLocaleDateString()}
                   </span>
                   {item.resolved_at && (
                     <span className="text-xs text-gray-400">
-                      Resolved {new Date(item.resolved_at).toLocaleDateString()}
+                      {item.category === 'Approval' ? 'Acknowledged' : 'Resolved'}{' '}
+                      {new Date(item.resolved_at).toLocaleDateString()}
                     </span>
                   )}
                 </div>
                 <p className="text-sm text-gray-700">{item.content_text}</p>
               </div>
 
-              {canUpdate && next && (
-                <button
-                  onClick={() => updateStatus.mutate({ id: item.id, status: next })}
-                  disabled={updateStatus.isPending}
-                  className="text-xs px-2 py-1 border rounded hover:bg-gray-50 flex-shrink-0 disabled:opacity-50"
-                >
-                  Mark {next}
-                </button>
-              )}
+              <div className="flex items-center gap-2 shrink-0">
+                {canUpdate && next && (
+                  <button
+                    onClick={() => updateStatus.mutate({ id: item.id, status: next })}
+                    disabled={updateStatus.isPending}
+                    className="text-xs px-2 py-1 border rounded hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    Mark {next}
+                  </button>
+                )}
+                {canDelete && (
+                  <button
+                    onClick={() => handleDelete(item.id)}
+                    disabled={deleteFeedback.isPending}
+                    className="text-xs px-2 py-1 border border-rose-200 text-rose-500 rounded hover:bg-rose-50 disabled:opacity-50"
+                  >
+                    Delete
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Reply section */}

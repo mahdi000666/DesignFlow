@@ -20,3 +20,7 @@ export const updateFeedbackStatus = async (
   const { data } = await apiClient.patch<Feedback>(`/feedback/${id}/`, { status });
   return data;
 };
+
+export const deleteFeedback = async (id: number): Promise<void> => {
+  await apiClient.delete(`/feedback/${id}/`);
+};

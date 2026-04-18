@@ -1,5 +1,5 @@
 import { useParams } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { useProject } from '../../hooks/useProjects';
 import { useCreateFeedback, useFeedback } from '../../hooks/useFeedback';
@@ -67,6 +67,9 @@ export default function ClientProjectDetail() {
   const handleFeedbackSubmit = (payload: FeedbackPayload) => {
     createFeedback.mutate(payload);
   };
+
+  useEffect(() => { if (activeTab === 'messages') markMessagesRead(); }, [messages.length, activeTab, markMessagesRead]);
+  useEffect(() => { if (activeTab === 'feedback') markFeedbackRead(); }, [feedback.length, activeTab, markFeedbackRead]);
 
   const handleTabClick = (tab: Tab) => {
     setActiveTab(tab);

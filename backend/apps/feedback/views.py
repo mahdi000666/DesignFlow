@@ -1,4 +1,5 @@
 from rest_framework import viewsets, permissions
+from rest_framework.exceptions import PermissionDenied
 
 from .models import Feedback
 from .serializers import (
@@ -11,8 +12,7 @@ from apps.users.permissions import IsClient, IsManagerOrDesigner
 
 class FeedbackViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
-    # Full PUT not meaningful here — status transitions are incremental.
-    http_method_names  = ['get', 'post', 'patch', 'head', 'options']
+    http_method_names  = ['get', 'post', 'patch', 'delete', 'head', 'options']
 
     def get_queryset(self):
         user       = self.request.user
@@ -40,7 +40,6 @@ class FeedbackViewSet(viewsets.ModelViewSet):
         if self.action == 'create':
             return FeedbackWriteSerializer
         if self.action == 'partial_update':
-            # Manager/Designer update only the status field.
             return FeedbackStatusSerializer
         return FeedbackReadSerializer
 
@@ -50,3 +49,15 @@ class FeedbackViewSet(viewsets.ModelViewSet):
         if self.action == 'partial_update':
             return [IsManagerOrDesigner()]
         return [permissions.IsAuthenticated()]
+
+    def perform_destroy(self, instance):
+        user = self.request.user
+        # Only the client who submitted the feedback can delete it,
+        # and only while it is still Pending (not yet actioned).
+        if user.role != 'Client':
+            raise PermissionDenied('Only the submitting client can delete feedback.')
+        if instance.project.client.user != user:
+            raise PermissionDenied('You can only delete your own feedback.')
+        if instance.status != 'Pending':
+            raise PermissionDenied('Feedback that is already in progress or resolved cannot be deleted.')
+        instance.delete()

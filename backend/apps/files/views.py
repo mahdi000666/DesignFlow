@@ -1,8 +1,9 @@
+from django.conf import settings
 from rest_framework import viewsets, parsers, permissions
+from rest_framework.exceptions import PermissionDenied
 
 from .models import FileUpload
 from .serializers import FileUploadReadSerializer, FileUploadWriteSerializer
-from apps.users.permissions import IsManager
 
 
 class FileUploadViewSet(viewsets.ModelViewSet):
@@ -31,9 +32,6 @@ class FileUploadViewSet(viewsets.ModelViewSet):
         if project_id:
             qs = qs.filter(project_id=project_id)
 
-        # distinct() prevents duplicate rows caused by the ProjectAssignment join
-        # when a designer is assigned to the same project more than once (shouldn't
-        # happen due to unique_together, but defensive here).
         return qs.distinct()
 
     def get_serializer_class(self):
@@ -41,7 +39,16 @@ class FileUploadViewSet(viewsets.ModelViewSet):
             return FileUploadWriteSerializer
         return FileUploadReadSerializer
 
-    def get_permissions(self):
-        if self.action == 'destroy':
-            return [IsManager()]
-        return [permissions.IsAuthenticated()]
+    def perform_destroy(self, instance):
+        user = self.request.user
+        # Managers can delete any file.
+        # Designers and Clients can only delete files they uploaded themselves.
+        if user.role != 'Manager' and instance.uploaded_by != user:
+            raise PermissionDenied('You can only delete files you uploaded.')
+
+        # Remove the physical file from disk.
+        full_path = settings.MEDIA_ROOT / instance.file_path
+        if full_path.exists():
+            full_path.unlink()
+
+        instance.delete()

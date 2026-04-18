@@ -5,14 +5,11 @@ Ask about index.css problem.
 
 check own file deletion for designer and client.
 
-Good job, my feedback:
-1. Im not sure whats supposed to change after the IsOwn fix, take a look at the screenshot.
-2. What benefit could stars on feedback add? is it meaningful? Should we leave a note or maybe a user story for sprint 5?
-3. Should we allow the client to delete feedbacks in case they changed their mind? Should we allow all roles to delete their own messages?
-4. Im new to this language, why did u add "Partial" to Fix 3? what does it? would omitting "Approval" not have been enough? Either way, it no longer allows me to update the status of Approval but it still shows "Pending" next to it.
-5. As for the unread badges, its working but i noticed a small problem. If the user types a message, they will get the red badge while they are still on that tab. it will only dissapear if they click on another tab then go back to to messages tab for it to dissapear. My point is that in most apps who have this feature, if you are on that tab, it doesn't make sense for it to have that badge because its supposed to alert you. Fix this.
-
-Note: if any change is a few lines of code, just tell me where to copy and paste. If it requires a lot of changes, then you can do it yourself.
+1. Isn't Approval like the final state? Correct me if im wrong but it doesn't make sense to have it Pending no? You mentioned that it needs backend handling, can't we just not show "Pending" on Approval feedbacks in frontend?
+2. Since we both agree on feedback pending deletion, proceed to add this feature.
+3. As for the isOwn problem, the Number solution worked, but I would like it to be the opposite, meaning that my messages appear on left while theirs on right.
+4. As for the messages tab, i noticed that after a specific amount of messages typed, it no longer lets me or any other user/role send more. was this intended?
+5. Currently only the manager can delete files. We should allow client and designer to only delete their own uploaded files. I uploaded FileUploadPanel.tsx, if this feature requires more files let me know.
 
 In order to save tokens, you may only generate the document for S3 chapter.
 

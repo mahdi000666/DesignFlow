@@ -24,3 +24,11 @@ export const useUpdateFeedbackStatus = (projectId: number) => {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['feedback', projectId] }),
   });
 };
+
+export const useDeleteFeedback = (projectId: number) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => api.deleteFeedback(id),
+    onSuccess:  () => qc.invalidateQueries({ queryKey: ['feedback', projectId] }),
+  });
+};

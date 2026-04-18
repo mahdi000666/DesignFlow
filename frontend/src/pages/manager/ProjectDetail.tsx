@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { useProject, useUpdateProject, useDeleteProject } from '../../hooks/useProjects';
 import { useTasks, useCreateTask } from '../../hooks/useTasks';
@@ -96,6 +96,9 @@ export default function ProjectDetail() {
     }
     return map;
   }, [logs]);
+
+  useEffect(() => { if (activeTab === 'messages') markMessagesRead(); }, [messages.length, activeTab, markMessagesRead]);
+  useEffect(() => { if (activeTab === 'feedback') markFeedbackRead(); }, [feedback.length, activeTab, markFeedbackRead]);
 
   const handleTabClick = (tab: Tab) => {
     setActiveTab(tab);

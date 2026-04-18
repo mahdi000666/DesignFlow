@@ -18,13 +18,12 @@ const initials = (name: string) =>
   name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 
 export default function MessageBoard({ projectId }: Props) {
-  const { user }                                     = useAuth();
-  const { data: messages = [], isLoading }           = useMessages(projectId);
-  const createMessage                                = useCreateMessage(projectId);
-  const [text, setText]                              = useState('');
-  const bottomRef                                    = useRef<HTMLDivElement>(null);
+  const { user }                           = useAuth();
+  const { data: messages = [], isLoading } = useMessages(projectId);
+  const createMessage                      = useCreateMessage(projectId);
+  const [text, setText]                    = useState('');
+  const bottomRef                          = useRef<HTMLDivElement>(null);
 
-  // Scroll to latest message whenever the list changes.
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -58,7 +57,9 @@ export default function MessageBoard({ projectId }: Props) {
           </p>
         ) : (
           messages.map(msg => {
-            const isOwn = msg.sender === user?.user_id;
+            // isOwn = true means this message was sent by the logged-in user.
+            // Own messages appear on the LEFT (slate bubble); others on the RIGHT (blue bubble).
+            const isOwn = msg.sender === Number(user?.user_id);
             return (
               <div key={msg.id} className={`flex gap-3 ${isOwn ? 'flex-row-reverse' : ''}`}>
 
@@ -79,8 +80,8 @@ export default function MessageBoard({ projectId }: Props) {
                   </div>
                   <div className={`rounded-xl px-3.5 py-2 text-sm leading-relaxed whitespace-pre-wrap ${
                     isOwn
-                      ? 'bg-blue-600 text-white rounded-tr-sm'
-                      : 'bg-slate-100 text-slate-800 rounded-tl-sm'
+                      ? 'bg-blue-600 text-white rounded-tl-sm'
+                      : 'bg-slate-100 text-slate-800 rounded-tr-sm'
                   }`}>
                     {msg.content_text}
                   </div>

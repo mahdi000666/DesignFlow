@@ -1,5 +1,5 @@
 import { useParams } from 'react-router-dom';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { useProject } from '../../hooks/useProjects';
 import { useTasks } from '../../hooks/useTasks';
@@ -92,6 +92,9 @@ export default function DesignerProjectDetail() {
   const handleLogTime = (payload: TimeLogPayload) => {
     createTimeLog.mutate(payload, { onSuccess: () => setShowLogForm(false) });
   };
+
+  useEffect(() => { if (activeTab === 'messages') markMessagesRead(); }, [messages.length, activeTab, markMessagesRead]);
+  useEffect(() => { if (activeTab === 'feedback') markFeedbackRead(); }, [feedback.length, activeTab, markFeedbackRead]);
 
   const handleTabClick = (tab: Tab) => {
     setActiveTab(tab);

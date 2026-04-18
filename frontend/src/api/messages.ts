@@ -2,10 +2,10 @@ import apiClient from './client';
 import type { Message, MessagePayload } from '../types/message';
 
 export const getMessages = async (projectId: number): Promise<Message[]> => {
-  const { data } = await apiClient.get<{ results: Message[] }>('/messages/', {
+  const { data } = await apiClient.get<Message[]>('/messages/', {
     params: { project: projectId },
   });
-  return data.results;
+  return data;
 };
 
 export const sendMessage = async (payload: MessagePayload): Promise<Message> => {
