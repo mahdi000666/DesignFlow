@@ -4,6 +4,7 @@ import type { TimeLog, TimeLogPayload } from '../types/timelog';
 interface Props {
   logs:       TimeLog[];
   isManager:  boolean;
+  currentUserId?: number;
   onDelete?:  (id: number) => void;
   onUpdate?:  (id: number, payload: Partial<TimeLogPayload>) => void;
 }
@@ -128,12 +129,14 @@ export default function TimeLogList({ logs, isManager, onDelete, onUpdate }: Pro
                     </div>
                   ) : (
                     <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
-                        onClick={() => startEdit(log)}
-                        className="text-xs font-medium text-slate-400 hover:text-slate-700 transition-colors"
-                      >
-                        Edit
-                      </button>
+                        {(isManager || log.designer === currentUserId) && (
+                          <button
+                            onClick={() => startEdit(log)}
+                            className="text-xs font-medium text-slate-400 hover:text-slate-700 transition-colors"
+                          >
+                            Edit
+                          </button>
+                        )}
                       {isManager && (
                         <button
                           onClick={() => onDelete?.(log.id)}

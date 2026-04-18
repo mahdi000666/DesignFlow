@@ -58,7 +58,6 @@ export default function MessageBoard({ projectId }: Props) {
         ) : (
           messages.map(msg => {
             // isOwn = true means this message was sent by the logged-in user.
-            // Own messages appear on the LEFT (slate bubble); others on the RIGHT (blue bubble).
             const isOwn = msg.sender === Number(user?.user_id);
             return (
               <div key={msg.id} className={`flex gap-3 ${isOwn ? 'flex-row-reverse' : ''}`}>

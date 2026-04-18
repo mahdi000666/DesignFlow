@@ -36,7 +36,7 @@ const labelCls =
   'block text-xs font-semibold text-slate-500 mb-1.5';
 
 export default function TaskForm({ projectId, onSubmit, isLoading, defaults, parentTaskOptions }: Props) {
-  const isEdit = defaults !== undefined;
+  const isEdit = defaults?.id !== undefined;
 
   const [estimating,  setEstimating]  = useState(false);
   const [aiReasoning, setAiReasoning] = useState<string | null>(null);
@@ -63,12 +63,17 @@ export default function TaskForm({ projectId, onSubmit, isLoading, defaults, par
     if (!task_name) return;
     setEstimating(true);
     setAiReasoning(null);
-    const result = await estimateTaskHours(task_name, description ?? '', projectId);
-    if (result.estimated_hours !== null) {
-      setValue('estimated_hours', String(result.estimated_hours));
+    try {
+      const result = await estimateTaskHours(task_name, description ?? '', projectId);
+      if (result.estimated_hours !== null) {
+        setValue('estimated_hours', String(result.estimated_hours));
+      }
+      setAiReasoning(result.reasoning);
+    } catch {
+      setAiReasoning('Estimation failed. Please try again.');
+    } finally {
+      setEstimating(false);
     }
-    setAiReasoning(result.reasoning);
-    setEstimating(false);
   };
 
   const submit = (values: FormValues) => {
