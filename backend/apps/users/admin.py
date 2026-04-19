@@ -18,6 +18,31 @@ class InviteUserForm(forms.ModelForm):
         model  = User
         fields = ('email', 'full_name', 'role', 'hourly_rate')
 
+    def clean_full_name(self):
+        name = self.cleaned_data.get('full_name', '').strip()
+        if len(name) < 2:
+            raise forms.ValidationError('Full name must be at least 2 characters.')
+        # Allows "Henry VIII" but rejects "12345".
+        if not any(c.isalpha() for c in name):
+            raise forms.ValidationError('Full name must contain at least one letter.')
+        return name
+
+    def clean_hourly_rate(self):
+        # DecimalField already rejects non-numeric input before this method runs.
+        rate = self.cleaned_data.get('hourly_rate')
+        if rate is not None and rate <= 0:
+            raise forms.ValidationError('Hourly rate must be greater than 0.')
+        return rate
+
+    def clean(self):
+        cleaned = super().clean()
+        role        = cleaned.get('role')
+        hourly_rate = cleaned.get('hourly_rate')
+        # Required for Designer — drives the profit margin metric.
+        if role == 'Designer' and hourly_rate is None:
+            self.add_error('hourly_rate', 'Hourly rate is required for Designer accounts.')
+        return cleaned
+
     def save(self, commit=True):
         user = super().save(commit=False)
         user.set_unusable_password()
@@ -27,13 +52,7 @@ class InviteUserForm(forms.ModelForm):
         return user
 
     class Media:
-        # Small inline script: hides/shows the hourly_rate row based on the
-        # role dropdown value. Runs on page load and on every role change.
-        js = ('admin/js/vendor/jquery/jquery.js',)  # jQuery is already bundled in Django admin
-
-    # The JS is injected via the fieldset's description below; using a
-    # separate static file would require STATICFILES setup. Instead we use
-    # a ModelAdmin.change_view override — see UserAdmin below.
+        js = ('admin/js/vendor/jquery/jquery.js',)
 
 
 # ─── User admin ───────────────────────────────────────────────────────────────
@@ -56,8 +75,6 @@ class UserAdmin(BaseUserAdmin):
         (None, {
             'classes': ('wide',),
             'fields':  ('email', 'full_name', 'role', 'hourly_rate'),
-            # Small description used to inject the toggle script.
-            # Django renders 'description' as raw HTML above the fieldset.
             'description': (
                 '<script>'
                 'document.addEventListener("DOMContentLoaded", function () {'
@@ -66,7 +83,7 @@ class UserAdmin(BaseUserAdmin):
                 '    var row  = document.querySelector(".field-hourly_rate");'
                 '    if (row) row.style.display = (role === "Designer") ? "" : "none";'
                 '  }'
-                '  toggle();'  # hide on initial load if role is not Designer
+                '  toggle();'
                 '  document.getElementById("id_role").addEventListener("change", toggle);'
                 '});'
                 '</script>'

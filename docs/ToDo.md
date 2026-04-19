@@ -1,9 +1,12 @@
-1. Add input validation for account activation + ADMINPANEL hourly rate + full name numberless.
-3. CANT EDIT TIMELOG
+1. I noticed that hourly_rate still passes even if empty despite you saying it should be required. The field also allows characters.
+2. Phone does not seem to respect any format, for example i typed (123) and it passed which doesnt seem correct. Is there a way to enforce a legit number format? especially for tunisia, also it should only allow spaces and + sign and nothing else. I also think it would be better to enforce this field, because how else would the manager contact the client.
+3. Industry can allow numbers, but you forgot to add the check that requires minimum a character.
 
-reply to feedback goes to messages + name
+Going back to feedback and tab indicators:
+1. Since reply under the feedback item seems to be the standard then lets implement it. In this case i dont think showing the original content as quote is necessary since the reply is under the feedback itself no?
+2. As for the red badge, wouldn't the manager adding a task or client/designer uploading a file a red badge worthy? Time log seems like it might need it as well.
 
-Check button placement later.
+Apply the necessary changes depending on your judgement and the standard. If you require any more files, let me know.
 
 In order to save tokens, you may only generate the document for S3 chapter.
 
@@ -34,7 +37,6 @@ Directory structure:
     │   │   ├── tasks/
     │   │   ├── timelog/
     │   │   └── users/
-    │   │       ├── __init__.py
     │   │       ├── admin.py
     │   │       ├── apps.py
     │   │       ├── models.py
@@ -53,7 +55,6 @@ Directory structure:
     │       └── wsgi.py
     └── frontend/
         └── src/
-            ├── App.css
             ├── App.tsx
             ├── index.css
             ├── main.tsx
@@ -61,14 +62,17 @@ Directory structure:
             │   ├── client.ts
             │   ├── feedback.ts
             │   ├── files.ts
+            │   ├── messages.ts
             │   ├── projects.ts
             │   ├── tasks.ts
             │   └── timelogs.ts
             ├── components/
             │   ├── AppShell.tsx
             │   ├── AssignDesignerPanel.tsx
+            │   ├── FeedbackForm.tsx
             │   ├── FeedbackList.tsx
             │   ├── FileUploadPanel.tsx
+            │   ├── MessageBoard.tsx
             │   ├── ProjectForm.tsx
             │   ├── ProtectedRoute.tsx
             │   ├── TaskForm.tsx
@@ -82,15 +86,19 @@ Directory structure:
             │   ├── useAuth.ts
             │   ├── useFeedback.ts
             │   ├── useFiles.ts
+            │   ├── useMessages.ts
             │   ├── useProjects.ts
             │   ├── useTasks.ts
-            │   └── useTimeLogs.ts
+            │   ├── useTimeLogs.ts
+            │   └── useUnreadCount.ts
             ├── pages/
             │   ├── auth/
             │   │   ├── ActivatePage.tsx
             │   │   └── LoginPage.tsx
             │   ├── client/
-            │   │   └── ClientDashboard.tsx
+            │   │   ├── ClientDashboard.tsx
+            │   │   ├── ClientProjectDetail.tsx
+            │   │   └── ClientProjects.tsx
             │   ├── designer/
             │   │   ├── DesignerDashboard.tsx
             │   │   ├── DesignerProjectDetail.tsx
@@ -102,6 +110,7 @@ Directory structure:
             └── types/
                 ├── feedback.ts
                 ├── file.ts
+                ├── message.ts
                 ├── project.ts
                 ├── task.ts
                 └── timelog.ts

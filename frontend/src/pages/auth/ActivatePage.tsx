@@ -19,6 +19,22 @@ const inputCls =
 const labelCls =
   'block font-sans text-[11px] uppercase tracking-[0.6px] text-ink3 mb-[6px]';
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+// Must contain at least one letter — allows "3D Motion", "Henry VIII".
+const hasLetter = (s: string) => /[a-zA-Z]/.test(s);
+
+/**
+ * Validates a Tunisian phone number.
+ * After stripping + and spaces, accepts:
+ *   - 8 digits  (local)          e.g. 98 123 456
+ *   - 11 digits starting with 216 (international) e.g. +216 98 123 456
+ */
+const isValidTunisianPhone = (s: string) => {
+  const digits = s.replace(/[+ ]/g, '');
+  return digits.length === 8 || (digits.length === 11 && digits.startsWith('216'));
+};
+
 // ─── Shared brand mark ───────────────────────────────────────────────────────
 
 function BrandMark() {
@@ -46,25 +62,20 @@ export default function ActivatePage() {
   const navigate       = useNavigate();
   const token          = searchParams.get('token') ?? '';
 
-  // Token info — fetched on mount to determine which fields to show.
   const [tokenInfo,     setTokenInfo]     = useState<TokenInfo | null>(null);
   const [tokenError,    setTokenError]    = useState('');
   const [tokenLoading,  setTokenLoading]  = useState(true);
 
-  // Form fields
   const [password,   setPassword]   = useState('');
   const [confirm,    setConfirm]    = useState('');
-  // Designer fields
   const [spec,       setSpec]       = useState('');
   const [hoursPerWk, setHoursPerWk] = useState('');
-  // Client fields
   const [phone,      setPhone]      = useState('');
   const [industry,   setIndustry]   = useState('');
 
   const [error,   setError]   = useState('');
   const [loading, setLoading] = useState(false);
 
-  // ── Fetch role on mount ────────────────────────────────────────────────────
   useEffect(() => {
     if (!token) {
       setTokenError('No token found in the URL. Check your invitation email.');
@@ -81,26 +92,61 @@ export default function ActivatePage() {
       .finally(() => setTokenLoading(false));
   }, [token]);
 
-  // ── Submit ─────────────────────────────────────────────────────────────────
   const handleSubmit = async () => {
     setError('');
 
-    if (password !== confirm) { setError('Passwords do not match.');              return; }
-    if (password.length < 8)  { setError('Password must be at least 8 characters.'); return; }
+    // ── Password ──────────────────────────────────────────────────────────
+    if (!password)           { setError('Password is required.');                   return; }
+    if (password.length < 8) { setError('Password must be at least 8 characters.'); return; }
+    if (password !== confirm) { setError('Passwords do not match.');                 return; }
+
+    // ── Designer ──────────────────────────────────────────────────────────
+    if (tokenInfo?.role === 'Designer') {
+      if (!hoursPerWk) {
+        setError('Available hours per week is required.');
+        return;
+      }
+      const hrs = parseInt(hoursPerWk, 10);
+      if (isNaN(hrs) || hrs < 1 || hrs > 80) {
+        setError('Available hours must be a whole number between 1 and 80.');
+        return;
+      }
+      if (spec && !hasLetter(spec)) {
+        setError('Specialization must contain at least one letter.');
+        return;
+      }
+    }
+
+    // ── Client ────────────────────────────────────────────────────────────
+    if (tokenInfo?.role === 'Client') {
+      // Phone is required — manager needs a way to contact the client.
+      if (!phone) {
+        setError('Phone number is required.');
+        return;
+      }
+      if (!isValidTunisianPhone(phone)) {
+        setError('Enter a valid number — 8 digits local (98 123 456) or international (+216 98 123 456).');
+        return;
+      }
+      // Industry is optional but must read like a word if provided.
+      if (industry && !hasLetter(industry)) {
+        setError('Industry must contain at least one letter.');
+        return;
+      }
+    }
 
     setLoading(true);
     try {
       await apiClient.post('/auth/activate/', {
         token,
         password,
-        // Role-specific fields — backend ignores them if role doesn't match.
         ...(tokenInfo?.role === 'Designer' && {
-          specialization:           spec,
-          available_hours_per_week: hoursPerWk ? parseInt(hoursPerWk, 10) : null,
+          specialization:           spec.trim(),
+          available_hours_per_week: parseInt(hoursPerWk, 10),
         }),
         ...(tokenInfo?.role === 'Client' && {
-          phone,
-          industry,
+          phone:    phone.trim(),
+          industry: industry.trim(),
         }),
       });
       navigate('/login', { state: { activated: true } });
@@ -114,7 +160,6 @@ export default function ActivatePage() {
     }
   };
 
-  // ── Render: loading / error / form ────────────────────────────────────────
   if (tokenLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-bg">
@@ -192,7 +237,10 @@ export default function ActivatePage() {
                 <hr className="border-border" />
 
                 <div>
-                  <label className={labelCls}>Specialization</label>
+                  <label className={labelCls}>
+                    Specialization{' '}
+                    <span className="normal-case tracking-normal">(optional)</span>
+                  </label>
                   <input
                     type="text"
                     value={spec}
@@ -203,13 +251,17 @@ export default function ActivatePage() {
                 </div>
 
                 <div>
+                  {/* Required — used in the designer utilisation metric */}
                   <label className={labelCls}>Available hours per week</label>
                   <input
                     type="number"
-                    min={0}
+                    min={1}
                     max={80}
                     value={hoursPerWk}
-                    onChange={e => setHoursPerWk(e.target.value)}
+                    onChange={e => {
+                      const val = e.target.value;
+                      if (val === '' || /^\d+$/.test(val)) setHoursPerWk(val);
+                    }}
                     placeholder="e.g. 40"
                     className={inputCls}
                   />
@@ -223,18 +275,27 @@ export default function ActivatePage() {
                 <hr className="border-border" />
 
                 <div>
+                  {/* Required — manager needs a way to contact the client */}
                   <label className={labelCls}>Phone</label>
                   <input
                     type="text"
                     value={phone}
-                    onChange={e => setPhone(e.target.value)}
-                    placeholder="e.g. +216 98 123 456"
+                    onChange={e => {
+                      const val = e.target.value;
+                      // Only allow digits, spaces, and + sign
+                      if (val === '' || /^[0-9+ ]*$/.test(val)) setPhone(val);
+                    }}
+                    placeholder="e.g. 98 123 456 or +216 98 123 456"
                     className={inputCls}
                   />
                 </div>
 
                 <div>
-                  <label className={labelCls}>Industry</label>
+                  <label className={labelCls}>
+                    Industry{' '}
+                    <span className="normal-case tracking-normal">(optional)</span>
+                  </label>
+                  {/* Free text — "Fortune 500", "3PL Logistics" are valid industry names */}
                   <input
                     type="text"
                     value={industry}

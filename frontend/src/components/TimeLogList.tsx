@@ -137,12 +137,6 @@ export default function TimeLogList({ logs, isManager, currentUserId, onDelete, 
                             Edit
                           </button>
                         )}
-                        {/* <button
-                            onClick={() => startEdit(log)}
-                            className="text-xs font-medium text-slate-400 hover:text-slate-700 transition-colors"
-                          >
-                            Edit
-                          </button> */}
                       {isManager && (
                         <button
                           onClick={() => onDelete?.(log.id)}
