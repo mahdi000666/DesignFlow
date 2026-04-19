@@ -1,10 +1,3 @@
-Good job, here is my feedback:
-The input validation issues are solved, now lets put our focus on the red badges and feedback.
-1. Since the feedback reply is now under the feedback itself, i don't think there is still a need for sending it to the messages tab as well no? Also the client should receive a red badge when a manager/designer replies to their feedback.
-2. I found a bug, The red badges show up for each new file, feedback, task or message. But only to those who see them first!
-For example if a client uploads a file or a manager adds a task, the red badges will show, but if designer1 logs in and checks them, they will dissapear for all accounts, meaning that if designer2 logs in after him, there wont be red badges meaning they wont be notified!
-
-If any changes require a few lines of code, just tell me where to paste otherwise you can rewrite.
 
 In order to save tokens, you may only generate the document for S3 chapter.
 

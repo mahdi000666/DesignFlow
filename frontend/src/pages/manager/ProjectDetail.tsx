@@ -74,14 +74,8 @@ export default function ProjectDetail() {
   const { data: messages = [] } = useMessages(projectId);
   const { data: feedback = [] } = useFeedback(projectId);
 
-  // Non-reply messages only — replies are displayed inline under feedback items.
-  const chatMessages = useMemo(
-    () => messages.filter(m => !m.content_text.startsWith('[Re:')),
-    [messages],
-  );
-
   const { count: unreadMessages, markRead: markMessagesRead } =
-    useUnreadCount(chatMessages, projectId, 'messages', userId);
+    useUnreadCount(messages, projectId, 'messages', userId);
   const { count: unreadFeedback, markRead: markFeedbackRead } =
     useUnreadCount(feedback, projectId, 'feedback', userId);
   const { count: unreadFiles, markRead: markFilesRead } =
@@ -106,7 +100,7 @@ export default function ProjectDetail() {
     return map;
   }, [logs]);
 
-  useEffect(() => { if (activeTab === 'messages') markMessagesRead(); }, [chatMessages.length, activeTab, markMessagesRead]);
+  useEffect(() => { if (activeTab === 'messages') markMessagesRead(); }, [messages.length, activeTab, markMessagesRead]);
   useEffect(() => { if (activeTab === 'feedback') markFeedbackRead(); }, [feedback.length,      activeTab, markFeedbackRead]);
   useEffect(() => { if (activeTab === 'files')    markFilesRead();    }, [files.length,         activeTab, markFilesRead]);
 

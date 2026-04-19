@@ -7,6 +7,5 @@ class MessageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model  = Message
-        fields = ['id', 'project', 'sender', 'sender_name', 'content_text', 'is_read', 'created_at']
-        # sender is set server-side in perform_create; clients must not be able to spoof it
+        fields = ['id', 'project', 'sender', 'sender_name', 'content_text', 'is_read', 'created_at', 'feedback']
         read_only_fields = ['sender', 'is_read', 'created_at']

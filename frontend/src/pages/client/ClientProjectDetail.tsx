@@ -1,10 +1,10 @@
 import { useParams } from 'react-router-dom';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { useProject } from '../../hooks/useProjects';
 import { useCreateFeedback, useFeedback } from '../../hooks/useFeedback';
 import { useFiles } from '../../hooks/useFiles';
-import { useMessages } from '../../hooks/useMessages';
+import { useMessages, useReplies } from '../../hooks/useMessages';
 import { useUnreadCount } from '../../hooks/useUnreadCount';
 import { useAuth } from '../../hooks/useAuth';
 import AppShell from '../../components/AppShell';
@@ -61,26 +61,14 @@ export default function ClientProjectDetail() {
   const { data: messages = [] }      = useMessages(projectId);
   const { data: feedback = [] }      = useFeedback(projectId);
   const { data: files    = [] }      = useFiles(projectId);
-
-  // Non-reply chat messages.
-  const chatMessages = useMemo(
-    () => messages.filter(m => !m.content_text.startsWith('[Re:')),
-    [messages],
-  );
-
-  // Replies to the client's own feedback items — drives the Feedback tab badge.
-  // The client submitted the feedback; replies come from Manager or Designer.
-  const feedbackReplies = useMemo(
-    () => messages.filter(m => m.content_text.startsWith('[Re:')),
-    [messages],
-  );
+  const { data: replies = [] }       = useReplies(projectId);
 
   const { count: unreadMessages, markRead: markMessagesRead } =
-    useUnreadCount(chatMessages, projectId, 'messages', userId);
+    useUnreadCount(messages, projectId, 'messages', userId);
   const { count: unreadFeedback, markRead: markFeedbackRead } =
     useUnreadCount(feedback, projectId, 'feedback', userId);
   const { count: unreadReplies, markRead: markRepliesRead } =
-    useUnreadCount(feedbackReplies, projectId, 'replies', userId);
+    useUnreadCount(replies, projectId, 'replies', userId);
   const { count: unreadFiles, markRead: markFilesRead } =
     useUnreadCount(files, projectId, 'files', userId);
 
@@ -95,9 +83,9 @@ export default function ClientProjectDetail() {
 
   useEffect(() => {
     if (activeTab === 'feedback') { markFeedbackRead(); markRepliesRead(); }
-  }, [feedback.length, feedbackReplies.length, activeTab, markFeedbackRead, markRepliesRead]);
+  }, [feedback.length, replies.length, activeTab, markFeedbackRead, markRepliesRead]);
 
-  useEffect(() => { if (activeTab === 'messages') markMessagesRead(); }, [chatMessages.length, activeTab, markMessagesRead]);
+  useEffect(() => { if (activeTab === 'messages') markMessagesRead(); }, [messages.length, activeTab, markMessagesRead]);
   useEffect(() => { if (activeTab === 'files')    markFilesRead();    }, [files.length,        activeTab, markFilesRead]);
 
   const handleTabClick = (tab: Tab) => {

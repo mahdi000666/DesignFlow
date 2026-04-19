@@ -9,6 +9,14 @@ class Message(models.Model):
     content_text = models.TextField()
     is_read      = models.BooleanField(default=False)
     created_at   = models.DateTimeField(auto_now_add=True)
+    # Null = chat message. Set = reply to that feedback item.
+    feedback     = models.ForeignKey(
+        'feedback.Feedback',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='replies',
+    )
 
     class Meta:
         indexes = [models.Index(fields=['project', 'created_at'])]

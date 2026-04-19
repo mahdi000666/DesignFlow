@@ -8,10 +8,23 @@ export const useMessages = (projectId: number) =>
     queryFn:  () => api.getMessages(projectId),
   });
 
+export const useReplies = (projectId: number) =>
+  useQuery({
+    queryKey: ['replies', projectId],
+    queryFn:  () => api.getReplies(projectId),
+  });
+
 export const useCreateMessage = (projectId: number) => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (payload: MessagePayload) => api.sendMessage(payload),
-    onSuccess:  () => qc.invalidateQueries({ queryKey: ['messages', projectId] }),
+    onSuccess: (data) => {
+      // Invalidate the correct cache depending on whether this was a reply or a chat message.
+      if (data.feedback != null) {
+        qc.invalidateQueries({ queryKey: ['replies', projectId] });
+      } else {
+        qc.invalidateQueries({ queryKey: ['messages', projectId] });
+      }
+    },
   });
 };

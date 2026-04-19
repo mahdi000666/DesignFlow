@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useFeedback, useUpdateFeedbackStatus, useDeleteFeedback } from '../hooks/useFeedback';
-import { useMessages, useCreateMessage } from '../hooks/useMessages';
+import { useReplies, useCreateMessage } from '../hooks/useMessages';
 import { useAuth } from '../hooks/useAuth';
 import type { FeedbackStatus } from '../types/feedback';
 
@@ -16,8 +16,6 @@ const CATEGORY_STYLES: Record<string, string> = {
   Question: 'bg-gray-100 text-gray-700',
 };
 
-// Approval items are excluded from status progression — they are self-contained signals.
-// Revision and Question follow: Pending → InProgress → Resolved.
 const NEXT_STATUS: Partial<Record<FeedbackStatus, FeedbackStatus>> = {
   Pending:    'InProgress',
   InProgress: 'Resolved',
@@ -40,23 +38,16 @@ function StatusBadge({ category, status }: { category: string; status: FeedbackS
   );
 }
 
-// Reply messages are stored as regular Messages with a [Re: Category #ID] prefix.
-// Strip the prefix for display — the context is already clear from the parent item.
-const extractReplyText = (content: string) => {
-  const match = content.match(/^\[Re: \w+ #\d+\] ([\s\S]+)$/);
-  return match ? match[1] : content;
-};
-
 interface Props {
   projectId: number;
-  canUpdate: boolean;   // true for Manager and Designer
-  canReply?:  boolean;  // true for Designer/Manager
+  canUpdate: boolean;
+  canReply?:  boolean;
 }
 
 export default function FeedbackList({ projectId, canUpdate, canReply = false }: Props) {
-  const { user }                        = useAuth();
+  const { user }                           = useAuth();
   const { data: items    = [], isLoading } = useFeedback(projectId);
-  const { data: messages = [] }            = useMessages(projectId);
+  const { data: replies  = [] }            = useReplies(projectId);
   const updateStatus   = useUpdateFeedbackStatus(projectId);
   const deleteFeedback = useDeleteFeedback(projectId);
   const createMessage  = useCreateMessage(projectId);
@@ -64,15 +55,15 @@ export default function FeedbackList({ projectId, canUpdate, canReply = false }:
   const [replyingTo, setReplyingTo] = useState<number | null>(null);
   const [replyText,  setReplyText]  = useState('');
 
-  // Returns all messages that are replies to a specific feedback item.
-  const repliesFor = (feedbackId: number, category: string) =>
-    messages.filter(m => m.content_text.startsWith(`[Re: ${category} #${feedbackId}]`));
+  // Replies are Messages with feedback=<id> — group by feedback FK directly.
+  const repliesFor = (feedbackId: number) =>
+    replies.filter(r => r.feedback === feedbackId);
 
-  const handleReply = (feedbackId: number, category: string) => {
+  const handleReply = (feedbackId: number) => {
     const trimmed = replyText.trim();
     if (!trimmed) return;
     createMessage.mutate(
-      { project: projectId, content_text: `[Re: ${category} #${feedbackId}] ${trimmed}` },
+      { project: projectId, content_text: trimmed, feedback: feedbackId },
       { onSuccess: () => { setReplyingTo(null); setReplyText(''); } },
     );
   };
@@ -92,7 +83,7 @@ export default function FeedbackList({ projectId, canUpdate, canReply = false }:
       {items.map(item => {
         const next      = item.category !== 'Approval' ? NEXT_STATUS[item.status] : undefined;
         const canDelete = isClient && item.status === 'Pending';
-        const replies   = repliesFor(item.id, item.category);
+        const itemReplies = repliesFor(item.id);
 
         return (
           <li key={item.id} className="border rounded-lg p-4 bg-white shadow-sm">
@@ -141,15 +132,13 @@ export default function FeedbackList({ projectId, canUpdate, canReply = false }:
             </div>
 
             {/* ── Threaded replies ──────────────────────────────────────── */}
-            {(replies.length > 0 || canReply) && (
+            {(itemReplies.length > 0 || canReply) && (
               <div className="mt-3 border-t border-slate-100 pt-3 space-y-3">
 
-                {/* Existing replies */}
-                {replies.length > 0 && (
+                {itemReplies.length > 0 && (
                   <ul className="space-y-2">
-                    {replies.map(reply => (
+                    {itemReplies.map(reply => (
                       <li key={reply.id} className="flex gap-2.5">
-                        {/* Avatar initial */}
                         <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-[10px] font-semibold text-slate-500 shrink-0 mt-0.5">
                           {(reply.sender_name ?? '?')[0].toUpperCase()}
                         </div>
@@ -162,16 +151,13 @@ export default function FeedbackList({ projectId, canUpdate, canReply = false }:
                               {new Date(reply.created_at).toLocaleDateString()}
                             </span>
                           </div>
-                          <p className="text-sm text-slate-600 mt-0.5">
-                            {extractReplyText(reply.content_text)}
-                          </p>
+                          <p className="text-sm text-slate-600 mt-0.5">{reply.content_text}</p>
                         </div>
                       </li>
                     ))}
                   </ul>
                 )}
 
-                {/* Reply composer (Manager / Designer only) */}
                 {canReply && (
                   replyingTo === item.id ? (
                     <div className="flex gap-2 items-end">
@@ -184,7 +170,7 @@ export default function FeedbackList({ projectId, canUpdate, canReply = false }:
                       />
                       <div className="flex flex-col gap-1.5 shrink-0">
                         <button
-                          onClick={() => handleReply(item.id, item.category)}
+                          onClick={() => handleReply(item.id)}
                           disabled={!replyText.trim() || createMessage.isPending}
                           className="text-xs px-3 py-1.5 bg-blue-700 text-white rounded-lg font-medium hover:bg-blue-800 disabled:opacity-50 transition-colors"
                         >

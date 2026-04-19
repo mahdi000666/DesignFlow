@@ -9,13 +9,13 @@ class MessageViewSet(viewsets.ModelViewSet):
     # Messages are immutable once sent — no PATCH/PUT/DELETE.
     http_method_names  = ['get', 'post', 'head', 'options']
     serializer_class   = MessageSerializer
-    # Disable pagination — all messages for a project are loaded at once.
-    # A project's message history is bounded and needs to render in full for the chat UI.
     pagination_class   = None
 
     def get_queryset(self):
         user       = self.request.user
         project_id = self.request.query_params.get('project')
+        # ?replies=1 returns reply messages; default returns chat messages only.
+        is_replies = self.request.query_params.get('replies') == '1'
 
         if user.role == 'Manager':
             qs = Message.objects.select_related('sender').all()
@@ -32,6 +32,8 @@ class MessageViewSet(viewsets.ModelViewSet):
 
         if project_id:
             qs = qs.filter(project_id=project_id)
+
+        qs = qs.filter(feedback__isnull=not is_replies)
 
         return qs.distinct()
 
