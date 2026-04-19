@@ -1,12 +1,10 @@
-1. I noticed that hourly_rate still passes even if empty despite you saying it should be required. The field also allows characters.
-2. Phone does not seem to respect any format, for example i typed (123) and it passed which doesnt seem correct. Is there a way to enforce a legit number format? especially for tunisia, also it should only allow spaces and + sign and nothing else. I also think it would be better to enforce this field, because how else would the manager contact the client.
-3. Industry can allow numbers, but you forgot to add the check that requires minimum a character.
+Good job, here is my feedback:
+The input validation issues are solved, now lets put our focus on the red badges and feedback.
+1. Since the feedback reply is now under the feedback itself, i don't think there is still a need for sending it to the messages tab as well no? Also the client should receive a red badge when a manager/designer replies to their feedback.
+2. I found a bug, The red badges show up for each new file, feedback, task or message. But only to those who see them first!
+For example if a client uploads a file or a manager adds a task, the red badges will show, but if designer1 logs in and checks them, they will dissapear for all accounts, meaning that if designer2 logs in after him, there wont be red badges meaning they wont be notified!
 
-Going back to feedback and tab indicators:
-1. Since reply under the feedback item seems to be the standard then lets implement it. In this case i dont think showing the original content as quote is necessary since the reply is under the feedback itself no?
-2. As for the red badge, wouldn't the manager adding a task or client/designer uploading a file a red badge worthy? Time log seems like it might need it as well.
-
-Apply the necessary changes depending on your judgement and the standard. If you require any more files, let me know.
+If any changes require a few lines of code, just tell me where to paste otherwise you can rewrite.
 
 In order to save tokens, you may only generate the document for S3 chapter.
 

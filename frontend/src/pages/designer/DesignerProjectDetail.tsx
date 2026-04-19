@@ -59,6 +59,7 @@ export default function DesignerProjectDetail() {
   const { id }    = useParams<{ id: string }>();
   const projectId = Number(id);
   const { user }  = useAuth();
+  const userId    = user?.user_id ?? 0;
 
   const { data: project, isLoading: loadingProject } = useProject(projectId);
   const { data: rawTasks = [], isLoading: loadingTasks } = useTasks(projectId);
@@ -68,10 +69,20 @@ export default function DesignerProjectDetail() {
   const { data: messages = [] } = useMessages(projectId);
   const { data: feedback = [] } = useFeedback(projectId);
 
+  // Non-reply messages only — replies are displayed inline under feedback items.
+  const chatMessages = useMemo(
+    () => messages.filter(m => !m.content_text.startsWith('[Re:')),
+    [messages],
+  );
+
   const { count: unreadMessages, markRead: markMessagesRead } =
-    useUnreadCount(messages, projectId, 'messages');
+    useUnreadCount(chatMessages, projectId, 'messages', userId);
   const { count: unreadFeedback, markRead: markFeedbackRead } =
-    useUnreadCount(feedback, projectId, 'feedback');
+    useUnreadCount(feedback, projectId, 'feedback', userId);
+  const { count: unreadTasks, markRead: markTasksRead } =
+    useUnreadCount(tasks, projectId, 'tasks', userId);
+  const { count: unreadFiles, markRead: markFilesRead } =
+    useUnreadCount(files, projectId, 'files', userId);
 
   const createTimeLog = useCreateTimeLog(projectId);
   const updateTimeLog = useUpdateTimeLog(projectId);
@@ -94,13 +105,17 @@ export default function DesignerProjectDetail() {
     createTimeLog.mutate(payload, { onSuccess: () => setShowLogForm(false) });
   };
 
-  useEffect(() => { if (activeTab === 'messages') markMessagesRead(); }, [messages.length, activeTab, markMessagesRead]);
-  useEffect(() => { if (activeTab === 'feedback') markFeedbackRead(); }, [feedback.length, activeTab, markFeedbackRead]);
+  useEffect(() => { if (activeTab === 'messages') markMessagesRead(); }, [chatMessages.length, activeTab, markMessagesRead]);
+  useEffect(() => { if (activeTab === 'feedback') markFeedbackRead(); }, [feedback.length,     activeTab, markFeedbackRead]);
+  useEffect(() => { if (activeTab === 'tasks')    markTasksRead();    }, [tasks.length,         activeTab, markTasksRead]);
+  useEffect(() => { if (activeTab === 'files')    markFilesRead();    }, [files.length,          activeTab, markFilesRead]);
 
   const handleTabClick = (tab: Tab) => {
     setActiveTab(tab);
     if (tab === 'messages') markMessagesRead();
     if (tab === 'feedback') markFeedbackRead();
+    if (tab === 'tasks')    markTasksRead();
+    if (tab === 'files')    markFilesRead();
   };
 
   const filteredTasks = statusFilter === 'All'
@@ -120,9 +135,9 @@ export default function DesignerProjectDetail() {
 
   const tabContent = (tab: Tab): ReactNode => {
     switch (tab) {
-      case 'tasks':    return `Tasks (${tasks.length})`;
+      case 'tasks':    return <span className="flex items-center">Tasks ({tasks.length})<UnreadBadge count={unreadTasks} /></span>;
       case 'log':      return `Time Logs (${logs.length})`;
-      case 'files':    return `Files (${files.length})`;
+      case 'files':    return <span className="flex items-center">Files ({files.length})<UnreadBadge count={unreadFiles} /></span>;
       case 'feedback': return <span className="flex items-center">Feedback<UnreadBadge count={unreadFeedback} /></span>;
       case 'messages': return <span className="flex items-center">Messages<UnreadBadge count={unreadMessages} /></span>;
     }

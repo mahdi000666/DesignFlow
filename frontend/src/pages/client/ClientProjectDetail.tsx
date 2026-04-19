@@ -1,10 +1,12 @@
 import { useParams } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { useProject } from '../../hooks/useProjects';
 import { useCreateFeedback, useFeedback } from '../../hooks/useFeedback';
+import { useFiles } from '../../hooks/useFiles';
 import { useMessages } from '../../hooks/useMessages';
 import { useUnreadCount } from '../../hooks/useUnreadCount';
+import { useAuth } from '../../hooks/useAuth';
 import AppShell from '../../components/AppShell';
 import FeedbackForm from '../../components/FeedbackForm';
 import FeedbackList from '../../components/FeedbackList';
@@ -51,16 +53,39 @@ function UnreadBadge({ count }: { count: number }) {
 export default function ClientProjectDetail() {
   const { id }    = useParams<{ id: string }>();
   const projectId = Number(id);
+  const { user }  = useAuth();
+  const userId    = user?.user_id ?? 0;
 
   const { data: project, isLoading } = useProject(projectId);
   const createFeedback               = useCreateFeedback(projectId);
   const { data: messages = [] }      = useMessages(projectId);
   const { data: feedback = [] }      = useFeedback(projectId);
+  const { data: files    = [] }      = useFiles(projectId);
+
+  // Non-reply chat messages.
+  const chatMessages = useMemo(
+    () => messages.filter(m => !m.content_text.startsWith('[Re:')),
+    [messages],
+  );
+
+  // Replies to the client's own feedback items — drives the Feedback tab badge.
+  // The client submitted the feedback; replies come from Manager or Designer.
+  const feedbackReplies = useMemo(
+    () => messages.filter(m => m.content_text.startsWith('[Re:')),
+    [messages],
+  );
 
   const { count: unreadMessages, markRead: markMessagesRead } =
-    useUnreadCount(messages, projectId, 'messages');
+    useUnreadCount(chatMessages, projectId, 'messages', userId);
   const { count: unreadFeedback, markRead: markFeedbackRead } =
-    useUnreadCount(feedback, projectId, 'feedback');
+    useUnreadCount(feedback, projectId, 'feedback', userId);
+  const { count: unreadReplies, markRead: markRepliesRead } =
+    useUnreadCount(feedbackReplies, projectId, 'replies', userId);
+  const { count: unreadFiles, markRead: markFilesRead } =
+    useUnreadCount(files, projectId, 'files', userId);
+
+  // Total badge for the Feedback tab = new feedback status changes + new replies.
+  const unreadFeedbackTab = unreadFeedback + unreadReplies;
 
   const [activeTab, setActiveTab] = useState<Tab>('overview');
 
@@ -68,13 +93,18 @@ export default function ClientProjectDetail() {
     createFeedback.mutate(payload);
   };
 
-  useEffect(() => { if (activeTab === 'messages') markMessagesRead(); }, [messages.length, activeTab, markMessagesRead]);
-  useEffect(() => { if (activeTab === 'feedback') markFeedbackRead(); }, [feedback.length, activeTab, markFeedbackRead]);
+  useEffect(() => {
+    if (activeTab === 'feedback') { markFeedbackRead(); markRepliesRead(); }
+  }, [feedback.length, feedbackReplies.length, activeTab, markFeedbackRead, markRepliesRead]);
+
+  useEffect(() => { if (activeTab === 'messages') markMessagesRead(); }, [chatMessages.length, activeTab, markMessagesRead]);
+  useEffect(() => { if (activeTab === 'files')    markFilesRead();    }, [files.length,        activeTab, markFilesRead]);
 
   const handleTabClick = (tab: Tab) => {
     setActiveTab(tab);
+    if (tab === 'feedback') { markFeedbackRead(); markRepliesRead(); }
     if (tab === 'messages') markMessagesRead();
-    if (tab === 'feedback') markFeedbackRead();
+    if (tab === 'files')    markFilesRead();
   };
 
   if (isLoading) {
@@ -91,8 +121,8 @@ export default function ClientProjectDetail() {
   const tabContent = (tab: Tab): ReactNode => {
     switch (tab) {
       case 'overview':  return 'Overview';
-      case 'files':     return 'Files';
-      case 'feedback':  return <span className="flex items-center">Feedback<UnreadBadge count={unreadFeedback} /></span>;
+      case 'files':     return <span className="flex items-center">Files<UnreadBadge count={unreadFiles} /></span>;
+      case 'feedback':  return <span className="flex items-center">Feedback<UnreadBadge count={unreadFeedbackTab} /></span>;
       case 'messages':  return <span className="flex items-center">Messages<UnreadBadge count={unreadMessages} /></span>;
     }
   };

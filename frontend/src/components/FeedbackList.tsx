@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useFeedback, useUpdateFeedbackStatus, useDeleteFeedback } from '../hooks/useFeedback';
-import { useCreateMessage } from '../hooks/useMessages';
+import { useMessages, useCreateMessage } from '../hooks/useMessages';
 import { useAuth } from '../hooks/useAuth';
 import type { FeedbackStatus } from '../types/feedback';
 
@@ -23,9 +23,6 @@ const NEXT_STATUS: Partial<Record<FeedbackStatus, FeedbackStatus>> = {
   InProgress: 'Resolved',
 };
 
-// For Approval items, "Resolved" is shown as "Acknowledged" since they aren't
-// resolved in the same sense as a Revision. "Pending" is hidden — an unacknowledged
-// approval just shows no status badge rather than implying something is wrong.
 function StatusBadge({ category, status }: { category: string; status: FeedbackStatus }) {
   if (category === 'Approval') {
     if (status === 'Pending') return null;
@@ -43,6 +40,13 @@ function StatusBadge({ category, status }: { category: string; status: FeedbackS
   );
 }
 
+// Reply messages are stored as regular Messages with a [Re: Category #ID] prefix.
+// Strip the prefix for display — the context is already clear from the parent item.
+const extractReplyText = (content: string) => {
+  const match = content.match(/^\[Re: \w+ #\d+\] ([\s\S]+)$/);
+  return match ? match[1] : content;
+};
+
 interface Props {
   projectId: number;
   canUpdate: boolean;   // true for Manager and Designer
@@ -51,13 +55,18 @@ interface Props {
 
 export default function FeedbackList({ projectId, canUpdate, canReply = false }: Props) {
   const { user }                        = useAuth();
-  const { data: items = [], isLoading } = useFeedback(projectId);
-  const updateStatus  = useUpdateFeedbackStatus(projectId);
+  const { data: items    = [], isLoading } = useFeedback(projectId);
+  const { data: messages = [] }            = useMessages(projectId);
+  const updateStatus   = useUpdateFeedbackStatus(projectId);
   const deleteFeedback = useDeleteFeedback(projectId);
-  const createMessage = useCreateMessage(projectId);
+  const createMessage  = useCreateMessage(projectId);
 
   const [replyingTo, setReplyingTo] = useState<number | null>(null);
   const [replyText,  setReplyText]  = useState('');
+
+  // Returns all messages that are replies to a specific feedback item.
+  const repliesFor = (feedbackId: number, category: string) =>
+    messages.filter(m => m.content_text.startsWith(`[Re: ${category} #${feedbackId}]`));
 
   const handleReply = (feedbackId: number, category: string) => {
     const trimmed = replyText.trim();
@@ -81,14 +90,14 @@ export default function FeedbackList({ projectId, canUpdate, canReply = false }:
   return (
     <ul className="space-y-3">
       {items.map(item => {
-        const next = item.category !== 'Approval' ? NEXT_STATUS[item.status] : undefined;
-        // Client can only delete their own Pending feedback.
+        const next      = item.category !== 'Approval' ? NEXT_STATUS[item.status] : undefined;
         const canDelete = isClient && item.status === 'Pending';
+        const replies   = repliesFor(item.id, item.category);
 
         return (
           <li key={item.id} className="border rounded-lg p-4 bg-white shadow-sm">
 
-            {/* Top row: badges + action buttons */}
+            {/* ── Top row: badges + action buttons ─────────────────────── */}
             <div className="flex items-start justify-between gap-4">
               <div className="space-y-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -131,41 +140,72 @@ export default function FeedbackList({ projectId, canUpdate, canReply = false }:
               </div>
             </div>
 
-            {/* Reply section */}
-            {canReply && (
-              <div className="mt-3 border-t border-slate-100 pt-3">
-                {replyingTo === item.id ? (
-                  <div className="flex gap-2 items-end">
-                    <textarea
-                      value={replyText}
-                      onChange={e => setReplyText(e.target.value)}
-                      placeholder="Write a reply…"
-                      rows={2}
-                      className="flex-1 resize-none rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-colors"
-                    />
-                    <div className="flex flex-col gap-1.5 shrink-0">
-                      <button
-                        onClick={() => handleReply(item.id, item.category)}
-                        disabled={!replyText.trim() || createMessage.isPending}
-                        className="text-xs px-3 py-1.5 bg-blue-700 text-white rounded-lg font-medium hover:bg-blue-800 disabled:opacity-50 transition-colors"
-                      >
-                        Send
-                      </button>
-                      <button
-                        onClick={() => { setReplyingTo(null); setReplyText(''); }}
-                        className="text-xs px-3 py-1.5 border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 transition-colors"
-                      >
-                        Cancel
-                      </button>
+            {/* ── Threaded replies ──────────────────────────────────────── */}
+            {(replies.length > 0 || canReply) && (
+              <div className="mt-3 border-t border-slate-100 pt-3 space-y-3">
+
+                {/* Existing replies */}
+                {replies.length > 0 && (
+                  <ul className="space-y-2">
+                    {replies.map(reply => (
+                      <li key={reply.id} className="flex gap-2.5">
+                        {/* Avatar initial */}
+                        <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-[10px] font-semibold text-slate-500 shrink-0 mt-0.5">
+                          {(reply.sender_name ?? '?')[0].toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-xs font-medium text-slate-700">
+                              {reply.sender_name ?? 'Team'}
+                            </span>
+                            <span className="text-[11px] text-slate-400">
+                              {new Date(reply.created_at).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <p className="text-sm text-slate-600 mt-0.5">
+                            {extractReplyText(reply.content_text)}
+                          </p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                {/* Reply composer (Manager / Designer only) */}
+                {canReply && (
+                  replyingTo === item.id ? (
+                    <div className="flex gap-2 items-end">
+                      <textarea
+                        value={replyText}
+                        onChange={e => setReplyText(e.target.value)}
+                        placeholder="Write a reply…"
+                        rows={2}
+                        className="flex-1 resize-none rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-colors"
+                      />
+                      <div className="flex flex-col gap-1.5 shrink-0">
+                        <button
+                          onClick={() => handleReply(item.id, item.category)}
+                          disabled={!replyText.trim() || createMessage.isPending}
+                          className="text-xs px-3 py-1.5 bg-blue-700 text-white rounded-lg font-medium hover:bg-blue-800 disabled:opacity-50 transition-colors"
+                        >
+                          Send
+                        </button>
+                        <button
+                          onClick={() => { setReplyingTo(null); setReplyText(''); }}
+                          className="text-xs px-3 py-1.5 border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => { setReplyingTo(item.id); setReplyText(''); }}
-                    className="text-xs text-slate-500 hover:text-blue-700 transition-colors"
-                  >
-                    ↩ Reply
-                  </button>
+                  ) : (
+                    <button
+                      onClick={() => { setReplyingTo(item.id); setReplyText(''); }}
+                      className="text-xs text-slate-500 hover:text-blue-700 transition-colors"
+                    >
+                      ↩ Reply
+                    </button>
+                  )
                 )}
               </div>
             )}

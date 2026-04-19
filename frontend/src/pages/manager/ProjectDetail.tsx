@@ -64,6 +64,7 @@ export default function ProjectDetail() {
   const navigate  = useNavigate();
   const { user }  = useAuth();
   const isManager = user?.role === 'Manager';
+  const userId    = user?.user_id ?? 0;
 
   const { data: project, isLoading: loadingProject } = useProject(projectId);
   const { data: rawTasks = [], isLoading: loadingTasks } = useTasks(projectId);
@@ -73,10 +74,18 @@ export default function ProjectDetail() {
   const { data: messages = [] } = useMessages(projectId);
   const { data: feedback = [] } = useFeedback(projectId);
 
+  // Non-reply messages only — replies are displayed inline under feedback items.
+  const chatMessages = useMemo(
+    () => messages.filter(m => !m.content_text.startsWith('[Re:')),
+    [messages],
+  );
+
   const { count: unreadMessages, markRead: markMessagesRead } =
-    useUnreadCount(messages, projectId, 'messages');
+    useUnreadCount(chatMessages, projectId, 'messages', userId);
   const { count: unreadFeedback, markRead: markFeedbackRead } =
-    useUnreadCount(feedback, projectId, 'feedback');
+    useUnreadCount(feedback, projectId, 'feedback', userId);
+  const { count: unreadFiles, markRead: markFilesRead } =
+    useUnreadCount(files, projectId, 'files', userId);
 
   const createTask    = useCreateTask(projectId);
   const updateProject = useUpdateProject(projectId);
@@ -97,13 +106,15 @@ export default function ProjectDetail() {
     return map;
   }, [logs]);
 
-  useEffect(() => { if (activeTab === 'messages') markMessagesRead(); }, [messages.length, activeTab, markMessagesRead]);
-  useEffect(() => { if (activeTab === 'feedback') markFeedbackRead(); }, [feedback.length, activeTab, markFeedbackRead]);
+  useEffect(() => { if (activeTab === 'messages') markMessagesRead(); }, [chatMessages.length, activeTab, markMessagesRead]);
+  useEffect(() => { if (activeTab === 'feedback') markFeedbackRead(); }, [feedback.length,      activeTab, markFeedbackRead]);
+  useEffect(() => { if (activeTab === 'files')    markFilesRead();    }, [files.length,         activeTab, markFilesRead]);
 
   const handleTabClick = (tab: Tab) => {
     setActiveTab(tab);
     if (tab === 'messages') markMessagesRead();
     if (tab === 'feedback') markFeedbackRead();
+    if (tab === 'files')    markFilesRead();
   };
 
   if (loadingProject) {
@@ -140,7 +151,7 @@ export default function ProjectDetail() {
     switch (tab) {
       case 'tasks':    return `Tasks (${tasks.length})`;
       case 'logs':     return `Time Logs (${logs.length})`;
-      case 'files':    return `Files (${files.length})`;
+      case 'files':    return <span className="flex items-center">Files ({files.length})<UnreadBadge count={unreadFiles} /></span>;
       case 'feedback': return <span className="flex items-center">Feedback<UnreadBadge count={unreadFeedback} /></span>;
       case 'messages': return <span className="flex items-center">Messages<UnreadBadge count={unreadMessages} /></span>;
     }
