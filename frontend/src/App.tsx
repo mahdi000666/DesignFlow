@@ -12,6 +12,8 @@ import ClientDashboard from './pages/client/ClientDashboard';
 import ClientProjects from './pages/client/ClientProjects';
 import ClientProjectDetail from './pages/client/ClientProjectDetail';
 import DesignerProjectDetail from './pages/designer/DesignerProjectDetail';
+import AnalyticsDashboard from './pages/manager/AnalyticsDashboard';
+import ReportsPage from './pages/manager/ReportsPage';
 
 function RootRedirect() {
   const { user } = useAuth();
@@ -22,7 +24,6 @@ function RootRedirect() {
   return <Navigate to="/login" replace />;
 }
 
-// Redirects already-authenticated users away from /login
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   if (!user) return <>{children}</>;
@@ -34,49 +35,33 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-      <BrowserRouter>
-        <Routes>
+    <BrowserRouter>
+      <Routes>
 
-          {/* Public */}
-          <Route path="/login"    element={<PublicRoute><LoginPage /></PublicRoute>} />
-          <Route path="/activate" element={<ActivatePage />} />
+        {/* Public */}
+        <Route path="/login"    element={<PublicRoute><LoginPage /></PublicRoute>} />
+        <Route path="/activate" element={<ActivatePage />} />
 
-          {/* Manager */}
-          <Route path="/manager" element={<ProtectedRoute allowedRoles={['Manager']}><ManagerDashboard /></ProtectedRoute>} />
-          <Route
-            path="/manager/projects"
-            element={<ProtectedRoute allowedRoles={['Manager']}><ProjectList /></ProtectedRoute>}
-          />
-          <Route
-            path="/manager/projects/:id"
-            element={<ProtectedRoute allowedRoles={['Manager']}><ProjectDetail /></ProtectedRoute>}
-          />
+        {/* Manager */}
+        <Route path="/manager" element={<ProtectedRoute allowedRoles={['Manager']}><ManagerDashboard /></ProtectedRoute>} />
+        <Route path="/manager/projects"    element={<ProtectedRoute allowedRoles={['Manager']}><ProjectList /></ProtectedRoute>} />
+        <Route path="/manager/projects/:id" element={<ProtectedRoute allowedRoles={['Manager']}><ProjectDetail /></ProtectedRoute>} />
+        <Route path="/manager/analytics"   element={<ProtectedRoute allowedRoles={['Manager']}><AnalyticsDashboard /></ProtectedRoute>} />
+        <Route path="/manager/reports"     element={<ProtectedRoute allowedRoles={['Manager']}><ReportsPage /></ProtectedRoute>} />
 
-          {/* Designer */}
-          <Route path="/designer" element={<ProtectedRoute allowedRoles={['Designer']}><DesignerDashboard /></ProtectedRoute>} />
-          <Route
-            path="/designer/projects"
-            element={<ProtectedRoute allowedRoles={['Designer']}><DesignerProjects /></ProtectedRoute>}
-          />
-          <Route
-            path="/designer/projects/:id"
-            element={<ProtectedRoute allowedRoles={['Designer']}><DesignerProjectDetail /></ProtectedRoute>}
-          />
+        {/* Designer */}
+        <Route path="/designer" element={<ProtectedRoute allowedRoles={['Designer']}><DesignerDashboard /></ProtectedRoute>} />
+        <Route path="/designer/projects"    element={<ProtectedRoute allowedRoles={['Designer']}><DesignerProjects /></ProtectedRoute>} />
+        <Route path="/designer/projects/:id" element={<ProtectedRoute allowedRoles={['Designer']}><DesignerProjectDetail /></ProtectedRoute>} />
 
-          {/* Client */}
-          <Route path="/client" element={<ProtectedRoute allowedRoles={['Client']}><ClientDashboard /></ProtectedRoute>} />
-          <Route
-            path="/client/projects"
-            element={<ProtectedRoute allowedRoles={['Client']}><ClientProjects /></ProtectedRoute>}
-          />
-          <Route
-            path="/client/projects/:id"
-            element={<ProtectedRoute allowedRoles={['Client']}><ClientProjectDetail /></ProtectedRoute>}
-          />
+        {/* Client */}
+        <Route path="/client" element={<ProtectedRoute allowedRoles={['Client']}><ClientDashboard /></ProtectedRoute>} />
+        <Route path="/client/projects"    element={<ProtectedRoute allowedRoles={['Client']}><ClientProjects /></ProtectedRoute>} />
+        <Route path="/client/projects/:id" element={<ProtectedRoute allowedRoles={['Client']}><ClientProjectDetail /></ProtectedRoute>} />
 
-          <Route path="/" element={<RootRedirect />} />
+        <Route path="/" element={<RootRedirect />} />
 
-        </Routes>
-      </BrowserRouter>
+      </Routes>
+    </BrowserRouter>
   );
 }

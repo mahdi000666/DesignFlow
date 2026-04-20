@@ -9,6 +9,7 @@ import { useMessages } from '../../hooks/useMessages';
 import { useFeedback } from '../../hooks/useFeedback';
 import { useUnreadCount } from '../../hooks/useUnreadCount';
 import { useAuth } from '../../hooks/useAuth';
+import { useAISummary } from '../../hooks/useAnalytics';
 import TaskForm from '../../components/TaskForm';
 import TaskRow from '../../components/TaskRow';
 import AssignDesignerPanel from '../../components/AssignDesignerPanel';
@@ -53,6 +54,52 @@ function UnreadBadge({ count }: { count: number }) {
     <span className="ml-1.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold leading-none">
       {count}
     </span>
+  );
+}
+
+// ─── AI Summary card ─────────────────────────────────────────────────────────
+
+function AISummaryCard({ projectId }: { projectId: number }) {
+  const [enabled, setEnabled] = useState(false);
+  const { data, isLoading, isError, refetch, isFetching } = useAISummary(
+    enabled ? projectId : undefined
+  );
+
+  return (
+    <div className="bg-blue-50 border border-blue-200 rounded-xl p-5 mb-6">
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">
+          AI Project Health Summary
+        </p>
+        {enabled && data && (
+          <button
+            onClick={() => refetch()}
+            disabled={isFetching}
+            className="text-xs text-blue-600 hover:text-blue-800 disabled:opacity-40 transition-colors"
+          >
+            {isFetching ? 'Refreshing…' : 'Refresh'}
+          </button>
+        )}
+      </div>
+
+      {!enabled && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-blue-600">
+            Generate an AI-powered health narrative for this project.
+          </p>
+          <button
+            onClick={() => setEnabled(true)}
+            className="shrink-0 ml-4 bg-blue-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-blue-800 transition-colors"
+          >
+            Generate Summary
+          </button>
+        </div>
+      )}
+
+      {enabled && isLoading  && <p className="text-sm text-blue-600">Analysing project data…</p>}
+      {enabled && isError    && <p className="text-sm text-rose-600">Failed to generate summary. Check that GROQ_API_KEY is configured.</p>}
+      {enabled && data       && <p className="text-sm text-slate-700 leading-relaxed">{data.summary}</p>}
+    </div>
   );
 }
 
@@ -265,6 +312,9 @@ export default function ProjectDetail() {
           </div>
         )}
       </div>
+
+      {/* ── AI Summary card (Manager only) ──────────────────────────────── */}
+      {isManager && <AISummaryCard projectId={projectId} />}
 
       {/* ── Tabs ─────────────────────────────────────────────────────────── */}
       <div className="flex border-b border-slate-200 mb-6">

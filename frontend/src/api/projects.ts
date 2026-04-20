@@ -1,4 +1,4 @@
-import apiClient from './client';
+import apiClient from './clients';
 import type { Project, ProjectPayload } from '../types/project';
 
 export const getProjects = async (): Promise<Project[]> => {

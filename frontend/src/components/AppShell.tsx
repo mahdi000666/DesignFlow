@@ -43,18 +43,17 @@ function IconReports() {
 // ─── Nav config ──────────────────────────────────────────────────────────────
 
 interface NavItem {
-  label:     string;
-  path:      string;
-  icon:      ReactNode;
-  disabled?: boolean;
+  label: string;
+  path:  string;
+  icon:  ReactNode;
 }
 
 const NAV_BY_ROLE: Record<string, NavItem[]> = {
   Manager: [
     { label: 'Dashboard', path: '/manager',           icon: <IconDashboard /> },
     { label: 'Projects',  path: '/manager/projects',  icon: <IconProjects /> },
-    { label: 'Analytics', path: '/manager/analytics', icon: <IconAnalytics />, disabled: true },
-    { label: 'Reports',   path: '/manager/reports',   icon: <IconReports />,   disabled: true },
+    { label: 'Analytics', path: '/manager/analytics', icon: <IconAnalytics /> },
+    { label: 'Reports',   path: '/manager/reports',   icon: <IconReports /> },
   ],
   Designer: [
     { label: 'Dashboard',   path: '/designer',          icon: <IconDashboard /> },
@@ -83,7 +82,6 @@ export default function AppShell({ title, breadcrumb, actions, children }: AppSh
   const role             = user?.role ?? 'Manager';
   const navItems         = NAV_BY_ROLE[role] ?? [];
 
-  // Exact match for root dashboard; prefix match for nested routes.
   const isActive = (path: string) => {
     const base = `/${role.toLowerCase()}`;
     return path === base
@@ -139,30 +137,20 @@ export default function AppShell({ title, breadcrumb, actions, children }: AppSh
 
         {/* Nav items */}
         <nav className="flex-1 px-2.5 py-3 space-y-0.5 overflow-y-auto">
-          {navItems.map(item =>
-            item.disabled ? (
-              <div
-                key={item.path}
-                className="flex items-center gap-3 px-3 py-2 rounded-md text-slate-600 text-sm cursor-not-allowed opacity-40 select-none"
-              >
-                {item.icon}
-                {item.label}
-              </div>
-            ) : (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex items-center gap-3 py-2 rounded-md text-sm transition-colors ${
-                  isActive(item.path)
-                    ? 'bg-slate-800 text-white border-l-[3px] border-blue-500 pl-[9px] pr-3'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800 px-3'
-                }`}
-              >
-                {item.icon}
-                {item.label}
-              </Link>
-            )
-          )}
+          {navItems.map(item => (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={`flex items-center gap-3 py-2 rounded-md text-sm transition-colors ${
+                isActive(item.path)
+                  ? 'bg-slate-800 text-white border-l-[3px] border-blue-500 pl-[9px] pr-3'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800 px-3'
+              }`}
+            >
+              {item.icon}
+              {item.label}
+            </Link>
+          ))}
         </nav>
       </aside>
 

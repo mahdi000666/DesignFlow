@@ -1,4 +1,4 @@
-import apiClient from './client';
+import apiClient from './clients';
 import type { UploadedFile, FileType } from '../types/file';
 
 export const getFiles = async (projectId: number): Promise<UploadedFile[]> => {

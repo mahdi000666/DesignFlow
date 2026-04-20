@@ -1,3 +1,6 @@
+Verification. UPLOAD SETTINGS TOO
+
+DONT FORGE TO CHECK INTEGRATION
 
 In order to save tokens, you may only generate the document for S3 chapter.
 
@@ -34,7 +37,6 @@ Directory structure:
     │   │       ├── permissions.py
     │   │       ├── serializers.py
     │   │       ├── signals.py
-    │   │       ├── tests.py
     │   │       ├── urls.py
     │   │       ├── urls_users.py
     │   │       ├── views.py

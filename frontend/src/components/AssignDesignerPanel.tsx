@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAssignDesigner, useRemoveDesigner } from '../hooks/useProjects';
-import apiClient from '../api/client';
+import apiClient from '../api/clients';
 import type { Project } from '../types/project';
 
 interface DesignerOption {

@@ -13,7 +13,8 @@ urlpatterns = [
     path('api/feedback/',  include('apps.feedback.urls')),
     path('api/files/',     include('apps.files.urls')),
     path('api/messages/',  include('apps.messages.urls')),
-    path('api/analytics/', include('apps.analytics.urls'))
+    path('api/analytics/', include('apps.analytics.urls')),
+    path('api/reports/',   include('apps.analytics.report_urls'))
 ]
 
 if settings.DEBUG:

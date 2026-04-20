@@ -1,4 +1,4 @@
-import apiClient from './client';
+import apiClient from './clients';
 import type { Message, MessagePayload } from '../types/message';
 
 export const getMessages = async (projectId: number): Promise<Message[]> => {

@@ -1,4 +1,4 @@
-import apiClient from './client';
+import apiClient from './clients';
 import type { Task, TaskPayload, HourEstimate } from '../types/task';
 
 export const getTasks = async (projectId: number): Promise<Task[]> => {

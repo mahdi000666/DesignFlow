@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import apiClient from '../../api/client';
+import apiClient from '../../api/clients';
 import { useAuth } from '../../hooks/useAuth';
 
 // Role → dashboard path mapping.

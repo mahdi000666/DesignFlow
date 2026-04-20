@@ -1,4 +1,4 @@
-import apiClient from './client';
+import apiClient from './clients';
 import type { TimeLog, TimeLogPayload } from '../types/timelog';
 
 export const getTimeLogs = async (projectId: number): Promise<TimeLog[]> => {

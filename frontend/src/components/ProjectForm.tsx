@@ -2,7 +2,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useQuery } from '@tanstack/react-query';
-import apiClient from '../api/client';
+import apiClient from '../api/clients';
 import type { ProjectPayload } from '../types/project';
 
 const schema = z.object({

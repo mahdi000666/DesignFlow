@@ -1,4 +1,4 @@
-import apiClient from './client';
+import apiClient from './clients';
 import type { Feedback, FeedbackPayload, FeedbackStatus } from '../types/feedback';
 
 export const getFeedback = async (projectId: number): Promise<Feedback[]> => {
