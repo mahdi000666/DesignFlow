@@ -1,23 +1,4 @@
-1. In AnalyticsDashboard.tsx im getting these errors:
-```
-label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-'percent' is possibly 'undefined'.
 
-formatter={(v: number) => v.toLocaleString()}
-Type '(v: number) => string' is not assignable to type 'Formatter<number, NameType> & ((value: number, name: NameType, item: Payload<number, NameType>, index: number, payload: Payload<number, NameType>[]) => ReactNode | [...])'.
-  Type '(v: number) => string' is not assignable to type 'Formatter<number, NameType>'.
-    Types of parameters 'v' and 'value' are incompatible.
-      Type 'number | undefined' is not assignable to type 'number'.
-        Type 'undefined' is not assignable to type 'number'.
-```
-
-1. Here are the files you have requested.
-2. Add the missing feature.
-3. Given the context of this project, should I have the LLM generate fake data? (clients, designers, projects, tasks, time logs, feedbacks, scope creeps etc). What should I tell them LLM? And how to fill this data?
-
-Ask third question again to double check.
-
-Tomorrow ask 5 tunisian fake data from each LLM.
 
 In order to save tokens, you may only generate the document for S3 chapter.
 

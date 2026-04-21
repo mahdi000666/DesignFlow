@@ -455,4 +455,15 @@ class AISummaryView(APIView):
         )
         summary = response.choices[0].message.content.strip()
 
+        try:
+            groq_client = Groq(api_key=os.environ.get('GROQ_API_KEY'))
+            response = groq_client.chat.completions.create(
+                model='llama-3.3-70b-versatile',
+                messages=[{'role': 'user', 'content': prompt}],
+                max_tokens=300,
+            )
+            summary = response.choices[0].message.content.strip()
+        except Exception as e:
+            return Response({'error': f'AI summary unavailable: {e}'}, status=502)
+
         return Response({'summary': summary})

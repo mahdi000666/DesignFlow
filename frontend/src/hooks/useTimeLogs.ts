@@ -12,7 +12,11 @@ export const useCreateTimeLog = (projectId: number) => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: api.createTimeLog,
-    onSuccess:  () => qc.invalidateQueries({ queryKey: ['timelogs', projectId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['timelogs', projectId] });
+      qc.invalidateQueries({ queryKey: ['projects', projectId] });
+      qc.invalidateQueries({ queryKey: ['projects'], exact: true });
+    },
   });
 };
 
@@ -20,7 +24,11 @@ export const useDeleteTimeLog = (projectId: number) => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: api.deleteTimeLog,
-    onSuccess:  () => qc.invalidateQueries({ queryKey: ['timelogs', projectId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['timelogs', projectId] });
+      qc.invalidateQueries({ queryKey: ['projects', projectId] });
+      qc.invalidateQueries({ queryKey: ['projects'], exact: true });
+    },
   });
 };
 

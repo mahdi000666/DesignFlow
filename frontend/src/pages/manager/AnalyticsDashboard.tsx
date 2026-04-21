@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
@@ -34,9 +34,10 @@ interface FilterBarProps {
   filters:  AnalyticsFilters;
   onChange: (f: AnalyticsFilters) => void;
   projects: { id: number; project_name: string }[];
+  clients:  { id: number; name: string }[];   // ADD THIS LINE
 }
 
-function FilterBar({ filters, onChange, projects }: FilterBarProps) {
+function FilterBar({ filters, onChange, projects, clients }: FilterBarProps) {
   const selectCls =
     'px-3 py-2 border border-slate-200 rounded-lg bg-white text-sm text-slate-600 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 cursor-pointer transition-colors hover:bg-slate-50';
 
@@ -73,6 +74,19 @@ function FilterBar({ filters, onChange, projects }: FilterBarProps) {
           ))}
         </select>
       </div>
+      <div className="flex flex-col gap-1">
+        <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Client</label>
+        <select
+          value={filters.client ?? ''}
+          onChange={e => onChange({ ...filters, client: e.target.value ? Number(e.target.value) : undefined })}
+          className={selectCls}
+        >
+          <option value="">All clients</option>
+          {clients.map(c => (
+            <option key={c.id} value={c.id}>{c.name}</option>
+          ))}
+        </select>
+      </div>
       <button
         onClick={() => onChange({})}
         className="px-3 py-2 text-sm text-slate-500 hover:text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
@@ -91,6 +105,11 @@ export default function AnalyticsDashboard() {
   const [filters, setFilters] = useState<AnalyticsFilters>({});
 
   const { data: projects = [] }      = useProjects();
+  const clients = useMemo(
+    () => Array.from(new Map(projects.map(p => [p.client, p.client_name])).entries())
+      .map(([id, name]) => ({ id, name })),
+    [projects]
+  );
   const { data: kpi }                = useKPISummary(filters);
   const { data: budgetData = [] }    = useBudgetVariance(filters);
   const { data: revenueData = [] }   = useRevenueByClient();
@@ -105,7 +124,7 @@ export default function AnalyticsDashboard() {
   return (
     <AppShell title="Analytics" breadcrumb="Analytics">
 
-      <FilterBar filters={filters} onChange={setFilters} projects={projects} />
+      <FilterBar filters={filters} onChange={setFilters} projects={projects} clients={clients} />
 
       {/* ── KPI cards ──────────────────────────────────────────────────── */}
       <div className="grid grid-cols-4 gap-4 mb-6">
