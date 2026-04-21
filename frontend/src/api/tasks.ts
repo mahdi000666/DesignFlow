@@ -8,6 +8,14 @@ export const getTasks = async (projectId: number): Promise<Task[]> => {
   return data.results;
 };
 
+// Completed tasks across all projects — Manager only. Used by the dashboard.
+export const getAllCompletedTasks = async (): Promise<Task[]> => {
+  const { data } = await apiClient.get<{ results: Task[] }>('/tasks/', {
+    params: { status: 'Completed', page_size: 100 },
+  });
+  return data.results;
+};
+
 export const createTask = async (payload: TaskPayload): Promise<Task> => {
   const { data } = await apiClient.post<Task>('/tasks/', payload);
   return data;
@@ -33,7 +41,7 @@ export const estimateTaskHours = async (
   const { data } = await apiClient.post<HourEstimate>('/tasks/estimate-hours/', {
     task_name:   taskName,
     description,
-    project_id:  projectId,   // lets the backend pull historical TimeLog context
+    project_id:  projectId,
   });
   return data;
 };

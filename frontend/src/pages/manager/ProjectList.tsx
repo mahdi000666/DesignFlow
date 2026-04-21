@@ -25,19 +25,11 @@ const STATUS_DOT: Record<Project['status'], string> = {
 const CATEGORY_COLORS = [
   'bg-purple-50 text-purple-700',
   'bg-blue-50 text-blue-700',
-  'bg-teal-50 text-teal-700',
   'bg-orange-50 text-orange-700',
   'bg-pink-50 text-pink-700',
-  'bg-indigo-50 text-indigo-700',
   'bg-cyan-50 text-cyan-700',
   'bg-rose-50 text-rose-700',
 ];
-
-const categoryColor = (cat: string) => {
-  let hash = 0;
-  for (let i = 0; i < cat.length; i++) hash = cat.charCodeAt(i) + ((hash << 5) - hash);
-  return CATEGORY_COLORS[Math.abs(hash) % CATEGORY_COLORS.length];
-};
 
 const barColor = (pct: number) =>
   pct >= 100 ? '#ef4444' : pct >= 80 ? '#f59e0b' : '#0d9488';
@@ -60,6 +52,21 @@ export default function ProjectList() {
     () => Array.from(new Set(projects.map(p => p.client_name))).sort(),
     [projects]
   );
+
+  const categoryColorMap = useMemo(() => {
+    // Extract unique, truthy categories and sort them for deterministic order
+    const uniqueCategories = Array.from(
+      new Set(projects.map(p => p.category).filter((c): c is string => Boolean(c)))
+    ).sort();
+
+    // Map each category to a color sequentially
+    return new Map(
+      uniqueCategories.map((cat, i) => [
+        cat, 
+        CATEGORY_COLORS[i % CATEGORY_COLORS.length]
+      ])
+    );
+  }, [projects]);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -167,7 +174,7 @@ export default function ProjectList() {
                       </span>
                       {p.category && (
                         <div className="mt-1">
-                          <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide ${categoryColor(p.category)}`}>
+                          <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide ${categoryColorMap.get(p.category) ?? 'bg-slate-50 text-slate-700'}`}>
                             {p.category}
                           </span>
                         </div>

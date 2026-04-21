@@ -19,6 +19,7 @@ class TaskViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user       = self.request.user
         project_id = self.request.query_params.get('project')
+        status_filter = self.request.query_params.get('status')
 
         if user.role == 'Manager':
             qs = Task.objects.select_related('project').prefetch_related('subtasks')
@@ -31,6 +32,9 @@ class TaskViewSet(viewsets.ModelViewSet):
 
         if project_id:
             qs = qs.filter(project_id=project_id)
+
+        if status_filter:
+            qs = qs.filter(status=status_filter)
 
         # Restrict to top-level tasks on list only — detail/update/delete actions
         # must be able to resolve subtask ids, so the filter must not apply there.

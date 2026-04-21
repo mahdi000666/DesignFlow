@@ -16,6 +16,7 @@ class Task(models.Model):
     status          = models.CharField(max_length=10, choices=STATUS_CHOICES, default='Todo')
     is_unplanned    = models.BooleanField(default=False)   # True = scope creep task
     created_at      = models.DateTimeField(auto_now_add=True)
+    completed_at    = models.DateTimeField(null=True, blank=True, db_index=True)
 
     class Meta:
         indexes = [

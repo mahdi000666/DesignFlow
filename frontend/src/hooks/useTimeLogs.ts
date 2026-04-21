@@ -37,6 +37,10 @@ export const useUpdateTimeLog = (projectId: number) => {
   return useMutation({
     mutationFn: ({ id, payload }: { id: number; payload: Partial<TimeLogPayload> }) =>
       api.updateTimeLog(id, payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['timelogs', projectId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['timelogs', projectId] });
+      qc.invalidateQueries({ queryKey: ['projects', projectId] });
+      qc.invalidateQueries({ queryKey: ['projects'], exact: true });
+    },
   });
 };

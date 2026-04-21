@@ -8,6 +8,14 @@ export const getFiles = async (projectId: number): Promise<UploadedFile[]> => {
   return data.results;
 };
 
+// All files across projects — Manager only. Used by the dashboard.
+export const getAllFiles = async (): Promise<UploadedFile[]> => {
+  const { data } = await apiClient.get<{ results: UploadedFile[] }>('/files/', {
+    params: { page_size: 100 },
+  });
+  return data.results;
+};
+
 export const uploadFile = async (
   projectId: number,
   fileType: FileType,

@@ -1,3 +1,4 @@
+from django.utils import timezone
 from rest_framework import serializers
 from .models import Task
 
@@ -11,12 +12,11 @@ class TaskReadSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'project', 'project_name', 'parent_task',
             'task_name', 'description', 'estimated_hours',
-            'status', 'is_unplanned', 'created_at', 'subtasks',
+            'status', 'is_unplanned', 'created_at', 'completed_at', 'subtasks',
         ]
 
     def get_subtasks(self, obj):
         # Only recurse one level — avoids expensive deep nesting for MVP.
-        # Parent tasks are fetched with ?project= filter; subtasks render inline.
         return TaskReadSerializer(obj.subtasks.all(), many=True).data
 
 
@@ -29,11 +29,18 @@ class TaskWriteSerializer(serializers.ModelSerializer):
         ]
 
     def validate(self, attrs):
-        # Prevent assigning a subtask's parent from a different project.
-        parent = attrs.get('parent_task')
+        parent  = attrs.get('parent_task')
         project = attrs.get('project', getattr(self.instance, 'project', None))
         if parent and parent.project_id != project.id:
             raise serializers.ValidationError(
                 {'parent_task': 'Parent task must belong to the same project.'}
             )
         return attrs
+
+    def update(self, instance, validated_data):
+        new_status = validated_data.get('status', instance.status)
+        if new_status == 'Completed' and instance.status != 'Completed':
+            validated_data['completed_at'] = timezone.now()
+        elif new_status != 'Completed' and instance.status == 'Completed':
+            validated_data['completed_at'] = None
+        return super().update(instance, validated_data)

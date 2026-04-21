@@ -8,6 +8,14 @@ export const getFeedback = async (projectId: number): Promise<Feedback[]> => {
   return data.results;
 };
 
+// All feedback across projects — Manager only. Used by the dashboard.
+export const getAllFeedback = async (): Promise<Feedback[]> => {
+  const { data } = await apiClient.get<{ results: Feedback[] }>('/feedback/', {
+    params: { page_size: 100 },
+  });
+  return data.results;
+};
+
 export const createFeedback = async (payload: FeedbackPayload): Promise<Feedback> => {
   const { data } = await apiClient.post<Feedback>('/feedback/', payload);
   return data;

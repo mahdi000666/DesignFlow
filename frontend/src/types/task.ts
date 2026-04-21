@@ -2,6 +2,7 @@ export interface Task {
   readonly id:           number;
   readonly project_name: string;
   readonly created_at:   string;
+  readonly completed_at: string | null;
   readonly subtasks:     Task[];
   project:          number;
   parent_task:      number | null;
