@@ -10,7 +10,7 @@ export default function ManagerDashboard() {
   const KPI_CARDS = [
     { label: 'Active Projects',  value: kpi ? String(kpi.active_projects)       : '—', rail: 'bg-blue-500' },
     { label: 'Total Revenue',    value: kpi ? kpi.total_revenue.toLocaleString() : '—', rail: 'bg-emerald-500' },
-    { label: 'Avg. EHR',         value: kpi ? kpi.avg_ehr.toFixed(2)             : '—', rail: 'bg-amber-500' },
+    { label: 'Avg. EHR',         value: kpi ? kpi.avg_ehr.toFixed(2)             : '—', rail: 'bg-yellow-500' },
     { label: 'Pending Feedback', value: kpi ? String(kpi.pending_feedback)        : '—', rail: 'bg-rose-500' },
   ];
 
