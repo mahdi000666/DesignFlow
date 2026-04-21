@@ -7,6 +7,7 @@ from django.utils.dateparse import parse_date
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from groq import Groq
 
 from apps.projects.models import Project
 from apps.tasks.models import Task
@@ -42,11 +43,11 @@ class KPISummaryView(APIView):
     permission_classes = [IsManager]
 
     def get(self, request):
-        f = _parse_filters(request)
+        client_id = request.query_params.get('client')
 
         projects = Project.objects.all()
-        if f.get('client_id'):
-            projects = projects.filter(client_id=f['client_id'])
+        if client_id:
+            projects = projects.filter(client_id=client_id)
 
         total_revenue  = projects.aggregate(total=Sum('budget_amount'))['total'] or 0
         active_count   = projects.filter(status='Active').count()
@@ -100,6 +101,9 @@ class BudgetVarianceView(APIView):
             if f.get('date_to'):
                 timelog_filter['time_logs__created_at__date__lte'] = f['date_to']
 
+            if timelog_filter:
+                task_qs = task_qs.filter(**timelog_filter)
+
             agg = task_qs.aggregate(
                 total_estimated=Sum('estimated_hours'),
                 total_actual=Sum('time_logs__hours_spent'),
@@ -130,13 +134,14 @@ class EHRView(APIView):
     permission_classes = [IsManager]
 
     def get(self, request):
-        f = _parse_filters(request)
+        client_id  = request.query_params.get('client')
+        project_id = request.query_params.get('project')
 
         projects = Project.objects.filter(budget_amount__isnull=False).select_related('client__user')
-        if f.get('client_id'):
-            projects = projects.filter(client_id=f['client_id'])
-        if f.get('project_id'):
-            projects = projects.filter(id=f['project_id'])
+        if client_id:
+            projects = projects.filter(client_id=client_id)
+        if project_id:
+            projects = projects.filter(id=project_id)
 
         data = []
         for project in projects:
@@ -441,8 +446,7 @@ class AISummaryView(APIView):
             f"Effective Hourly Rate: {f'{ehr:.2f}' if ehr else 'N/A'}\n"
             f"Days until deadline: {days_remaining if days_remaining is not None else 'no deadline set'}"
         )
-
-        from groq import Groq
+        
         groq_client = Groq(api_key=os.environ.get('GROQ_API_KEY'))
         response = groq_client.chat.completions.create(
             model='llama-3.3-70b-versatile',

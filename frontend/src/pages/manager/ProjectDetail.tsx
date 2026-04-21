@@ -20,6 +20,7 @@ import MessageBoard from '../../components/MessageBoard';
 import AppShell from '../../components/AppShell';
 import type { TaskPayload, Task } from '../../types/task';
 import type { Project } from '../../types/project';
+import { exportPDF } from '../../api/analytics';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -214,14 +215,12 @@ export default function ProjectDetail() {
               Assign Designer
             </button>
           )}
-          <a
-            href={`/api/reports/export/?format=pdf&project=${projectId}`}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            onClick={() => exportPDF(projectId)}
             className="bg-blue-700 text-white px-3.5 py-2 rounded-lg text-sm font-semibold hover:bg-blue-800 transition-colors"
           >
             Export Report
-          </a>
+          </button>
           {isManager && (
             <button
               onClick={handleDelete}

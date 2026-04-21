@@ -172,7 +172,7 @@ export default function AnalyticsDashboard() {
                   nameKey="client_name"
                   cx="50%" cy="50%"
                   outerRadius={80}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
                   labelLine={false}
                 >
                   {revenueData.map((_, i) => (
@@ -180,7 +180,7 @@ export default function AnalyticsDashboard() {
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(v: number) => v.toLocaleString()}
+                  formatter={(v: number | undefined) => v?.toLocaleString() ?? '—'}
                   contentStyle={{ fontSize: 12 }}
                 />
               </PieChart>
