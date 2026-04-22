@@ -44,3 +44,26 @@ class TaskWriteSerializer(serializers.ModelSerializer):
         elif new_status != 'Completed' and instance.status == 'Completed':
             validated_data['completed_at'] = None
         return super().update(instance, validated_data)
+
+
+class TaskStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Task
+        fields = ['status']
+
+    def validate(self, attrs):
+        unexpected = set(self.initial_data.keys()) - {'status'}
+        if unexpected:
+            raise serializers.ValidationError({
+                field: 'Designers may only update task status.'
+                for field in sorted(unexpected)
+            })
+        return attrs
+
+    def update(self, instance, validated_data):
+        new_status = validated_data.get('status', instance.status)
+        if new_status == 'Completed' and instance.status != 'Completed':
+            validated_data['completed_at'] = timezone.now()
+        elif new_status != 'Completed' and instance.status == 'Completed':
+            validated_data['completed_at'] = None
+        return super().update(instance, validated_data)

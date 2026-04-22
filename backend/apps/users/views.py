@@ -8,7 +8,11 @@ from django.utils import timezone
 from apps.users.permissions import IsManager
 from apps.users.models import Client, Designer, InvitationToken
 
-from .serializers import ActivateAccountSerializer, CustomTokenObtainPairSerializer
+from .serializers import (
+    ActivateAccountSerializer,
+    CustomTokenObtainPairSerializer,
+    UserMeSerializer,
+)
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -63,6 +67,19 @@ def activate_account(request):
         {'message': f'Account activated. Welcome {user.full_name}, you can now log in.'},
         status=status.HTTP_200_OK,
     )
+
+
+@api_view(['GET', 'PATCH'])
+@permission_classes([IsAuthenticated])
+def me(request):
+    if request.method == 'GET':
+        serializer = UserMeSerializer(request.user)
+        return Response(serializer.data)
+
+    serializer = UserMeSerializer(request.user, data=request.data, partial=True)
+    serializer.is_valid(raise_exception=True)
+    serializer.save()
+    return Response(serializer.data)
 
 
 @api_view(['GET'])

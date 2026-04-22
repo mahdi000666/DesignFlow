@@ -71,11 +71,13 @@ class InvitationToken(models.Model):
     expires_at = models.DateTimeField()
     is_used    = models.BooleanField(default=False)
 
+    def save(self, *args, **kwargs):
+        if not self.expires_at:
+            self.expires_at = timezone.now() + timedelta(hours=48)
+        super().save(*args, **kwargs)
+
     def is_valid(self):
         return not self.is_used and self.expires_at > timezone.now()
 
     def __str__(self):
         return f'Token for {self.user.email} (used={self.is_used})'
-    
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)

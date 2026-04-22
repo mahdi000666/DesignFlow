@@ -1,3 +1,4 @@
+from django.db.models import Sum
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -10,7 +11,7 @@ from .serializers import (
     ProjectWriteSerializer,
     AssignDesignerSerializer,
 )
-from apps.users.permissions import IsManager, IsManagerOrDesigner
+from apps.users.permissions import IsManager
 
 
 class ProjectViewSet(viewsets.ModelViewSet):
@@ -44,7 +45,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         if self.action in ('create', 'destroy', 'assign_designer', 'remove_designer'):
             return [IsManager()]
         if self.action in ('update', 'partial_update'):
-            return [IsManagerOrDesigner()]
+            return [IsManager()]
         return [IsAuthenticated()]
 
     # --- custom action --------------------------------------------------
@@ -72,3 +73,30 @@ class ProjectViewSet(viewsets.ModelViewSet):
         assignment = get_object_or_404(ProjectAssignment, project=project, designer_id=designer_id)
         assignment.delete()
         return Response({'detail': 'Designer removed.'}, status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=True, methods=['get'], url_path='summary')
+    def summary(self, request, pk=None):
+        project = self.get_object()
+        actual_hours = float(
+            project.tasks.aggregate(total=Sum('time_logs__hours_spent'))['total'] or 0
+        )
+        budget_hours = float(project.budget_hours or 0)
+        budget_amount = float(project.budget_amount or 0)
+
+        ehr = (
+            budget_amount / actual_hours
+            if actual_hours > 0 and project.budget_amount is not None
+            else None
+        )
+        budget_utilization = (
+            actual_hours / budget_hours * 100 if budget_hours > 0 else None
+        )
+
+        return Response({
+            'project_id': project.id,
+            'project_name': project.project_name,
+            'actual_hours': round(actual_hours, 2),
+            'budget_hours': budget_hours,
+            'budget_utilization_pct': round(budget_utilization, 1) if budget_utilization is not None else None,
+            'ehr': round(ehr, 2) if ehr is not None else None,
+        })
