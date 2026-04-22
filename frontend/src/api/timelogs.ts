@@ -1,19 +1,14 @@
 import apiClient from './clients';
+import { getPaginatedResults } from './pagination';
 import type { TimeLog, TimeLogPayload } from '../types/timelog';
 
 export const getTimeLogs = async (projectId: number): Promise<TimeLog[]> => {
-  const { data } = await apiClient.get<{ results: TimeLog[] }>('/timelogs/', {
-    params: { project: projectId },
-  });
-  return data.results;
+  return getPaginatedResults<TimeLog>('/timelogs/', { project: projectId });
 };
 
 // All time logs across projects — Manager only. Used by the dashboard.
 export const getAllTimeLogs = async (): Promise<TimeLog[]> => {
-  const { data } = await apiClient.get<{ results: TimeLog[] }>('/timelogs/', {
-    params: { page_size: 100 },
-  });
-  return data.results;
+  return getPaginatedResults<TimeLog>('/timelogs/', { page_size: 100 });
 };
 
 export const createTimeLog = async (payload: TimeLogPayload): Promise<TimeLog> => {

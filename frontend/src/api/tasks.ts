@@ -1,19 +1,14 @@
 import apiClient from './clients';
+import { getPaginatedResults } from './pagination';
 import type { Task, TaskPayload, HourEstimate } from '../types/task';
 
 export const getTasks = async (projectId: number): Promise<Task[]> => {
-  const { data } = await apiClient.get<{ results: Task[] }>('/tasks/', {
-    params: { project: projectId },
-  });
-  return data.results;
+  return getPaginatedResults<Task>('/tasks/', { project: projectId });
 };
 
 // Completed tasks across all projects — Manager only. Used by the dashboard.
 export const getAllCompletedTasks = async (): Promise<Task[]> => {
-  const { data } = await apiClient.get<{ results: Task[] }>('/tasks/', {
-    params: { status: 'Completed', page_size: 100 },
-  });
-  return data.results;
+  return getPaginatedResults<Task>('/tasks/', { status: 'Completed', page_size: 100 });
 };
 
 export const createTask = async (payload: TaskPayload): Promise<Task> => {

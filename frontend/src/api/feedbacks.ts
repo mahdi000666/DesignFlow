@@ -1,19 +1,14 @@
 import apiClient from './clients';
+import { getPaginatedResults } from './pagination';
 import type { Feedback, FeedbackPayload, FeedbackStatus } from '../types/feedback';
 
 export const getFeedback = async (projectId: number): Promise<Feedback[]> => {
-  const { data } = await apiClient.get<{ results: Feedback[] }>('/feedback/', {
-    params: { project: projectId },
-  });
-  return data.results;
+  return getPaginatedResults<Feedback>('/feedback/', { project: projectId });
 };
 
 // All feedback across projects — Manager only. Used by the dashboard.
 export const getAllFeedback = async (): Promise<Feedback[]> => {
-  const { data } = await apiClient.get<{ results: Feedback[] }>('/feedback/', {
-    params: { page_size: 100 },
-  });
-  return data.results;
+  return getPaginatedResults<Feedback>('/feedback/', { page_size: 100 });
 };
 
 export const createFeedback = async (payload: FeedbackPayload): Promise<Feedback> => {

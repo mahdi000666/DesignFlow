@@ -1,9 +1,9 @@
 import apiClient from './clients';
+import { getPaginatedResults } from './pagination';
 import type { Project, ProjectPayload } from '../types/project';
 
 export const getProjects = async (): Promise<Project[]> => {
-  const { data } = await apiClient.get<{ results: Project[] }>('/projects/');
-  return data.results;
+  return getPaginatedResults<Project>('/projects/');
 };
 
 export const getProject = async (id: number): Promise<Project> => {

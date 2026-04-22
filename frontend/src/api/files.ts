@@ -1,19 +1,14 @@
 import apiClient from './clients';
+import { getPaginatedResults } from './pagination';
 import type { UploadedFile, FileType } from '../types/file';
 
 export const getFiles = async (projectId: number): Promise<UploadedFile[]> => {
-  const { data } = await apiClient.get<{ results: UploadedFile[] }>('/files/', {
-    params: { project: projectId },
-  });
-  return data.results;
+  return getPaginatedResults<UploadedFile>('/files/', { project: projectId });
 };
 
 // All files across projects — Manager only. Used by the dashboard.
 export const getAllFiles = async (): Promise<UploadedFile[]> => {
-  const { data } = await apiClient.get<{ results: UploadedFile[] }>('/files/', {
-    params: { page_size: 100 },
-  });
-  return data.results;
+  return getPaginatedResults<UploadedFile>('/files/', { page_size: 100 });
 };
 
 export const uploadFile = async (

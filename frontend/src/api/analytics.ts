@@ -37,8 +37,10 @@ export const getEHR = async (filters: AnalyticsFilters = {}): Promise<EHRItem[]>
   return data;
 };
 
-export const getClientProfitability = async (): Promise<ClientProfitabilityItem[]> => {
-  const { data } = await apiClient.get('/analytics/profitability/');
+export const getClientProfitability = async (
+  filters: AnalyticsFilters = {},
+): Promise<ClientProfitabilityItem[]> => {
+  const { data } = await apiClient.get('/analytics/profitability/', { params: toParams(filters) });
   return data;
 };
 
@@ -57,8 +59,10 @@ export const getCumulativeHours = async (filters: AnalyticsFilters): Promise<Cum
   return data;
 };
 
-export const getRevenueByClient = async (): Promise<RevenueByClientItem[]> => {
-  const { data } = await apiClient.get('/analytics/revenue-by-client/');
+export const getRevenueByClient = async (
+  filters: AnalyticsFilters = {},
+): Promise<RevenueByClientItem[]> => {
+  const { data } = await apiClient.get('/analytics/revenue-by-client/', { params: toParams(filters) });
   return data;
 };
 

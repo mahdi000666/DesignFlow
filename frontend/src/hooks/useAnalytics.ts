@@ -31,10 +31,10 @@ export const useEHR = (filters: AnalyticsFilters = {}) =>
     queryFn:  () => getEHR(filters),
   });
 
-export const useClientProfitability = () =>
+export const useClientProfitability = (filters: AnalyticsFilters = {}) =>
   useQuery({
-    queryKey: ['analytics', 'profitability'],
-    queryFn:  getClientProfitability,
+    queryKey: ['analytics', 'profitability', filters],
+    queryFn:  () => getClientProfitability(filters),
   });
 
 export const useScopeCreep = (filters: AnalyticsFilters = {}) =>
@@ -56,10 +56,10 @@ export const useCumulativeHours = (filters: AnalyticsFilters) =>
     enabled:  !!filters.project,
   });
 
-export const useRevenueByClient = () =>
+export const useRevenueByClient = (filters: AnalyticsFilters = {}) =>
   useQuery({
-    queryKey: ['analytics', 'revenue-by-client'],
-    queryFn:  getRevenueByClient,
+    queryKey: ['analytics', 'revenue-by-client', filters],
+    queryFn:  () => getRevenueByClient(filters),
   });
 
 export const useProfitMargin = (filters: AnalyticsFilters = {}) =>

@@ -12,7 +12,10 @@ export const useCreateProject = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: projectsApi.createProject,
-    onSuccess:  () => qc.invalidateQueries({ queryKey: ['projects'], exact: true }),
+    onSuccess:  () => {
+      qc.invalidateQueries({ queryKey: ['projects'], exact: true });
+      qc.invalidateQueries({ queryKey: ['analytics'] });
+    },
   });
 };
 
@@ -20,7 +23,11 @@ export const useUpdateProject = (id: number) => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (payload: Partial<ProjectPayload>) => projectsApi.updateProject(id, payload),
-    onSuccess:  () => qc.invalidateQueries({ queryKey: ['projects', id] }),
+    onSuccess:  () => {
+      qc.invalidateQueries({ queryKey: ['projects', id] });
+      qc.invalidateQueries({ queryKey: ['projects'], exact: true });
+      qc.invalidateQueries({ queryKey: ['analytics'] });
+    },
   });
 };
 
@@ -33,6 +40,7 @@ export const useDeleteProject = () => {
       // 404 refetch on the now-deleted project while the page is still mounted.
       qc.invalidateQueries({ queryKey: ['projects'], exact: true });
       qc.removeQueries({ queryKey: ['projects', deletedId] });
+      qc.invalidateQueries({ queryKey: ['analytics'] });
     },
   });
 };
@@ -41,7 +49,10 @@ export const useAssignDesigner = (projectId: number) => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (designerId: number) => projectsApi.assignDesigner(projectId, designerId),
-    onSuccess:  () => qc.invalidateQueries({ queryKey: ['projects', projectId] }),
+    onSuccess:  () => {
+      qc.invalidateQueries({ queryKey: ['projects', projectId] });
+      qc.invalidateQueries({ queryKey: ['projects'], exact: true });
+    },
   });
 };
 
@@ -49,6 +60,9 @@ export const useRemoveDesigner = (projectId: number) => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (designerId: number) => projectsApi.removeDesigner(projectId, designerId),
-    onSuccess:  () => qc.invalidateQueries({ queryKey: ['projects', projectId] }),
+    onSuccess:  () => {
+      qc.invalidateQueries({ queryKey: ['projects', projectId] });
+      qc.invalidateQueries({ queryKey: ['projects'], exact: true });
+    },
   });
 };

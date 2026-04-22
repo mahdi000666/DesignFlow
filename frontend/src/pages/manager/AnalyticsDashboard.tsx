@@ -112,8 +112,8 @@ export default function AnalyticsDashboard() {
   );
   const { data: kpi }                = useKPISummary(filters);
   const { data: budgetData = [] }    = useBudgetVariance(filters);
-  const { data: revenueData = [] }   = useRevenueByClient();
-  const { data: profitability = [] } = useClientProfitability();
+  const { data: revenueData = [] }   = useRevenueByClient(filters);
+  const { data: profitability = [] } = useClientProfitability(filters);
   const { data: scopeCreep = [] }    = useScopeCreep(filters);
   const { data: utilization = [] }   = useDesignerUtilization(filters);
   const { data: cumulativeHours, isLoading: loadingCumulative } = useCumulativeHours(filters);

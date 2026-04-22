@@ -250,7 +250,7 @@ export default function ManagerDashboard() {
                           {/* EHR */}
                           <div className="text-right">
                             {ehr !== null
-                              ? <span className={`font-mono text-sm font-bold ${isOver ? 'text-rose-600' : 'text-emerald-700'}`}>${ehr}</span>
+                              ? <span className={`font-mono text-sm font-bold ${isOver ? 'text-rose-600' : 'text-emerald-700'}`}>{ehr} TND/h</span>
                               : <span className="text-slate-300 text-sm">—</span>}
                           </div>
                           {/* Deadline */}
