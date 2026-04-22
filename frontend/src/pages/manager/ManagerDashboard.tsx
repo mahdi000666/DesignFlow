@@ -77,19 +77,13 @@ export default function ManagerDashboard() {
   });
 
   const categoryColorMap = useMemo(() => {
-      // Extract unique, truthy categories and sort them for deterministic order
-      const uniqueCategories = Array.from(
-        new Set(projects.map(p => p.category).filter((c): c is string => Boolean(c)))
-      ).sort();
-  
-      // Map each category to a color sequentially
-      return new Map(
-        uniqueCategories.map((cat, i) => [
-          cat, 
-          CATEGORY_COLORS[i % CATEGORY_COLORS.length]
-        ])
-      );
-    }, [projects]);
+    const uniqueCategories = Array.from(
+      new Set(projects.map(p => p.category).filter((c): c is string => Boolean(c)))
+    ).sort();
+    return new Map(
+      uniqueCategories.map((cat, i) => [cat, CATEGORY_COLORS[i % CATEGORY_COLORS.length]])
+    );
+  }, [projects]);
 
   // ── Derived data ─────────────────────────────────────────────────────────────
 
@@ -99,7 +93,6 @@ export default function ManagerDashboard() {
     .sort((a, b) => new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime())
     .slice(0, 5);
 
-  // Hours logged in the current calendar week (Mon–Sun).
   const weekStart = new Date();
   weekStart.setDate(weekStart.getDate() - ((weekStart.getDay() + 6) % 7));
   weekStart.setHours(0, 0, 0, 0);
@@ -107,7 +100,6 @@ export default function ManagerDashboard() {
     .filter(l => new Date(l.created_at) >= weekStart)
     .reduce((sum, l) => sum + Number(l.hours_spent), 0);
 
-  // At-risk: active projects where budget ≥ 80% consumed OR deadline within 14 days.
   const today = new Date();
   const soonDate = new Date();
   soonDate.setDate(today.getDate() + 14);
@@ -120,7 +112,6 @@ export default function ManagerDashboard() {
     return pct >= 80 || deadlineSoon;
   }).length;
 
-  // UploadedFile only exposes project id — cross-reference with fetched projects.
   const projectNameById = Object.fromEntries(projects.map(p => [p.id, p.project_name]));
 
   type ActivityItem = { id: string; type: 'log' | 'file' | 'task'; label: string; sub: string; date: string };
@@ -152,15 +143,15 @@ export default function ManagerDashboard() {
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 8);
 
-  // ── KPI cards (3-col × 2-row) ─────────────────────────────────────────────
+  // ── KPI cards ─────────────────────────────────────────────────────────────
 
   const KPI_CARDS = [
-    { label: 'Active Projects',  value: kpi ? String(kpi.active_projects)      : '—', rail: 'bg-blue-500'   },
-    { label: 'Total Revenue',    value: kpi ? formatTND(kpi.total_revenue)      : '—', rail: 'bg-emerald-500' },
-    { label: 'Avg. EHR',         value: kpi ? `${kpi.avg_ehr.toFixed(2)} TND/h` : '—', rail: 'bg-yellow-500' },
-    { label: 'Pending Feedback', value: kpi ? String(kpi.pending_feedback)      : '—', rail: 'bg-rose-500'   },
-    { label: 'Hours Logged This Week',  value: `${hoursThisWeek.toFixed(1)}h`,                rail: 'bg-violet-500' },
-    { label: 'At-risk Projects', value: String(atRiskCount),                           rail: 'bg-orange-500' },
+    { label: 'Active Projects',       value: kpi ? String(kpi.active_projects)      : '—', rail: 'bg-blue-500'    },
+    { label: 'Total Revenue',         value: kpi ? formatTND(kpi.total_revenue)      : '—', rail: 'bg-emerald-500' },
+    { label: 'Avg. EHR',              value: kpi ? `${kpi.avg_ehr.toFixed(2)} TND/h` : '—', rail: 'bg-yellow-500'  },
+    { label: 'Pending Feedback',      value: kpi ? String(kpi.pending_feedback)      : '—', rail: 'bg-rose-500'    },
+    { label: 'Hours Logged This Week', value: `${hoursThisWeek.toFixed(1)}h`,                rail: 'bg-violet-500'  },
+    { label: 'At-risk Projects',      value: String(atRiskCount),                            rail: 'bg-orange-500'  },
   ];
 
   // ── Render ────────────────────────────────────────────────────────────────────
@@ -175,7 +166,7 @@ export default function ManagerDashboard() {
         <p className="text-sm text-slate-500 mt-0.5">Here's an overview of your agency today.</p>
       </div>
 
-      {/* KPI cards — 3 columns × 2 rows */}
+      {/* KPI cards */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         {KPI_CARDS.map(card => (
           <div
@@ -208,49 +199,72 @@ export default function ManagerDashboard() {
           {activeProjects.length === 0 ? (
             <p className="px-5 py-8 text-sm text-slate-400 text-center">No active projects.</p>
           ) : (
-            <ul className="divide-y divide-slate-100">
-              {activeProjects.map(p => {
-                const pct = p.budget_hours && p.actual_hours != null
-                  ? Math.round((p.actual_hours / Number(p.budget_hours)) * 100)
-                  : null;
-                return (
-                  <li key={p.id}>
-                    <Link
-                      to={`/manager/projects/${p.id}`}
-                      className="flex items-center gap-4 px-5 py-3.5 hover:bg-slate-50 transition-colors"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-slate-900 truncate">{p.project_name}</p>
-                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                          <span className="text-xs text-slate-500">{p.client_name}</span>
-                          {p.category && (
-                            <div className="mt-1">
-                              <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide ${categoryColorMap.get(p.category) ?? 'bg-slate-50 text-slate-700'}`}>
-                                {p.category}
-                              </span>
+            <>
+                {/* Column headers */}
+                <div className="grid grid-cols-[1fr_140px_80px_90px] gap-4 px-5 py-2 border-b border-slate-100">
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Project</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Budget</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 text-right">EHR</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 text-right">Deadline</span>
+                </div>
+                <ul className="divide-y divide-slate-100">
+                  {activeProjects.map(p => {
+                    const pct = p.budget_hours && p.actual_hours != null
+                      ? Math.round((p.actual_hours / Number(p.budget_hours)) * 100)
+                      : null;
+                    const ehr = p.budget_amount && p.actual_hours > 0
+                      ? Math.round(Number(p.budget_amount) / p.actual_hours)
+                      : null;
+                    const isOver = p.budget_hours != null && p.actual_hours > Number(p.budget_hours);
+                    return (
+                      <li key={p.id}>
+                        <Link
+                          to={`/manager/projects/${p.id}`}
+                          className="grid grid-cols-[1fr_140px_80px_90px] gap-4 items-center px-5 py-3.5 hover:bg-slate-50 transition-colors"
+                        >
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-slate-900 truncate">{p.project_name}</p>
+                            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                              <span className="text-xs text-slate-500">{p.client_name}</span>
+                              {p.category && (
+                                <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide ${categoryColorMap.get(p.category) ?? 'bg-slate-50 text-slate-700'}`}>
+                                  {p.category}
+                                </span>
+                              )}
                             </div>
-                          )}
-                        </div>
-                      </div>
-                      {pct !== null && (
-                        <div className="flex items-center gap-2 shrink-0">
-                          <div className="w-20 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                            <div
-                              className="h-full rounded-full"
-                              style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: barColor(pct) }}
-                            />
                           </div>
-                          <span className="font-mono text-xs text-slate-500 w-9 text-right">{pct}%</span>
-                        </div>
-                      )}
-                      {p.deadline && (
-                        <span className="text-xs text-slate-400 shrink-0">{p.deadline}</span>
-                      )}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
+                          {/* Budget bar + hours */}
+                          <div className="flex items-center gap-2">
+                            {pct !== null ? (
+                              <>
+                                <div className="w-14 h-1.5 bg-slate-100 rounded-full overflow-hidden shrink-0">
+                                  <div className="h-full rounded-full" style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: barColor(pct) }} />
+                                </div>
+                                <span className="font-mono text-xs text-slate-500 whitespace-nowrap">
+                                  {Math.round(p.actual_hours)}/{Math.round(Number(p.budget_hours))}h
+                                  {isOver && <span className="ml-0.5 text-rose-500">↑</span>}
+                                </span>
+                              </>
+                            ) : <span className="text-slate-300 text-xs">—</span>}
+                          </div>
+                          {/* EHR */}
+                          <div className="text-right">
+                            {ehr !== null
+                              ? <span className={`font-mono text-sm font-bold ${isOver ? 'text-rose-600' : 'text-emerald-700'}`}>${ehr}</span>
+                              : <span className="text-slate-300 text-sm">—</span>}
+                          </div>
+                          {/* Deadline */}
+                          <div className="text-right">
+                            {p.deadline
+                              ? <span className="text-xs text-slate-400">{p.deadline}</span>
+                              : <span className="text-slate-300 text-sm">—</span>}
+                          </div>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </>
           )}
         </div>
 

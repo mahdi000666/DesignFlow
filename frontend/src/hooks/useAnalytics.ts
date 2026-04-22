@@ -72,6 +72,6 @@ export const useAISummary = (projectId: number | undefined) =>
   useQuery({
     queryKey: ['analytics', 'ai-summary', projectId],
     queryFn:  () => getAISummary(projectId!),
-    enabled:  !!projectId,
-    staleTime: 5 * 60 * 1000, // AI call is expensive — cache for 5 min
+    enabled:  false,           // ← changed: manual trigger only
+    staleTime: 5 * 60 * 1000,
   });
