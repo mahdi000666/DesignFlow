@@ -13,7 +13,6 @@ import ClientProjects from './pages/client/ClientProjects';
 import ClientProjectDetail from './pages/client/ClientProjectDetail';
 import DesignerProjectDetail from './pages/designer/DesignerProjectDetail';
 import AnalyticsDashboard from './pages/manager/AnalyticsDashboard';
-import ReportsPage from './pages/manager/ReportsPage';
 
 function RootRedirect() {
   const { user } = useAuth();
@@ -44,10 +43,9 @@ export default function App() {
 
         {/* Manager */}
         <Route path="/manager" element={<ProtectedRoute allowedRoles={['Manager']}><ManagerDashboard /></ProtectedRoute>} />
+        <Route path="/manager/analytics"   element={<ProtectedRoute allowedRoles={['Manager']}><AnalyticsDashboard /></ProtectedRoute>} />
         <Route path="/manager/projects"    element={<ProtectedRoute allowedRoles={['Manager']}><ProjectList /></ProtectedRoute>} />
         <Route path="/manager/projects/:id" element={<ProtectedRoute allowedRoles={['Manager']}><ProjectDetail /></ProtectedRoute>} />
-        <Route path="/manager/analytics"   element={<ProtectedRoute allowedRoles={['Manager']}><AnalyticsDashboard /></ProtectedRoute>} />
-        <Route path="/manager/reports"     element={<ProtectedRoute allowedRoles={['Manager']}><ReportsPage /></ProtectedRoute>} />
 
         {/* Designer */}
         <Route path="/designer" element={<ProtectedRoute allowedRoles={['Designer']}><DesignerDashboard /></ProtectedRoute>} />

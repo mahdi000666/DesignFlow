@@ -33,6 +33,16 @@ const STATUS_LABEL: Record<Task['status'], string> = {
   Completed:  'Completed',
 };
 
+function VarianceCell({ logged, estimated }: { logged: number; estimated: number | null | undefined }) {
+  if (logged === 0 || estimated == null) {
+    return <span className="text-slate-300">—</span>;
+  }
+  const v = logged - Number(estimated);
+  if (v === 0) return <span className="text-slate-900">0h</span>;
+  if (v > 0)   return <span className="text-red-600">+{v.toFixed(1)}h</span>;
+  return           <span className="text-emerald-600">{v.toFixed(1)}h</span>;
+}
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function TaskRow({ task, projectId, isManager, loggedHours = 0, taskLogMap = {} }: Props) {
@@ -57,7 +67,7 @@ export default function TaskRow({ task, projectId, isManager, loggedHours = 0, t
     deleteTask.mutate(id);
   };
 
-  // colspan: task + type + estimated + logged + status + actions = 6
+  // colspan: task + status + estimated + logged + variance + actions = 6
   const SPAN = 6;
 
   return (
@@ -65,21 +75,28 @@ export default function TaskRow({ task, projectId, isManager, loggedHours = 0, t
       {/* ── Parent task row ─────────────────────────────────────────────── */}
       <tr className="hover:bg-slate-50/70 transition-colors group">
 
-        {/* Task name */}
+        {/* Task name + scope creep label */}
         <td className="px-4 py-3.5 align-middle">
           <span className="text-sm font-medium text-slate-900">{task.task_name}</span>
           {task.description && (
             <p className="text-xs text-slate-400 mt-0.5 truncate max-w-xs">{task.description}</p>
           )}
+          {task.is_unplanned && (
+            <p className="text-xs text-rose-600 font-medium mt-1">Scope creep</p>
+          )}
         </td>
 
-        {/* Type */}
-        <td className="px-4 py-3.5 w-36 align-middle text-center">
-          {task.is_unplanned && (
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-50 text-rose-600 ring-1 ring-inset ring-rose-200">
-              Scope creep
-            </span>
-          )}
+        {/* Status — click to cycle */}
+        <td className="px-4 py-3.5 w-32 align-middle text-center">
+          <button
+            type="button"
+            onClick={() => cycleStatus(task.id, task.status)}
+            disabled={updateTask.isPending}
+            title="Click to cycle status"
+            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium cursor-pointer hover:opacity-70 transition-opacity disabled:opacity-40 ${STATUS_BADGE[task.status]}`}
+          >
+            {STATUS_LABEL[task.status]}
+          </button>
         </td>
 
         {/* Estimated */}
@@ -96,17 +113,9 @@ export default function TaskRow({ task, projectId, isManager, loggedHours = 0, t
             : <span className="text-slate-300">0h</span>}
         </td>
 
-        {/* Status — click to cycle */}
-        <td className="px-4 py-3.5 w-32 align-middle text-center">
-          <button
-            type="button"
-            onClick={() => cycleStatus(task.id, task.status)}
-            disabled={updateTask.isPending}
-            title="Click to cycle status"
-            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium cursor-pointer hover:opacity-70 transition-opacity disabled:opacity-40 ${STATUS_BADGE[task.status]}`}
-          >
-            {STATUS_LABEL[task.status]}
-          </button>
+        {/* Variance */}
+        <td className="px-4 py-3.5 w-28 align-middle font-mono text-sm text-center">
+          <VarianceCell logged={loggedHours} estimated={task.estimated_hours} />
         </td>
 
         {/* Manager actions */}
@@ -168,15 +177,22 @@ export default function TaskRow({ task, projectId, isManager, loggedHours = 0, t
               <span className="text-slate-300 text-xs">↳</span>
               <span className="text-sm text-slate-600">{sub.task_name}</span>
             </div>
+            {sub.is_unplanned && (
+              <p className="text-xs text-rose-600 font-medium mt-1 pl-4">Scope creep</p>
+            )}
           </td>
 
-          {/* Type */}
-          <td className="px-4 py-3 w-36 align-middle text-center">
-            {sub.is_unplanned && (
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-50 text-rose-600 ring-1 ring-inset ring-rose-200">
-                Scope creep
-              </span>
-            )}
+          {/* Status — click to cycle */}
+          <td className="px-4 py-3 w-32 align-middle text-center">
+            <button
+              type="button"
+              onClick={() => cycleStatus(sub.id, sub.status)}
+              disabled={updateTask.isPending}
+              title="Click to cycle status"
+              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium cursor-pointer hover:opacity-70 transition-opacity disabled:opacity-40 ${STATUS_BADGE[sub.status]}`}
+            >
+              {STATUS_LABEL[sub.status]}
+            </button>
           </td>
 
           {/* Estimated */}
@@ -193,17 +209,9 @@ export default function TaskRow({ task, projectId, isManager, loggedHours = 0, t
               : <span className="text-slate-300">0h</span>}
           </td>
 
-          {/* Status — click to cycle */}
-          <td className="px-4 py-3 w-32 align-middle text-center">
-            <button
-              type="button"
-              onClick={() => cycleStatus(sub.id, sub.status)}
-              disabled={updateTask.isPending}
-              title="Click to cycle status"
-              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium cursor-pointer hover:opacity-70 transition-opacity disabled:opacity-40 ${STATUS_BADGE[sub.status]}`}
-            >
-              {STATUS_LABEL[sub.status]}
-            </button>
+          {/* Variance */}
+          <td className="px-4 py-3 w-28 align-middle font-mono text-sm text-center">
+            <VarianceCell logged={taskLogMap[sub.id] ?? 0} estimated={sub.estimated_hours} />
           </td>
 
           {/* Manager actions */}

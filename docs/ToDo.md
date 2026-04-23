@@ -1,112 +1,6 @@
-Finished all sprints, time for some tweaks.
-1. In ProjectList, put status after client, remove Budget Hrs and Logged Hrs, add EHR and Scope Creep percentage instead. keep deadline last.
-2. Ensure the budget progress bar, EHR and scopecreep percentage colors match the screenshot (for ProjectList and Manager dashboard).
-3. In Manager dashboard, put project budget and EHR as column titles.
-4. In ProjectList, make the status of each project clickable so it cycles through statuses.
-5. Change the project detail to match the screenshot (do not change the colors of project status and category)
-6. Change the Assign Designer Panel to match the screenshot.
-7. Change the AI Project Health Narrative to match the screenshot. (exclude the "Based on" quote). Also ensure the summary remains until I click refresh button because currently, if if refresh the page or exit, the summary dissapears which is not good.
-
-1. In ManagerDashboard, the active project list should have 4 columns:
-Project - Budget - EHR - Deadline (Make sure to align them correctly), along with their rows.
-Budgets in there shouldn't have decimal points.
-2. In Projectl list, when i cycle through project status, it puts the project in the last row. for example if a project is on first row and click on it's status, the status changes correctly, but its placed at the bottom, it should not move.
-3. In Project detail, remove the decimal point from hours. Ensure the the Contract is in TND format.
-
-Take a look at the project structure, if you require any files from frontend or backend, pause and let me know!
 ```
-Directory structure:
-    ├── backend/
-    │   ├── apps/
-    │   │   ├── analytics/
-    │   │   ├── feedback/
-    │   │   ├── files/
-    │   │   ├── messages/
-    │   │   ├── projects/
-    │   │   ├── tasks/
-    │   │   ├── timelog/
-    │   │   └── users/
-    │   │       ├── admin.py
-    │   │       ├── apps.py
-    │   │       ├── models.py
-    │   │       ├── permissions.py
-    │   │       ├── serializers.py
-    │   │       ├── signals.py
-    │   │       ├── urls.py
-    │   │       ├── urls_users.py
-    │   │       ├── views.py
-    │   └── core/
-    │       ├── __init__.py
-    │       ├── asgi.py
-    │       ├── settings.py
-    │       ├── urls.py
-    │       └── wsgi.py
-    └── frontend/
-        └── src/
-            ├── App.tsx
-            ├── index.css
-            ├── main.tsx
-            ├── api/
-            │   ├── analytics.ts
-            │   ├── clients.ts
-            │   ├── feedbacks.ts
-            │   ├── files.ts
-            │   ├── messages.ts
-            │   ├── projects.ts
-            │   ├── tasks.ts
-            │   └── timelogs.ts
-            ├── components/
-            │   ├── AppShell.tsx
-            │   ├── AssignDesignerPanel.tsx
-            │   ├── FeedbackForm.tsx
-            │   ├── FeedbackList.tsx
-            │   ├── FileUploadPanel.tsx
-            │   ├── MessageBoard.tsx
-            │   ├── ProjectForm.tsx
-            │   ├── ProtectedRoute.tsx
-            │   ├── TaskForm.tsx
-            │   ├── TaskRow.tsx
-            │   ├── TimeLogForm.tsx
-            │   └── TimeLogList.tsx
-            ├── context/
-            │   ├── authContext.ts
-            │   └── AuthProvider.tsx
-            ├── hooks/
-            │   ├── useAnalytics.ts
-            │   ├── useAuth.ts
-            │   ├── useFeedback.ts
-            │   ├── useFiles.ts
-            │   ├── useMessages.ts
-            │   ├── useProjects.ts
-            │   ├── useTasks.ts
-            │   ├── useTimeLogs.ts
-            │   └── useUnreadCount.ts
-            ├── pages/
-            │   ├── auth/
-            │   │   ├── ActivatePage.tsx
-            │   │   └── LoginPage.tsx
-            │   ├── client/
-            │   │   ├── ClientDashboard.tsx
-            │   │   ├── ClientProjectDetail.tsx
-            │   │   └── ClientProjects.tsx
-            │   ├── designer/
-            │   │   ├── DesignerDashboard.tsx
-            │   │   ├── DesignerProjectDetail.tsx
-            │   │   └── DesignerProjects.tsx
-            │   └── manager/
-            │       ├── AnalyticsDashboard.tsx
-            │       ├── ManagerDashboard.tsx
-            │       ├── ProjectDetail.tsx
-            │       ├── ProjectList.tsx
-            │       └── ReportsPage.tsx
-            └── types/
-                ├── analytic.ts
-                ├── feedback.ts
-                ├── file.ts
-                ├── message.ts
-                ├── project.ts
-                ├── task.ts
-                └── timelog.ts
+python manage.py shell -c "from django.urls import resolve; print(resolve('/api/reports/export/'))"
+ResolverMatch(func=apps.analytics.report_views.ExportView, args=(), kwargs={}, url_name=None, app_names=[], namespaces=[], route='api/reports/export/')
 ```
 
 In order to save tokens, you may only generate the document for S3 chapter.
@@ -164,6 +58,7 @@ Directory structure:
             │   ├── feedbacks.ts
             │   ├── files.ts
             │   ├── messages.ts
+            │   ├── pagination.ts
             │   ├── projects.ts
             │   ├── tasks.ts
             │   └── timelogs.ts

@@ -15,6 +15,7 @@ import {
   useProfitMargin,
 } from '../../hooks/useAnalytics';
 import { useProjects } from '../../hooks/useProjects';
+import { exportPDF, exportExcel } from '../../api/analytics';
 import type { AnalyticsFilters } from '../../types/analytic';
 
 // ---------------------------------------------------------------------------
@@ -34,7 +35,7 @@ interface FilterBarProps {
   filters:  AnalyticsFilters;
   onChange: (f: AnalyticsFilters) => void;
   projects: { id: number; project_name: string }[];
-  clients:  { id: number; name: string }[];   // ADD THIS LINE
+  clients:  { id: number; name: string }[];
 }
 
 function FilterBar({ filters, onChange, projects, clients }: FilterBarProps) {
@@ -101,8 +102,13 @@ function FilterBar({ filters, onChange, projects, clients }: FilterBarProps) {
 // Main page
 // ---------------------------------------------------------------------------
 
+type ExportState = 'idle' | 'loading' | 'error';
+
 export default function AnalyticsDashboard() {
   const [filters, setFilters] = useState<AnalyticsFilters>({});
+  const [pdfState,   setPdfState]   = useState<ExportState>('idle');
+  const [excelState, setExcelState] = useState<ExportState>('idle');
+  const [exportError, setExportError] = useState('');
 
   const { data: projects = [] }      = useProjects();
   const clients = useMemo(
@@ -121,8 +127,71 @@ export default function AnalyticsDashboard() {
 
   const hasProjectFilter = !!filters.project;
 
+  const handleExport = async (format: 'pdf' | 'excel') => {
+    const setter = format === 'pdf' ? setPdfState : setExcelState;
+    setter('loading');
+    setExportError('');
+    try {
+      if (format === 'pdf') {
+        if (!filters.project) {
+          setExportError('Select a project in the filter bar to export a PDF report.');
+          setPdfState('error');
+          return;
+        }
+        await exportPDF(filters.project);
+      } else {
+        await exportExcel(filters.project);
+      }
+      setter('idle');
+    } catch {
+      setter('error');
+      setExportError('Export failed. Please try again.');
+    }
+  };
+
   return (
-    <AppShell title="Analytics" breadcrumb="Analytics">
+    <AppShell
+      title="Analytics"
+      breadcrumb="Analytics"
+      actions={
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => handleExport('pdf')}
+            disabled={pdfState === 'loading'}
+            title={!hasProjectFilter ? 'Select a project to export PDF' : 'Export PDF report'}
+            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed border ${
+              !hasProjectFilter
+                ? 'border-slate-200 text-slate-400 bg-white cursor-not-allowed'
+                : 'border-slate-200 text-slate-700 bg-white hover:bg-slate-50'
+            }`}
+          >
+            <svg width="13" height="13" viewBox="0 0 15 15" fill="none">
+              <path d="M3.5 1.5h5l3 3v9a1 1 0 01-1 1h-7a1 1 0 01-1-1v-11a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.3" />
+              <path d="M8.5 1.5v3h3M5 9.5h5M5 7h5M5 11.5h3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+            </svg>
+            {pdfState === 'loading' ? 'Generating…' : 'PDF'}
+          </button>
+          <button
+            onClick={() => handleExport('excel')}
+            disabled={excelState === 'loading'}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <svg width="13" height="13" viewBox="0 0 15 15" fill="none">
+              <path d="M3.5 1.5h5l3 3v9a1 1 0 01-1 1h-7a1 1 0 01-1-1v-11a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.3" />
+              <path d="M5 7l2 2.5L9 7M7 9.5V12" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            {excelState === 'loading' ? 'Generating…' : 'Excel'}
+          </button>
+        </div>
+      }
+    >
+
+      {/* Export error banner */}
+      {exportError && (
+        <div className="bg-rose-50 border border-rose-200 text-rose-700 rounded-lg px-4 py-3 text-sm mb-5">
+          {exportError}
+        </div>
+      )}
 
       <FilterBar filters={filters} onChange={setFilters} projects={projects} clients={clients} />
 

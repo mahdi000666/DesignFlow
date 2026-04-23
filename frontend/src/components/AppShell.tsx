@@ -31,15 +31,6 @@ function IconAnalytics() {
   );
 }
 
-function IconReports() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" className="shrink-0">
-      <rect x="2.5" y="1" width="10" height="13" rx="1" stroke="currentColor" strokeWidth="1.4" />
-      <path d="M5.5 5h4M5.5 7.5h4M5.5 10h2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-    </svg>
-  );
-}
-
 // ─── Nav config ──────────────────────────────────────────────────────────────
 
 interface NavItem {
@@ -51,9 +42,8 @@ interface NavItem {
 const NAV_BY_ROLE: Record<string, NavItem[]> = {
   Manager: [
     { label: 'Dashboard', path: '/manager',           icon: <IconDashboard /> },
-    { label: 'Projects',  path: '/manager/projects',  icon: <IconProjects /> },
     { label: 'Analytics', path: '/manager/analytics', icon: <IconAnalytics /> },
-    { label: 'Reports',   path: '/manager/reports',   icon: <IconReports /> },
+    { label: 'Projects',  path: '/manager/projects',  icon: <IconProjects /> },
   ],
   Designer: [
     { label: 'Dashboard',   path: '/designer',          icon: <IconDashboard /> },

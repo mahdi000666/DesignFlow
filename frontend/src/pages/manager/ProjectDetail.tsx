@@ -301,6 +301,17 @@ export default function ProjectDetail() {
     ? tasks
     : tasks.filter(t => t.status === statusFilter);
 
+  // ── Task tab stats ─────────────────────────────────────────────────────────
+  const taskCompletedCount  = tasks.filter(t => t.status === 'Completed').length;
+  const taskInProgressCount = tasks.filter(t => t.status === 'InProgress').length;
+  const taskUnplannedCount  = tasks.filter(t => t.is_unplanned).length;
+  const taskTotalEstimated  = tasks.reduce(
+    (sum, t) => sum + (t.estimated_hours != null ? Number(t.estimated_hours) : 0), 0,
+  );
+
+  // ── Time log stats ─────────────────────────────────────────────────────────
+  const totalLogged = logs.reduce((sum, l) => sum + Number(l.hours_spent), 0);
+
   const tabContent = (tab: Tab): ReactNode => {
     switch (tab) {
       case 'tasks':    return `Tasks (${tasks.length})`;
@@ -429,7 +440,7 @@ export default function ProjectDetail() {
           label="Budget Utilisation"
           value={budgetPctRounded != null ? `${budgetPctRounded}%` : '—'}
           subtitle={project.actual_hours != null && project.budget_hours
-            ? `${project.actual_hours} of ${project.budget_hours} h used`
+            ? `${Math.round(project.actual_hours)} of ${Math.round(Number(project.budget_hours))} h used`
             : 'No budget set'}
           borderColor="#3b82f6"
         />
@@ -482,9 +493,9 @@ export default function ProjectDetail() {
             </div>
             <div className="flex items-center gap-6">
               {[
-                { label: 'LOGGED', value: `${Math.round(project.actual_hours)} h`, cls: 'text-slate-900' },
-                { label: 'BUDGET', value: `${Math.round(Number(project.budget_hours))} h`, cls: 'text-slate-900' },
-                { label: 'REMAINING', value: `${Math.round(remaining ?? 0)} h`, cls: remaining != null && remaining < 10 ? 'text-rose-600' : 'text-blue-700' },
+                { label: 'LOGGED',    value: `${Math.round(project.actual_hours)} h`,                cls: 'text-slate-900' },
+                { label: 'BUDGET',    value: `${Math.round(Number(project.budget_hours))} h`,        cls: 'text-slate-900' },
+                { label: 'REMAINING', value: `${Math.round(remaining ?? 0)} h`,                      cls: remaining != null && remaining < 10 ? 'text-rose-600' : 'text-blue-700' },
                 {
                   label: 'CONTRACT', value: project.budget_amount != null
                     ? `${Math.round(Number(project.budget_amount)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '\u00A0')} TND`
@@ -518,7 +529,7 @@ export default function ProjectDetail() {
             <span className="font-mono font-semibold" style={{ color: barColor(budgetPct ?? 0) }}>
               {Math.round(project.actual_hours)} h · {budgetPctRounded}%
             </span>
-            <span>{project.budget_hours} h</span>
+            <span>{Math.round(Number(project.budget_hours))} h</span>
           </div>
 
           {/* Legend + EHR */}
@@ -573,29 +584,45 @@ export default function ProjectDetail() {
       {/* ── Tab: Tasks ───────────────────────────────────────────────────── */}
       {activeTab === 'tasks' && (
         <div>
-          <div className="flex justify-end gap-3 mb-4">
-            {isManager && (
-              <button
-                onClick={() => setShowTaskForm(v => !v)}
-                className={
-                  showTaskForm
-                    ? 'border border-slate-200 text-slate-600 px-3.5 py-2 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors'
-                    : 'bg-blue-700 text-white px-3.5 py-2 rounded-lg text-sm font-semibold hover:bg-blue-800 transition-colors'
-                }
+          <div className="flex items-center justify-between gap-3 mb-4">
+            {/* Stats — left side */}
+            <p className="text-sm text-slate-500 shrink-0">
+              <span className="font-medium text-slate-700">{tasks.length} Task{tasks.length !== 1 ? 's' : ''}</span>
+              {taskCompletedCount > 0  && <> · <span className="text-emerald-600">{taskCompletedCount} Completed</span></>}
+              {taskInProgressCount > 0 && <> · <span className="text-blue-600">{taskInProgressCount} In Progress</span></>}
+              {taskUnplannedCount > 0  && <> · <span className="text-rose-600">{taskUnplannedCount} Unplanned</span></>}
+              {taskTotalEstimated > 0  && (
+                <> <span className="text-slate-300 mx-1">|</span> Total estimated{' '}
+                  <span className="font-mono font-semibold text-slate-700">{taskTotalEstimated} h</span>
+                </>
+              )}
+            </p>
+
+            {/* Controls — right side */}
+            <div className="flex items-center gap-3 shrink-0">
+              {isManager && (
+                <button
+                  onClick={() => setShowTaskForm(v => !v)}
+                  className={
+                    showTaskForm
+                      ? 'border border-slate-200 text-slate-600 px-3.5 py-2 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors'
+                      : 'bg-blue-700 text-white px-3.5 py-2 rounded-lg text-sm font-semibold hover:bg-blue-800 transition-colors'
+                  }
+                >
+                  {showTaskForm ? 'Cancel' : '+ Add Task'}
+                </button>
+              )}
+              <select
+                value={statusFilter}
+                onChange={e => setStatusFilter(e.target.value as typeof statusFilter)}
+                className="px-3 py-2 border border-slate-200 rounded-lg bg-white text-sm text-slate-600 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 cursor-pointer transition-colors hover:bg-slate-50"
               >
-                {showTaskForm ? 'Cancel' : '+ Add Task'}
-              </button>
-            )}
-            <select
-              value={statusFilter}
-              onChange={e => setStatusFilter(e.target.value as typeof statusFilter)}
-              className="px-3 py-2 border border-slate-200 rounded-lg bg-white text-sm text-slate-600 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 cursor-pointer transition-colors hover:bg-slate-50"
-            >
-              <option value="All">All statuses</option>
-              <option value="Todo">Todo</option>
-              <option value="InProgress">In Progress</option>
-              <option value="Completed">Completed</option>
-            </select>
+                <option value="All">All statuses</option>
+                <option value="Todo">Todo</option>
+                <option value="InProgress">In Progress</option>
+                <option value="Completed">Completed</option>
+              </select>
+            </div>
           </div>
 
           {showTaskForm && isManager && (
@@ -624,10 +651,10 @@ export default function ProjectDetail() {
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-200">
                     <th className="px-7 py-3 text-left   text-xs font-semibold uppercase tracking-wide text-slate-400">Task</th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-400 w-36">Type</th>
+                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-400 w-32">Status</th>
                     <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-400 w-28">Estimated</th>
                     <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-400 w-24">Logged</th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-400 w-32">Status</th>
+                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-400 w-28">Variance</th>
                     <th className="w-36" />
                   </tr>
                 </thead>
@@ -651,12 +678,20 @@ export default function ProjectDetail() {
 
       {/* ── Tab: Time Logs ───────────────────────────────────────────────── */}
       {activeTab === 'logs' && (
-        <TimeLogList
-          logs={logs}
-          isManager={isManager}
-          onDelete={id => deleteTimeLog.mutate(id)}
-          onUpdate={(id, payload) => updateTimeLog.mutate({ id, payload })}
-        />
+        <div>
+          <div className="flex items-center mb-4">
+            <p className="text-sm text-slate-500">
+              Total logged{' '}
+              <span className="font-mono font-semibold text-slate-900">{totalLogged.toFixed(1)} h</span>
+            </p>
+          </div>
+          <TimeLogList
+            logs={logs}
+            isManager={isManager}
+            onDelete={id => deleteTimeLog.mutate(id)}
+            onUpdate={(id, payload) => updateTimeLog.mutate({ id, payload })}
+          />
+        </div>
       )}
 
       {/* ── Tab: Files ───────────────────────────────────────────────────── */}
