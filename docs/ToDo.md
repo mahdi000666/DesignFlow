@@ -1,8 +1,3 @@
-```
-python manage.py shell -c "from django.urls import resolve; print(resolve('/api/reports/export/'))"
-ResolverMatch(func=apps.analytics.report_views.ExportView, args=(), kwargs={}, url_name=None, app_names=[], namespaces=[], route='api/reports/export/')
-```
-
 In order to save tokens, you may only generate the document for S3 chapter.
 
 1. Use this exact style:

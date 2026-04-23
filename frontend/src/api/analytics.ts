@@ -96,9 +96,9 @@ async function downloadBlob(url: string, filename: string) {
 }
 
 export const exportPDF = (projectId: number) =>
-  downloadBlob(`/reports/export/?format=pdf&project=${projectId}`, `project_${projectId}_report.pdf`);
+  downloadBlob(`/reports/export/?export_format=pdf&project=${projectId}`, `project_${projectId}_report.pdf`);
 
 export const exportExcel = (projectId?: number) => {
-  const qs = projectId ? `?format=excel&project=${projectId}` : '?format=excel';
+  const qs = projectId ? `?export_format=excel&project=${projectId}` : '?export_format=excel';
   return downloadBlob(`/reports/export/${qs}`, 'profitability_report.xlsx');
 };
