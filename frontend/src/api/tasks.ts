@@ -11,6 +11,11 @@ export const getAllCompletedTasks = async (): Promise<Task[]> => {
   return getPaginatedResults<Task>('/tasks/', { status: 'Completed', page_size: 100 });
 };
 
+// All tasks across assigned projects — used by the Designer dashboard for open-task KPI.
+export const getAllTasks = async (): Promise<Task[]> => {
+  return getPaginatedResults<Task>('/tasks/', { page_size: 200 });
+};
+
 export const createTask = async (payload: TaskPayload): Promise<Task> => {
   const { data } = await apiClient.post<Task>('/tasks/', payload);
   return data;

@@ -1,3 +1,13 @@
+sk-af66c2c77ee6412f9f05e89de8987cf3
+
+sk-2OZIERKd1vsFWiNrZy5ckq6SWv8CKQmC5qCani3U97mhcDOE
+
+1. In design dashboard, "hours this week" remained 0 despite me logging hours in a project, also "Utilisation" has "-".
+2. Recent Time logs also dont display any time logs, despite me logging some.
+3. In Designer Project list, "My Hours Logged" remains 0 despite me logging.
+
+What files do I need to hand to you? let me know!
+
 In order to save tokens, you may only generate the document for S3 chapter.
 
 1. Use this exact style:
@@ -33,6 +43,7 @@ Directory structure:
     │   │       ├── permissions.py
     │   │       ├── serializers.py
     │   │       ├── signals.py
+    │   │       ├── tests.py
     │   │       ├── urls.py
     │   │       ├── urls_users.py
     │   │       ├── views.py
@@ -43,6 +54,16 @@ Directory structure:
     │       ├── urls.py
     │       └── wsgi.py
     └── frontend/
+        ├── README.md
+        ├── eslint.config.js
+        ├── index.html
+        ├── package.json
+        ├── postcss.config.js
+        ├── tailwind.config.js
+        ├── tsconfig.app.json
+        ├── tsconfig.json
+        ├── tsconfig.node.json
+        ├── vite.config.ts
         └── src/
             ├── App.tsx
             ├── index.css
@@ -99,8 +120,7 @@ Directory structure:
             │       ├── AnalyticsDashboard.tsx
             │       ├── ManagerDashboard.tsx
             │       ├── ProjectDetail.tsx
-            │       ├── ProjectList.tsx
-            │       └── ReportsPage.tsx
+            │       └── ProjectList.tsx
             └── types/
                 ├── analytic.ts
                 ├── feedback.ts

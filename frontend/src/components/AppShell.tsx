@@ -51,7 +51,6 @@ const NAV_BY_ROLE: Record<string, NavItem[]> = {
   ],
   Client: [
     { label: 'Dashboard',   path: '/client',          icon: <IconDashboard /> },
-    { label: 'My Projects', path: '/client/projects', icon: <IconProjects /> },
   ],
 };
 
