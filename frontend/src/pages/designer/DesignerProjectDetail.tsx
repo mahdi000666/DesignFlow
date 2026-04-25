@@ -62,7 +62,7 @@ export default function DesignerProjectDetail() {
   const { id }    = useParams<{ id: string }>();
   const projectId = Number(id);
   const { user }  = useAuth();
-  const userId    = user?.user_id ?? 0;
+  const userId = Number(user?.user_id ?? 0);
 
   const { data: project, isLoading: loadingProject } = useProject(projectId);
   const { data: rawTasks = [], isLoading: loadingTasks } = useTasks(projectId);

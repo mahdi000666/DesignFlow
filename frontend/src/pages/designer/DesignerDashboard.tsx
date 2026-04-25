@@ -44,13 +44,13 @@ function KPICard({
 
 export default function DesignerDashboard() {
   const { user } = useAuth();
-  const userId = user?.user_id ?? 0;
+  const userId = Number(user?.user_id ?? 0);
 
   const { data: projects = [] } = useProjects();
 
   const { data: allLogs = [] } = useQuery({
-    queryKey: ['timelogs-all'],
-    queryFn:  getAllTimeLogs,
+    queryKey: ['timelogs', 'all'],   // now caught by invalidateQueries({ queryKey: ['timelogs'] })
+    queryFn: getAllTimeLogs,
   });
 
   const { data: allTasks = [] } = useQuery({

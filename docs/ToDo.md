@@ -1,6 +1,6 @@
-1. In design dashboard, "hours this week" remained 0 despite me logging hours in a project, also "Utilisation" has "-".
+1. In Designer dashboard, "hours this week" remained 0 despite me logging hours in a project, also "Utilisation" has "-".
 2. Recent Time logs also dont display any time logs, despite me logging some.
-3. In Designer Project list, "My Hours Logged" remains 0 despite me logging.
+3. In Designer Project detail, "My Hours Logged" remains 0 despite me logging.
 
 What files do I need to hand to you? let me know!
 
