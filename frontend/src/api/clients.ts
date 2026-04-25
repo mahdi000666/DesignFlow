@@ -3,7 +3,7 @@ import axios from 'axios';
 // All API requests go through this instance.
 // baseURL comes from .env so it works in both dev (:8000) and production.
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000',
   headers: { 'Content-Type': 'application/json' },
 });
 

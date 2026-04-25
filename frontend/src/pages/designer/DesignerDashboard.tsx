@@ -64,7 +64,7 @@ export default function DesignerDashboard() {
     queryFn:  () => apiClient.get('/users/me/').then(r => r.data),
   });
   const availableHoursPerWeek: number | null =
-    (me?.designer_profile?.available_hours_per_week as number | null | undefined) ?? null;
+    (me?.available_hours_per_week as number | null | undefined) ?? null;
 
   // ── Derived KPI values ────────────────────────────────────────────────────
 

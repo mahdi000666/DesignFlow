@@ -391,7 +391,6 @@ class ProfitMarginView(APIView):
                 'project_name': project.project_name,
                 'ehr': round(ehr, 2),
                 'avg_designer_rate': round(weighted_rate, 2) if weighted_rate is not None else None,
-                'weighted_designer_rate': round(weighted_rate, 2) if weighted_rate is not None else None,
                 'profit_margin_pct': round(margin, 1) if margin is not None else None,
             })
 
