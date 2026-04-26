@@ -1,24 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useProjects } from '../../hooks/useProjects';
 import AppShell from '../../components/AppShell';
-import type { Project } from '../../types/project';
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-const STATUS_BADGE: Record<Project['status'], string> = {
-  Active:    'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-200',
-  Completed: 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200',
-  OnHold:    'bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200',
-};
-
-const STATUS_DOT: Record<Project['status'], string> = {
-  Active:    'bg-blue-500',
-  Completed: 'bg-emerald-500',
-  OnHold:    'bg-amber-500',
-};
-
-const barColor = (pct: number) =>
-  pct >= 100 ? '#ef4444' : pct >= 80 ? '#f59e0b' : '#3b82f6';
+import { STATUS_BADGE, STATUS_DOT, barColor, statusLabel } from '../../utils/project';
 
 // ─── Component ───────────────────────────────────────────────────────────────
 

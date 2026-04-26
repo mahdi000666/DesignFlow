@@ -5,39 +5,9 @@ import { useAuth } from '../../hooks/useAuth';
 import { useProjects } from '../../hooks/useProjects';
 import { getAllFeedback } from '../../api/feedbacks';
 import AppShell from '../../components/AppShell';
-import type { Project } from '../../types/project';
-import type { ReactNode } from 'react';
+import { STATUS_BADGE, STATUS_DOT, barColor, statusLabel } from '../../utils/project';
+import KPICard from '../../components/KPICard';
 import { formatTND } from '../../utils/format';
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-const STATUS_BADGE: Record<Project['status'], string> = {
-  Active:    'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-200',
-  Completed: 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200',
-  OnHold:    'bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200',
-};
-
-const STATUS_DOT: Record<Project['status'], string> = {
-  Active:    'bg-blue-500',
-  Completed: 'bg-emerald-500',
-  OnHold:    'bg-amber-500',
-};
-
-const barColor = (pct: number) =>
-  pct >= 100 ? '#ef4444' : pct >= 80 ? '#f59e0b' : '#3b82f6';
-
-function KPICard({
-  label, value, subtitle, borderColor,
-}: { label: string; value: ReactNode; subtitle: string; borderColor: string }) {
-  return (
-    <div className="bg-white border border-slate-200 rounded-xl px-5 py-4 relative overflow-hidden">
-      <div className="absolute left-0 inset-y-0 w-1 rounded-l-xl" style={{ backgroundColor: borderColor }} />
-      <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-2">{label}</p>
-      <p className="font-mono text-2xl font-bold text-slate-900 leading-none mb-1">{value}</p>
-      <p className="text-xs text-slate-400">{subtitle}</p>
-    </div>
-  );
-}
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
@@ -133,7 +103,7 @@ export default function ClientDashboard() {
                       </span>
                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${STATUS_BADGE[p.status]}`}>
                         <span className={`w-1.5 h-1.5 rounded-full ${STATUS_DOT[p.status]}`} />
-                        {p.status === 'OnHold' ? 'On Hold' : p.status}
+                        {statusLabel(p.status)}
                       </span>
                     </div>
                     {openCount > 0 && (

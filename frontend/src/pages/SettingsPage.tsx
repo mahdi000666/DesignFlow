@@ -3,17 +3,9 @@ import AppShell from '../components/AppShell';
 import { useMe, useUpdateMe, useChangePassword } from '../hooks/useUsers';
 import type { MeData } from '../types/user';
 import { useAuth } from '../hooks/useAuth';
+import { Initials } from '../utils/format';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-
-function initials(name: string): string {
-  return name
-    .split(' ')
-    .map(n => n[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase();
-}
 
 const inputCls =
   'w-full px-3 py-2.5 border border-slate-200 rounded-lg bg-white text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-colors placeholder:text-slate-400';
@@ -46,7 +38,7 @@ function ProfileCard({ me }: { me: MeData }) {
 
       <div className="flex items-center gap-4 mb-6">
         <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold text-sm shrink-0">
-          {initials(me.full_name)}
+          {Initials(me.full_name)}
         </div>
         <div>
           <p className="text-slate-900 font-semibold text-sm">{me.full_name}</p>

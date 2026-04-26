@@ -8,39 +8,15 @@ import AppShell from '../../components/AppShell';
 import apiClient from '../../api/clients';
 import type { Project, ProjectPayload } from '../../types/project';
 import type { ScopeCreepItem } from '../../types/analytic';
+import { STATUS_BADGE, STATUS_DOT, barColor, statusLabel, CATEGORY_PALETTE } from '../../utils/project';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-
-const STATUS_BADGE: Record<Project['status'], string> = {
-  Active:    'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-200',
-  Completed: 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200',
-  OnHold:    'bg-violet-50 text-violet-700 ring-1 ring-inset ring-violet-200',
-};
-
-const STATUS_DOT: Record<Project['status'], string> = {
-  Active:    'bg-blue-500',
-  Completed: 'bg-emerald-500',
-  OnHold:    'bg-violet-500',
-};
 
 const STATUS_CYCLE: Record<Project['status'], Project['status']> = {
   Active:    'Completed',
   Completed: 'OnHold',
   OnHold:    'Active',
 };
-
-const CATEGORY_COLORS = [
-  'bg-purple-50 text-purple-700',
-  'bg-blue-50 text-blue-700',
-  'bg-orange-50 text-orange-700',
-  'bg-pink-50 text-pink-700',
-  'bg-cyan-50 text-cyan-700',
-  'bg-rose-50 text-rose-700',
-];
-
-// Budget bar: teal < 80%, amber 80–99%, red ≥ 100%
-const barColor = (pct: number) =>
-  pct >= 100 ? '#ef4444' : pct >= 80 ? '#f59e0b' : '#0d9488';
 
 // EHR: red if over budget, emerald otherwise
 const ehrColor = (actualHours: number, budgetHours: number | null) => {
@@ -95,7 +71,7 @@ export default function ProjectList() {
     const uniqueCategories = Array.from(
       new Set(projects.map(p => p.category).filter((c): c is string => Boolean(c)))
     ).sort();
-    return new Map(uniqueCategories.map((cat, i) => [cat, CATEGORY_COLORS[i % CATEGORY_COLORS.length]]));
+    return new Map(uniqueCategories.map((cat, i) => [cat, CATEGORY_PALETTE[i % CATEGORY_PALETTE.length]]));
   }, [projects]);
 
   // Scope creep by project_id — field name assumed from backend serializer

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import AppShell from '../../components/AppShell';
 import { useTeam, useInviteUser } from '../../hooks/useUsers';
 import type { DesignerCard, TeamUser } from '../../types/user';
-import { formatTND } from '../../utils/format';
+import { formatTND, Initials  } from '../../utils/format';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -19,15 +19,6 @@ const AVATAR_PALETTE = [
 
 function avatarColor(id: number): string {
   return AVATAR_PALETTE[id % AVATAR_PALETTE.length];
-}
-
-function initials(name: string): string {
-  return name
-    .split(' ')
-    .map(n => n[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase();
 }
 
 function utilColor(pct: number): string {
@@ -219,7 +210,7 @@ function DesignerCardComponent({ d }: { d: DesignerCard }) {
           className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-semibold shrink-0"
           style={{ backgroundColor: color }}
         >
-          {initials(d.designer_name)}
+          {Initials(d.designer_name)}
         </div>
         <div className="min-w-0">
           <p className="text-slate-900 font-semibold text-sm leading-tight truncate">
@@ -303,7 +294,7 @@ function UserRow({ u, onInvite }: { u: TeamUser; onInvite: () => void }) {
             className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-semibold shrink-0"
             style={{ backgroundColor: color }}
           >
-            {initials(u.full_name)}
+            {Initials(u.full_name)}
           </div>
           <span className="text-sm text-slate-800 font-medium">{u.full_name}</span>
         </div>

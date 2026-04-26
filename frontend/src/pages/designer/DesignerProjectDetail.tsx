@@ -18,44 +18,11 @@ import TaskRow from '../../components/TaskRow';
 import AppShell from '../../components/AppShell';
 import type { Task } from '../../types/task';
 import type { TimeLogPayload } from '../../types/timelog';
-import type { Project } from '../../types/project';
 import { formatTND } from '../../utils/format';
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+import { STATUS_BADGE, STATUS_DOT, barColor, categoryClass, statusLabel } from '../../utils/project';
+import UnreadBadge from '../../components/UnreadBadge';
 
 type Tab = 'tasks' | 'log' | 'files' | 'feedback' | 'messages';
-
-const STATUS_BADGE: Record<Project['status'], string> = {
-  Active:    'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-200',
-  Completed: 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200',
-  OnHold:    'bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200',
-};
-
-const STATUS_DOT: Record<Project['status'], string> = {
-  Active:    'bg-blue-500',
-  Completed: 'bg-emerald-500',
-  OnHold:    'bg-amber-500',
-};
-
-const CATEGORY_COLORS: Record<string, string> = {
-  Branding:    'text-purple-700 bg-purple-50',
-  UX:          'text-blue-700 bg-blue-50',
-  Motion:      'text-orange-700 bg-orange-50',
-  Editorial:   'text-pink-700 bg-pink-50',
-  Web:         'text-cyan-700 bg-cyan-50',
-};
-
-const barColor = (pct: number) =>
-  pct >= 100 ? '#ef4444' : pct >= 80 ? '#f59e0b' : '#3b82f6';
-
-function UnreadBadge({ count }: { count: number }) {
-  if (count === 0) return null;
-  return (
-    <span className="ml-1.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold leading-none">
-      {count}
-    </span>
-  );
-}
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
@@ -146,7 +113,7 @@ export default function DesignerProjectDetail() {
   const taskDoneCount = tasks.filter(t => t.status === 'Completed').length;
   const taskOpenCount = tasks.length - taskDoneCount;
 
-  const categoryClass = CATEGORY_COLORS[project?.category ?? ''] ?? 'text-slate-600 bg-slate-100';
+  const category = categoryClass(project?.category);
 
   if (loadingProject) {
     return <AppShell title="Project"><p className="text-sm text-slate-400">Loading…</p></AppShell>;
@@ -196,7 +163,7 @@ export default function DesignerProjectDetail() {
         </span>
 
         {project.category && (
-          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${categoryClass}`}>
+          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${category}`}>
             {project.category}
           </span>
         )}

@@ -10,6 +10,7 @@ import { getAllCompletedTasks } from '../../api/tasks';
 import AppShell from '../../components/AppShell';
 import { useMemo } from 'react';
 import { formatTND } from '../../utils/format';
+import { barColor, CATEGORY_PALETTE } from '../../utils/project';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -22,18 +23,6 @@ const timeAgo = (dateStr: string) => {
   if (hours < 24) return `${hours}h ago`;
   return `${Math.floor(hours / 24)}d ago`;
 };
-
-const CATEGORY_COLORS = [
-  'bg-purple-50 text-purple-700',
-  'bg-blue-50 text-blue-700',
-  'bg-orange-50 text-orange-700',
-  'bg-pink-50 text-pink-700',
-  'bg-cyan-50 text-cyan-700',
-  'bg-rose-50 text-rose-700',
-];
-
-const barColor = (pct: number) =>
-  pct >= 100 ? '#ef4444' : pct >= 80 ? '#f59e0b' : '#0d9488';
 
 const FEEDBACK_CAT_STYLE: Record<string, { bg: string; text: string }> = {
   Revision: { bg: '#fff7ed', text: '#c2410c' },
@@ -79,7 +68,7 @@ export default function ManagerDashboard() {
       new Set(projects.map(p => p.category).filter((c): c is string => Boolean(c)))
     ).sort();
     return new Map(
-      uniqueCategories.map((cat, i) => [cat, CATEGORY_COLORS[i % CATEGORY_COLORS.length]])
+      uniqueCategories.map((cat, i) => [cat, CATEGORY_PALETTE[i % CATEGORY_PALETTE.length]])
     );
   }, [projects]);
 

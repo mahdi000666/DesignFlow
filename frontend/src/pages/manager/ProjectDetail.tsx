@@ -22,42 +22,11 @@ import type { TaskPayload, Task } from '../../types/task';
 import type { Project } from '../../types/project';
 import { exportPDF } from '../../api/analytics';
 import type { ScopeCreepItem } from '../../types/analytic';
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+import { STATUS_BADGE, STATUS_DOT, barColor, categoryClass, statusLabel } from '../../utils/project';
+import UnreadBadge from '../../components/UnreadBadge';
+import { formatTND } from '../../utils/format';
 
 type Tab = 'tasks' | 'logs' | 'files' | 'feedback' | 'messages';
-
-const STATUS_BADGE: Record<Project['status'], string> = {
-  Active:    'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-200',
-  Completed: 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200',
-  OnHold:    'bg-violet-50 text-violet-700 ring-1 ring-inset ring-violet-200',
-};
-
-const STATUS_DOT: Record<Project['status'], string> = {
-  Active:    'bg-blue-500',
-  Completed: 'bg-emerald-500',
-  OnHold:    'bg-violet-500',
-};
-
-const CATEGORY_COLORS: Record<string, string> = {
-  Branding:    'text-purple-700 bg-purple-50',
-  UX:          'text-blue-700 bg-blue-50',
-  Motion:      'text-orange-700 bg-orange-50',
-  Editorial:   'text-pink-700 bg-pink-50',
-  Web:         'text-cyan-700 bg-cyan-50',
-};
-
-const barColor = (pct: number) =>
-  pct >= 100 ? '#ef4444' : pct >= 80 ? '#f59e0b' : '#3b82f6';
-
-function UnreadBadge({ count }: { count: number }) {
-  if (count === 0) return null;
-  return (
-    <span className="ml-1.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold leading-none">
-      {count}
-    </span>
-  );
-}
 
 // ─── Markdown bold renderer (parses **text** → <strong>, orange for scope creep) ──
 
@@ -324,7 +293,7 @@ export default function ProjectDetail() {
 
   const TABS: Tab[] = ['tasks', 'logs', 'files', 'feedback', 'messages'];
 
-  const categoryClass = CATEGORY_COLORS[project.category] ?? 'text-slate-600 bg-slate-100';
+  const category = categoryClass(project.category);
 
   return (
     <AppShell
@@ -420,7 +389,7 @@ export default function ProjectDetail() {
 
         {/* Category */}
         {project.category && (
-          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${categoryClass}`}>
+          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${category}`}>
             {project.category}
           </span>
         )}
@@ -448,10 +417,10 @@ export default function ProjectDetail() {
         {/* Effective Hourly Rate */}
         <MetricCard
           label="Eff. Hourly Rate"
-          value={currentEHR != null ? `${Math.round(currentEHR)} TND` : '—'}
+          value={currentEHR != null ? `${formatTND(currentEHR)} TND` : '—'}
           subtitle={
             targetEHR != null && currentEHR != null
-              ? `Target ${Math.round(targetEHR)} TND · ${currentEHR >= targetEHR ? '+' : '−'}${Math.abs(Math.round(currentEHR - targetEHR))} ${currentEHR >= targetEHR ? 'above' : 'below'}`
+              ? `Target ${formatTND(targetEHR)} TND · ${currentEHR >= targetEHR ? '+' : '−'}${Math.abs(Math.round(currentEHR - targetEHR))} ${currentEHR >= targetEHR ? 'above' : 'below'}`
               : 'No budget set'
           }
           borderColor={currentEHR != null && targetEHR != null
@@ -498,7 +467,7 @@ export default function ProjectDetail() {
                 { label: 'REMAINING', value: `${Math.round(remaining ?? 0)} h`,                      cls: remaining != null && remaining < 10 ? 'text-rose-600' : 'text-blue-700' },
                 {
                   label: 'CONTRACT', value: project.budget_amount != null
-                    ? `${Math.round(Number(project.budget_amount)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '\u00A0')} TND`
+                    ? `${formatTND(Number(project.budget_amount))} TND`
                     : '—', cls: 'text-slate-900'
                 },
               ].map(col => (
