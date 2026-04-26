@@ -1,55 +1,94 @@
 /** @type {import('tailwindcss').Config} */
-export default {
-  content: ['./index.html', './src/**/*.{ts,tsx}'],
+module.exports = {
+  content: ['./**/*.{html,js,jsx,ts,tsx}'],
   theme: {
     extend: {
       colors: {
-        // Page & surface
-        bg:              '#f8fafc',   // slate-50
-        surface:         '#ffffff',
-        surface2:        '#f1f5f9',   // slate-100
-        border:          '#e2e8f0',   // slate-200
-        'border-strong': '#cbd5e1',   // slate-300
-
-        // Text
-        ink:             '#0f172a',   // slate-900
-        ink2:            '#475569',   // slate-600
-        ink3:            '#94a3b8',   // slate-400
-
-        // Sidebar
-        sidebar:         '#0f172a',   // slate-900
-
-        // Semantic
-        amber:           '#d97706',
-        'amber-light':   '#fef3c7',
-        'amber-dark':    '#92400e',
-        teal:            '#0d9488',
-        'teal-light':    '#ccfbf1',
-        'teal-dark':     '#0d4e49',
-        danger:          '#dc2626',
-        'danger-light':  '#fee2e2',
-        info:            '#1d4ed8',   // blue-700 — primary
-        'info-light':    '#dbeafe',
-        success:         '#15803d',
-        'success-light': '#dcfce7',
+        brand: {
+          50:  '#EEEDFE',
+          100: '#CECBF6',
+          200: '#AFA9EC',
+          300: '#9B94E8',
+          400: '#7F77DD',
+          500: '#6366F1',
+          600: '#4F46E5',
+          700: '#4338CA',
+          800: '#3730A3',
+          900: '#312E81',
+        },
+        sidebar: {
+          bg:     '#100F2E',
+          hover:  '#1E1B4B',
+          active: '#4F46E5',
+          text:   '#94A3B8',
+          muted:  '#64748B',
+        },
+        surface: {
+          page:   '#F4F5FA',
+          card:   '#FFFFFF',
+          raised: '#FFFFFF',
+        },
+        neutral: {
+          50:  '#F8FAFC',
+          100: '#F1F5F9',
+          200: '#E2E8F0',
+          300: '#CBD5E1',
+          400: '#94A3B8',
+          500: '#64748B',
+          600: '#475569',
+          700: '#334155',
+          800: '#1E293B',
+          900: '#0F172A',
+        },
+        status: {
+          'in-progress':     '#3B82F6',
+          'in-progress-bg':  '#EFF6FF',
+          completed:         '#10B981',
+          'completed-bg':    '#ECFDF5',
+          planning:          '#F59E0B',
+          'planning-bg':     '#FFFBEB',
+          pending:           '#F97316',
+          'pending-bg':      '#FFF7ED',
+          todo:              '#64748B',
+          'todo-bg':         '#F1F5F9',
+        },
       },
       fontFamily: {
-        // DM Serif Display — page titles only
-        display: ['"DM Serif Display"', 'Georgia', 'serif'],
-        // Keep serif alias for any existing references
-        serif:   ['"DM Serif Display"', 'Georgia', 'serif'],
-        // Figtree — all UI text
-        sans:    ['Figtree', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        // DM Mono — every number, hour value, currency
-        mono:    ['"DM Mono"', 'ui-monospace', 'monospace'],
+        sans: ['"DM Sans"', 'sans-serif'],
+        mono: ['"DM Mono"', 'monospace'],
+      },
+      fontSize: {
+        '2xs': ['10px', '14px'],
+        xs:    ['12px', '16px'],
+        sm:    ['13px', '18px'],
+        base:  ['14px', '20px'],
+        md:    ['15px', '22px'],
+        lg:    ['16px', '24px'],
+        xl:    ['18px', '26px'],
+        '2xl': ['20px', '28px'],
+        '3xl': ['24px', '32px'],
+        '4xl': ['30px', '38px'],
       },
       borderRadius: {
-        sm:      '4px',
-        DEFAULT: '8px',
-        lg:      '12px',
-        full:    '9999px',
+        sm:   '4px',
+        DEFAULT: '6px',
+        md:   '8px',
+        lg:   '10px',
+        xl:   '12px',
+        '2xl':'16px',
+        '3xl':'20px',
+      },
+      boxShadow: {
+        card:   '0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)',
+        raised: '0 4px 12px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.04)',
+        input:  '0 1px 2px rgba(0,0,0,0.04)',
+        brand:  '0 4px 14px rgba(99,102,241,0.35)',
+      },
+      spacing: {
+        sidebar: '220px',
+        header:  '60px',
       },
     },
   },
   plugins: [],
-}
+};
