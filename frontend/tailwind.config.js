@@ -23,7 +23,7 @@ export default {
         amber:           '#d97706',
         'amber-light':   '#fef3c7',
         'amber-dark':    '#92400e',
-        teal:            '#0f766e',
+        teal:            '#0d9488',
         'teal-light':    '#ccfbf1',
         'teal-dark':     '#0d4e49',
         danger:          '#dc2626',

@@ -229,7 +229,7 @@ export default function ProjectList() {
                         className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-opacity hover:opacity-75 disabled:opacity-40 ${STATUS_BADGE[p.status]}`}
                       >
                         <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${STATUS_DOT[p.status]}`} />
-                        {p.status === 'OnHold' ? 'On Hold' : p.status}
+                        {statusLabel(p.status)}
                       </button>
                     </td>
 

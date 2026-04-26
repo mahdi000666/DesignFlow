@@ -5,6 +5,7 @@ import { useDesignerUtilization } from '../hooks/useAnalytics';
 import apiClient from '../api/clients';
 import type { Project } from '../types/project';
 import type { DesignerUtilizationItem } from '../types/analytic';
+import { formatEHR, Initials } from '../utils/format';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -32,9 +33,6 @@ const avatarColor = (name: string) => {
   const hash = name.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
   return AVATAR_COLORS[hash % AVATAR_COLORS.length];
 };
-
-const initials = (name: string) =>
-  name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
@@ -108,14 +106,14 @@ export default function AssignDesignerPanel({ project, onClose }: Props) {
           {sorted.map(d => {
             const subtitleParts: string[] = [];
             if (d.specialization) subtitleParts.push(d.specialization);
-            if (d.hourly_rate != null) subtitleParts.push(`$${d.hourly_rate}/h`);
+            if (d.hourly_rate != null) subtitleParts.push(formatEHR(d.hourly_rate));
             if (d.utilization != null) subtitleParts.push(`${d.utilization}% utilised`);
 
             return (
               <li key={d.id} className={`flex items-center gap-4 px-2 py-4 rounded-xl ${d.isAssigned ? 'bg-slate-50' : ''}`}>
                 {/* Avatar */}
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-white text-sm font-bold ${avatarColor(d.name)}`}>
-                  {initials(d.name)}
+                  {Initials(d.name)}
                 </div>
 
                 {/* Info */}

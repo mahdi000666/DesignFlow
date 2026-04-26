@@ -44,7 +44,7 @@ export default function DesignerProjects() {
                       </span>
                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_BADGE[p.status]}`}>
                         <span className={`w-1.5 h-1.5 rounded-full ${STATUS_DOT[p.status]}`} />
-                        {p.status === 'OnHold' ? 'On Hold' : p.status}
+                        {statusLabel(p.status)}
                       </span>
                     </div>
                     {meta && <p className="text-sm text-slate-400">{meta}</p>}

@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { Initials } from '../utils/format';
 
 // ─── Icons ───────────────────────────────────────────────────────────────────
 
@@ -112,9 +113,7 @@ export default function AppShell({ title, breadcrumb, actions, children }: AppSh
         : 'text-slate-400 hover:text-white hover:bg-slate-800 px-3'
     }`;
 
-  const initials = user?.full_name
-    ? user.full_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
-    : '??';
+  const avatarInitials = user?.full_name ? Initials(user.full_name) : '??';
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50 font-sans antialiased">
@@ -141,7 +140,7 @@ export default function AppShell({ title, breadcrumb, actions, children }: AppSh
         <div className="px-4 py-3.5 border-b border-slate-800">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-semibold shrink-0">
-              {initials}
+              {avatarInitials}
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-white text-xs font-medium truncate">{user?.full_name}</p>

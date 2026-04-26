@@ -24,7 +24,7 @@ import { exportPDF } from '../../api/analytics';
 import type { ScopeCreepItem } from '../../types/analytic';
 import { STATUS_BADGE, STATUS_DOT, barColor, categoryClass, statusLabel } from '../../utils/project';
 import UnreadBadge from '../../components/UnreadBadge';
-import { formatTND } from '../../utils/format';
+import { formatEHR, formatTND } from '../../utils/format';
 
 type Tab = 'tasks' | 'logs' | 'files' | 'feedback' | 'messages';
 
@@ -363,7 +363,7 @@ export default function ProjectDetail() {
         ) : (
           <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_BADGE[project.status]}`}>
             <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${STATUS_DOT[project.status]}`} />
-            {project.status === 'OnHold' ? 'On Hold' : project.status}
+            {statusLabel(project.status)}
           </span>
         )}
 
@@ -417,10 +417,10 @@ export default function ProjectDetail() {
         {/* Effective Hourly Rate */}
         <MetricCard
           label="Eff. Hourly Rate"
-          value={currentEHR != null ? `${formatTND(currentEHR)} TND` : '—'}
+          value={currentEHR != null ? formatEHR(currentEHR) : '—'}
           subtitle={
             targetEHR != null && currentEHR != null
-              ? `Target ${formatTND(targetEHR)} TND · ${currentEHR >= targetEHR ? '+' : '−'}${Math.abs(Math.round(currentEHR - targetEHR))} ${currentEHR >= targetEHR ? 'above' : 'below'}`
+              ? `Target ${formatEHR(targetEHR)} · ${currentEHR >= targetEHR ? '+' : '−'}${formatEHR(Math.abs(currentEHR - targetEHR))} ${currentEHR >= targetEHR ? 'above' : 'below'}`
               : 'No budget set'
           }
           borderColor={currentEHR != null && targetEHR != null
@@ -467,7 +467,7 @@ export default function ProjectDetail() {
                 { label: 'REMAINING', value: `${Math.round(remaining ?? 0)} h`,                      cls: remaining != null && remaining < 10 ? 'text-rose-600' : 'text-blue-700' },
                 {
                   label: 'CONTRACT', value: project.budget_amount != null
-                    ? `${formatTND(Number(project.budget_amount))} TND`
+                    ? `${formatTND(Number(project.budget_amount))}`
                     : '—', cls: 'text-slate-900'
                 },
               ].map(col => (

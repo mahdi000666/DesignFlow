@@ -18,7 +18,7 @@ import TaskRow from '../../components/TaskRow';
 import AppShell from '../../components/AppShell';
 import type { Task } from '../../types/task';
 import type { TimeLogPayload } from '../../types/timelog';
-import { formatTND } from '../../utils/format';
+import { formatEHR, formatTND } from '../../utils/format';
 import { STATUS_BADGE, STATUS_DOT, barColor, categoryClass, statusLabel } from '../../utils/project';
 import UnreadBadge from '../../components/UnreadBadge';
 
@@ -141,7 +141,7 @@ export default function DesignerProjectDetail() {
       <div className="flex items-center gap-2 flex-wrap mb-6">
         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_BADGE[project.status]}`}>
           <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${STATUS_DOT[project.status]}`} />
-          {project.status === 'OnHold' ? 'On Hold' : project.status}
+          {statusLabel(project.status)}
         </span>
 
         {project.deadline && (
@@ -180,7 +180,7 @@ export default function DesignerProjectDetail() {
           <div className="absolute left-0 inset-y-0 w-1 rounded-l-xl bg-blue-500" />
           <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-2">My Tasks</p>
           <p className="font-mono text-2xl font-bold text-slate-900 leading-none mb-1">{tasks.length}</p>
-          <p className="text-xs text-slate-400">{taskDoneCount} done · {taskOpenCount} open</p>
+          <p className="text-xs text-slate-400">{taskDoneCount} Done · {taskOpenCount} Open</p>
         </div>
 
         {/* My Hours Logged */}
@@ -188,7 +188,7 @@ export default function DesignerProjectDetail() {
           <div className="absolute left-0 inset-y-0 w-1 rounded-l-xl bg-violet-500" />
           <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-2">My Hours Logged</p>
           <p className="font-mono text-2xl font-bold text-slate-900 leading-none mb-1">{myHours.toFixed(1)} h</p>
-          <p className="text-xs text-slate-400">{myTasksLogged} task{myTasksLogged !== 1 ? 's' : ''}</p>
+          <p className="text-xs text-slate-400">{myTasksLogged} Task{myTasksLogged !== 1 ? 's' : ''}</p>
         </div>
 
         {/* Budget Utilisation */}
@@ -200,7 +200,7 @@ export default function DesignerProjectDetail() {
           </p>
           <p className="text-xs text-slate-400">
             {project.actual_hours != null && project.budget_hours
-              ? `${Math.round(project.actual_hours)} of ${Math.round(Number(project.budget_hours))} h (all designers)`
+              ? `${Math.round(project.actual_hours)} of ${Math.round(Number(project.budget_hours))} h (All designers)`
               : 'No budget set'}
           </p>
         </div>
@@ -263,12 +263,12 @@ export default function DesignerProjectDetail() {
               <p className="text-xs text-slate-400">
                 Target EHR:{' '}
                 <span className={`font-semibold ${ehrGood ? 'line-through text-slate-400' : 'text-rose-600'}`}>
-                  {formatTND(targetEHR)}
+                  {formatEHR(targetEHR)}
                 </span>
                 {' · '}
                 Current EHR:{' '}
                 <span className={`font-semibold ${ehrGood ? 'text-emerald-600' : 'text-rose-600'}`}>
-                  {formatTND(currentEHR)}
+                  {formatEHR(currentEHR)}
                 </span>
               </p>
             )}

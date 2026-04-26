@@ -16,7 +16,7 @@ import MessageBoard from '../../components/MessageBoard';
 import type { FeedbackPayload } from '../../types/feedback';
 import { barColor, categoryClass } from '../../utils/project';
 import UnreadBadge from '../../components/UnreadBadge';
-import { formatTND, Initials } from '../../utils/format';
+import { formatEHR, formatTND, Initials } from '../../utils/format';
 
 type Tab = 'overview' | 'feedback' | 'files' | 'messages';
 
@@ -148,7 +148,7 @@ export default function ClientProjectDetail() {
           </p>
           <p className="text-xs text-slate-400">
             {project.actual_hours != null && project.budget_hours
-              ? `${Math.round(project.actual_hours)} of ${Math.round(Number(project.budget_hours))} h used`
+              ? `${Math.round(project.actual_hours)} of ${Math.round(Number(project.budget_hours))} h Used`
               : 'No budget set'}
           </p>
         </div>
@@ -158,7 +158,7 @@ export default function ClientProjectDetail() {
           <div className="absolute left-0 inset-y-0 w-1 rounded-l-xl bg-amber-400" />
           <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-2">My Feedback</p>
           <p className="font-mono text-2xl font-bold text-slate-900 leading-none mb-1">{feedback.length}</p>
-          <p className="text-xs text-slate-400">{resolvedFeedback} resolved · {openFeedback} open</p>
+          <p className="text-xs text-slate-400">{resolvedFeedback} Resolved · {openFeedback} Open</p>
         </div>
 
         {/* Files Shared */}
@@ -166,7 +166,7 @@ export default function ClientProjectDetail() {
           <div className="absolute left-0 inset-y-0 w-1 rounded-l-xl bg-emerald-500" />
           <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-2">Files Shared</p>
           <p className="font-mono text-2xl font-bold text-slate-900 leading-none mb-1">{files.length}</p>
-          <p className="text-xs text-slate-400">{deliverableFiles} deliverable{deliverableFiles !== 1 ? 's' : ''}</p>
+          <p className="text-xs text-slate-400">{deliverableFiles} Deliverable{deliverableFiles !== 1 ? 's' : ''}</p>
         </div>
       </div>
 
@@ -224,12 +224,12 @@ export default function ClientProjectDetail() {
               <p className="text-xs text-slate-400">
                 Target EHR:{' '}
                 <span className={`font-semibold ${ehrGood ? 'line-through text-slate-400' : 'text-rose-600'}`}>
-                  {formatTND(targetEHR)}
+                  {formatEHR(targetEHR)}
                 </span>
                 {' · '}
                 Current EHR:{' '}
                 <span className={`font-semibold ${ehrGood ? 'text-emerald-600' : 'text-rose-600'}`}>
-                  {formatTND(currentEHR)}
+                  {formatEHR(currentEHR)}
                 </span>
               </p>
             )}

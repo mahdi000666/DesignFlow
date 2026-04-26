@@ -3,8 +3,92 @@ Good job, I have questions:
 2. In various files, i get the error message "'statusLabel' is defined but never used.", is it supposed to be used? If so, give an example.
 3. Now I will give you the components to review them exactly like you did with the pages.
 
-
-
+Current frontend structure just for context
+frontend/
+        ├── README.md
+        ├── eslint.config.js
+        ├── index.html
+        ├── package.json
+        ├── postcss.config.js
+        ├── tailwind.config.js
+        ├── tsconfig.app.json
+        ├── tsconfig.json
+        ├── tsconfig.node.json
+        ├── vite.config.ts
+        └── src/
+            ├── App.tsx
+            ├── index.css
+            ├── main.tsx
+            ├── api/
+            │   ├── analytics.ts
+            │   ├── clients.ts
+            │   ├── feedbacks.ts
+            │   ├── files.ts
+            │   ├── messages.ts
+            │   ├── pagination.ts
+            │   ├── projects.ts
+            │   ├── tasks.ts
+            │   ├── timelogs.ts
+            │   └── users.ts
+            ├── components/
+            │   ├── AppShell.tsx
+            │   ├── AssignDesignerPanel.tsx
+            │   ├── FeedbackForm.tsx
+            │   ├── FeedbackList.tsx
+            │   ├── FileUploadPanel.tsx
+            │   ├── KPICard.tsx
+            │   ├── MessageBoard.tsx
+            │   ├── ProjectForm.tsx
+            │   ├── ProtectedRoute.tsx
+            │   ├── TaskForm.tsx
+            │   ├── TaskRow.tsx
+            │   ├── TimeLogForm.tsx
+            │   └── TimeLogList.tsx
+            │   └── UnreadBadge.tsx
+            ├── context/
+            │   ├── authContext.ts
+            │   └── AuthProvider.tsx
+            ├── hooks/
+            │   ├── useAnalytics.ts
+            │   ├── useAuth.ts
+            │   ├── useFeedback.ts
+            │   ├── useFiles.ts
+            │   ├── useMessages.ts
+            │   ├── useProjects.ts
+            │   ├── useTasks.ts
+            │   ├── useTimeLogs.ts
+            │   ├── useUnreadCount.ts
+            │   └── useUsers.ts
+            ├── pages/
+            │   ├── SettingsPage.tsx
+            │   ├── auth/
+            │   │   ├── ActivatePage.tsx
+            │   │   └── LoginPage.tsx
+            │   ├── client/
+            │   │   ├── ClientDashboard.tsx
+            │   │   └── ClientProjectDetail.tsx
+            │   ├── designer/
+            │   │   ├── DesignerDashboard.tsx
+            │   │   ├── DesignerProjectDetail.tsx
+            │   │   └── DesignerProjects.tsx
+            │   └── manager/
+            │       ├── AnalyticsDashboard.tsx
+            │       ├── ManagerDashboard.tsx
+            │       ├── ProjectDetail.tsx
+            │       ├── ProjectList.tsx
+            │       └── TeamPage.tsx
+            ├── types/
+            │   ├── analytic.ts
+            │   ├── feedback.ts
+            │   ├── file.ts
+            │   ├── message.ts
+            │   ├── project.ts
+            │   ├── task.ts
+            │   ├── timelog.ts
+            │   └── user.ts
+            └── utils/
+                ├── format.ts
+                └── project.ts
 
 
 
@@ -145,7 +229,8 @@ Directory structure:
             │   ├── timelog.ts
             │   └── user.ts
             └── utils/
-                └── format.ts
+                ├── format.ts
+                └── project.ts
 ```
 
 Its important that you don't accidentally contradict or overwrite already existing files from past sprints. You can always pause and ask me to provide any files you require.

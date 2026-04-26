@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useMessages, useCreateMessage } from '../hooks/useMessages';
 import { useAuth } from '../hooks/useAuth';
+import { Initials } from '../utils/format';
 
 interface Props {
   projectId: number;
@@ -13,9 +14,6 @@ const fmt = (iso: string) =>
     hour:   '2-digit',
     minute: '2-digit',
   });
-
-const initials = (name: string) =>
-  name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 
 export default function MessageBoard({ projectId }: Props) {
   const { user }                           = useAuth();
@@ -66,7 +64,7 @@ export default function MessageBoard({ projectId }: Props) {
                 <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-semibold shrink-0 ${
                   isOwn ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-600'
                 }`}>
-                  {initials(msg.sender_name)}
+                  {Initials(msg.sender_name)}
                 </div>
 
                 {/* Bubble + meta */}

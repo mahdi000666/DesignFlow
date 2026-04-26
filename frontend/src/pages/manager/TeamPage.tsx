@@ -2,7 +2,7 @@ import { useState } from 'react';
 import AppShell from '../../components/AppShell';
 import { useTeam, useInviteUser } from '../../hooks/useUsers';
 import type { DesignerCard, TeamUser } from '../../types/user';
-import { formatTND, Initials  } from '../../utils/format';
+import { formatEHR, Initials  } from '../../utils/format';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -227,7 +227,7 @@ function DesignerCardComponent({ d }: { d: DesignerCard }) {
         <div className="flex justify-between text-sm">
           <span className="text-slate-400">Hourly rate</span>
           <span className="font-mono font-semibold text-slate-900">
-            {d.hourly_rate ? `${formatTND(parseFloat(d.hourly_rate))}/h` : '—'}
+            {d.hourly_rate ? formatEHR(parseFloat(d.hourly_rate)) : '—'}
           </span>
         </div>
         <div className="flex justify-between text-sm">

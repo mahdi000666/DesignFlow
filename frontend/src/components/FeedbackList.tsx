@@ -16,16 +16,21 @@ const FILTERS: { value: FeedbackFilter; label: string }[] = [
   { value: 'Question',   label: 'Question' },
 ];
 
+// Aligned with the rest of the app: slate- for neutral, amber- for warning,
+// emerald- for success, blue- for in-progress.  Previously used yellow-, green-,
+// gray-, and red- which don't exist in the design system.
 const STATUS_STYLES: Record<FeedbackStatus, string> = {
-  Pending:    'bg-yellow-100 text-yellow-700',
-  InProgress: 'bg-blue-100 text-blue-700',
-  Resolved:   'bg-green-100 text-green-700',
+  Pending:    'bg-amber-50 text-amber-700',
+  InProgress: 'bg-blue-50 text-blue-700',
+  Resolved:   'bg-emerald-50 text-emerald-700',
 };
 
+// rose- replaces red- (danger token); slate- replaces gray- (neutral token);
+// emerald- replaces green-.
 const CATEGORY_STYLES: Record<string, string> = {
-  Revision: 'bg-red-100 text-red-700',
-  Approval: 'bg-green-100 text-green-700',
-  Question: 'bg-gray-100 text-gray-700',
+  Revision: 'bg-rose-50 text-rose-700',
+  Approval: 'bg-emerald-50 text-emerald-700',
+  Question: 'bg-slate-100 text-slate-600',
 };
 
 const NEXT_STATUS: Partial<Record<FeedbackStatus, FeedbackStatus>> = {
@@ -68,7 +73,6 @@ export default function FeedbackList({ projectId, canUpdate, canReply = false }:
   const [replyingTo, setReplyingTo] = useState<number | null>(null);
   const [replyText,  setReplyText]  = useState('');
 
-  // Replies are Messages with feedback=<id> — group by feedback FK directly.
   const repliesFor = (feedbackId: number) =>
     replies.filter(r => r.feedback === feedbackId);
 
@@ -86,8 +90,8 @@ export default function FeedbackList({ projectId, canUpdate, canReply = false }:
     deleteFeedback.mutate(id);
   };
 
-  if (isLoading) return <p className="text-sm text-gray-400">Loading feedback…</p>;
-  if (!items.length) return <p className="text-sm text-gray-400">No feedback yet.</p>;
+  if (isLoading) return <p className="text-sm text-slate-400">Loading feedback…</p>;
+  if (!items.length) return <p className="text-sm text-slate-400">No feedback yet.</p>;
 
   const isClient = user?.role === 'Client';
 
@@ -118,7 +122,7 @@ export default function FeedbackList({ projectId, canUpdate, canReply = false }:
       </div>
 
       {visibleItems.length === 0 ? (
-        <p className="text-sm text-gray-400">No feedback matches this filter.</p>
+        <p className="text-sm text-slate-400">No feedback matches this filter.</p>
       ) : (
         <ul className="space-y-3">
           {visibleItems.map(item => {
@@ -127,7 +131,7 @@ export default function FeedbackList({ projectId, canUpdate, canReply = false }:
             const itemReplies = repliesFor(item.id);
 
             return (
-              <li key={item.id} className="border rounded-lg p-4 bg-white shadow-sm">
+              <li key={item.id} className="border border-slate-200 rounded-xl p-4 bg-white shadow-sm">
 
                 {/* ── Top row: badges + action buttons ─────────────────────── */}
                 <div className="flex items-start justify-between gap-4">
@@ -137,17 +141,17 @@ export default function FeedbackList({ projectId, canUpdate, canReply = false }:
                         {item.category}
                       </span>
                       <StatusBadge category={item.category} status={item.status} />
-                      <span className="text-xs text-gray-400">
+                      <span className="text-xs text-slate-400">
                         {new Date(item.submitted_at).toLocaleDateString()}
                       </span>
                       {item.resolved_at && (
-                        <span className="text-xs text-gray-400">
+                        <span className="text-xs text-slate-400">
                           {item.category === 'Approval' ? 'Acknowledged' : 'Resolved'}{' '}
                           {new Date(item.resolved_at).toLocaleDateString()}
                         </span>
                       )}
                     </div>
-                    <p className="text-sm text-gray-700">{item.content_text}</p>
+                    <p className="text-sm text-slate-700">{item.content_text}</p>
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0">
@@ -155,7 +159,7 @@ export default function FeedbackList({ projectId, canUpdate, canReply = false }:
                       <button
                         onClick={() => updateStatus.mutate({ id: item.id, status: next })}
                         disabled={updateStatus.isPending}
-                        className="text-xs px-2 py-1 border rounded hover:bg-gray-50 disabled:opacity-50"
+                        className="text-xs px-2 py-1 border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 transition-colors"
                       >
                         Mark {next}
                       </button>
@@ -164,7 +168,7 @@ export default function FeedbackList({ projectId, canUpdate, canReply = false }:
                       <button
                         onClick={() => handleDelete(item.id)}
                         disabled={deleteFeedback.isPending}
-                        className="text-xs px-2 py-1 border border-rose-200 text-rose-500 rounded hover:bg-rose-50 disabled:opacity-50"
+                        className="text-xs px-2 py-1 border border-rose-200 text-rose-500 rounded-lg hover:bg-rose-50 disabled:opacity-50 transition-colors"
                       >
                         Delete
                       </button>

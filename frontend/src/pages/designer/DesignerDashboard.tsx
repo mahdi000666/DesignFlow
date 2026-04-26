@@ -79,13 +79,13 @@ export default function DesignerDashboard() {
         <KPICard
           label="Assigned Projects"
           value={projects.length}
-          subtitle={`${activeProjects.length} active`}
+          subtitle={`${activeProjects.length} Active`}
           borderColor="#3b82f6"
         />
         <KPICard
           label="Open Tasks"
           value={openTasks.length}
-          subtitle="across all projects"
+          subtitle="Across all projects"
           borderColor="#8b5cf6"
         />
         <KPICard
@@ -128,7 +128,7 @@ export default function DesignerDashboard() {
                         </p>
                         <span className={`shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${STATUS_BADGE[p.status]}`}>
                           <span className={`w-1.5 h-1.5 rounded-full ${STATUS_DOT[p.status]}`} />
-                          {p.status === 'OnHold' ? 'On Hold' : p.status}
+                          {statusLabel(p.status)}
                         </span>
                       </div>
                       {pct !== null && (

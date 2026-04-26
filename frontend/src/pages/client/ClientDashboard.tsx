@@ -54,19 +54,19 @@ export default function ClientDashboard() {
         <KPICard
           label="My Projects"
           value={projects.length}
-          subtitle={`${activeProjects} active`}
+          subtitle={`${activeProjects} Active`}
           borderColor="#3b82f6"
         />
         <KPICard
           label="Pending Feedback"
           value={pendingFeedback}
-          subtitle="awaiting response"
+          subtitle="Awaiting response"
           borderColor="#f59e0b"
         />
         <KPICard
           label="Total Contract Value"
           value={formatTND(totalContractValue)}
-          subtitle="across all projects"
+          subtitle="Across all projects"
           borderColor="#10b981"
         />
       </div>
@@ -107,9 +107,8 @@ export default function ClientDashboard() {
                       </span>
                     </div>
                     {openCount > 0 && (
-                      <span className="shrink-0 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200">
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                        {openCount} open feedback
+                      <span className="shrink-0 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200">
+                        ● {openCount} Open feedback
                       </span>
                     )}
                   </div>
