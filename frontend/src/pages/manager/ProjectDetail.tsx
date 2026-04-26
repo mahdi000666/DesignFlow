@@ -130,7 +130,7 @@ function AISummaryCard({ projectId }: { projectId: number }) {
           </div>
           <div>
             <p className="text-sm font-semibold text-slate-900">AI Project Health Narrative</p>
-            <p className="text-xs text-slate-400 mt-0.5">Generated from live metrics · Groq llama-3.3-70b</p>
+            <p className="text-xs text-slate-400 mt-0.5">Generated from live metrics</p>
           </div>
         </div>
         {stored && (

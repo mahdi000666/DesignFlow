@@ -11,6 +11,7 @@ export interface AuthContextValue {
   user: AuthUser | null;
   login: (access: string, refresh: string) => AuthUser;
   logout: () => void;
+  updateUser: (patch: Partial<AuthUser>) => void;
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null);

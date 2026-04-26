@@ -5,7 +5,6 @@ import {
 } from 'recharts';
 import AppShell from '../../components/AppShell';
 import {
-  useKPISummary,
   useBudgetVariance,
   useRevenueByClient,
   useClientProfitability,
@@ -16,7 +15,8 @@ import {
 } from '../../hooks/useAnalytics';
 import { useProjects } from '../../hooks/useProjects';
 import { exportPDF, exportExcel } from '../../api/analytics';
-import type { AnalyticsFilters } from '../../types/analytic';
+import type { AnalyticsFilters, ScopeCreepItem, ProfitMarginItem } from '../../types/analytic';
+import { formatTND } from '../../utils/format';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -26,6 +26,75 @@ const PIE_COLORS = ['#1e40af', '#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe', '#dbe
 
 const utilBarColor = (pct: number) =>
   pct > 100 ? '#ef4444' : pct > 80 ? '#f59e0b' : '#10b981';
+
+const scopeColor = (idx: number) =>
+  idx > 30 ? '#ef4444' : idx > 15 ? '#f59e0b' : '#10b981';
+
+const marginColor = (pct: number | null) => {
+  if (pct === null) return '#94a3b8';
+  return pct < 0 ? '#ef4444' : pct < 20 ? '#f59e0b' : '#10b981';
+};
+
+// Responsive height for horizontal bar charts — scales with row count.
+const hBarHeight = (count: number) => Math.max(180, count * 42 + 40);
+
+// ---------------------------------------------------------------------------
+// Custom Tooltips
+// ---------------------------------------------------------------------------
+
+interface ScopeTooltipProps {
+  active?: boolean;
+  payload?: { payload: ScopeCreepItem }[];  // for ScopeTooltip
+}
+
+interface MarginTooltipProps {
+  active?: boolean;
+  payload?: { payload: ProfitMarginItem }[];
+}
+
+function ScopeTooltip({ active, payload }: ScopeTooltipProps) {
+  if (!active || !payload?.length) return null;
+  const row = payload[0].payload;
+  return (
+    <div className="bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-xs shadow-sm">
+      <p className="font-semibold text-slate-800 mb-1.5 max-w-[180px] truncate">{row.project_name}</p>
+      <p className="text-slate-500">Total tasks: <span className="font-mono">{row.total_tasks}</span></p>
+      <p className="text-slate-500">Unplanned: <span className="font-mono">{row.unplanned_tasks}</span></p>
+      <p className="text-slate-500">
+        Index:{' '}
+        <span className={`font-mono font-semibold ${
+          row.scope_creep_index > 30 ? 'text-rose-600' : row.scope_creep_index > 15 ? 'text-amber-600' : 'text-emerald-600'
+        }`}>
+          {row.scope_creep_index}%
+        </span>
+      </p>
+    </div>
+  );
+}
+
+function MarginTooltip({ active, payload }: MarginTooltipProps) {
+  if (!active || !payload?.length) return null;
+  const row = payload[0].payload;
+  const pct = row.profit_margin_pct;
+  return (
+    <div className="bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-xs shadow-sm">
+      <p className="font-semibold text-slate-800 mb-1.5 max-w-[180px] truncate">{row.project_name}</p>
+      <p className="text-slate-500">EHR: <span className="font-mono">{row.ehr.toFixed(2)}</span></p>
+      <p className="text-slate-500">
+        Avg Designer Rate:{' '}
+        <span className="font-mono">{row.avg_designer_rate !== null ? row.avg_designer_rate.toFixed(2) : '—'}</span>
+      </p>
+      <p className="text-slate-500">
+        Margin:{' '}
+        <span className={`font-mono font-semibold ${
+          pct === null ? 'text-slate-400' : pct < 0 ? 'text-rose-600' : pct < 20 ? 'text-amber-600' : 'text-emerald-600'
+        }`}>
+          {pct !== null ? `${pct.toFixed(1)}%` : '—'}
+        </span>
+      </p>
+    </div>
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Filter bar
@@ -106,17 +175,17 @@ type ExportState = 'idle' | 'loading' | 'error';
 
 export default function AnalyticsDashboard() {
   const [filters, setFilters] = useState<AnalyticsFilters>({});
-  const [pdfState,   setPdfState]   = useState<ExportState>('idle');
-  const [excelState, setExcelState] = useState<ExportState>('idle');
+  const [pdfState,    setPdfState]    = useState<ExportState>('idle');
+  const [excelState,  setExcelState]  = useState<ExportState>('idle');
   const [exportError, setExportError] = useState('');
 
-  const { data: projects = [] }      = useProjects();
+  const { data: projects = [] } = useProjects();
   const clients = useMemo(
     () => Array.from(new Map(projects.map(p => [p.client, p.client_name])).entries())
       .map(([id, name]) => ({ id, name })),
-    [projects]
+    [projects],
   );
-  const { data: kpi }                = useKPISummary(filters);
+
   const { data: budgetData = [] }    = useBudgetVariance(filters);
   const { data: revenueData = [] }   = useRevenueByClient(filters);
   const { data: profitability = [] } = useClientProfitability(filters);
@@ -126,6 +195,9 @@ export default function AnalyticsDashboard() {
   const { data: profitMargin = [] }  = useProfitMargin(filters);
 
   const hasProjectFilter = !!filters.project;
+
+  // Profit margin rows with null margins excluded from chart (no rate data)
+  const marginChartData = profitMargin.filter(r => r.profit_margin_pct !== null);
 
   const handleExport = async (format: 'pdf' | 'excel') => {
     const setter = format === 'pdf' ? setPdfState : setExcelState;
@@ -195,25 +267,6 @@ export default function AnalyticsDashboard() {
 
       <FilterBar filters={filters} onChange={setFilters} projects={projects} clients={clients} />
 
-      {/* ── KPI cards ──────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
-        {[
-          { label: 'Total Revenue',    value: kpi ? kpi.total_revenue.toLocaleString() : '—', rail: 'bg-emerald-500' },
-          { label: 'Avg. EHR',         value: kpi ? kpi.avg_ehr.toFixed(2)             : '—', rail: 'bg-blue-500' },
-          { label: 'Active Projects',  value: kpi ? String(kpi.active_projects)         : '—', rail: 'bg-amber-500' },
-          { label: 'Pending Feedback', value: kpi ? String(kpi.pending_feedback)        : '—', rail: 'bg-rose-500' },
-        ].map(card => (
-          <div
-            key={card.label}
-            className="bg-white rounded-xl border border-slate-200 relative overflow-hidden pl-5 pr-5 py-5"
-          >
-            <div className={`absolute left-0 inset-y-0 w-1 ${card.rail}`} />
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-2">{card.label}</p>
-            <p className="font-mono text-3xl font-bold text-slate-900 leading-none">{card.value}</p>
-          </div>
-        ))}
-      </div>
-
       {/* ── Row 1: Budget vs Actual + Revenue by Client ─────────────────── */}
       <div className="grid grid-cols-2 gap-4 mb-4">
 
@@ -268,7 +321,7 @@ export default function AnalyticsDashboard() {
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(v: number | undefined) => v?.toLocaleString() ?? '—'}
+                  formatter={(v: number | undefined) => v ? formatTND(v) : '—'}
                   contentStyle={{ fontSize: 12 }}
                 />
               </PieChart>
@@ -277,7 +330,7 @@ export default function AnalyticsDashboard() {
         </div>
       </div>
 
-      {/* ── Cumulative hours line chart (project-scoped) ─────────────────── */}
+      {/* ── Cumulative hours line chart ──────────────────────────────────── */}
       <div className="bg-white rounded-xl border border-slate-200 p-6 mb-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-4">
           Cumulative Hours Over Time
@@ -317,50 +370,49 @@ export default function AnalyticsDashboard() {
         )}
       </div>
 
-      {/* ── Row 2: Scope Creep + Designer Utilisation ───────────────────── */}
+      {/* ── Row 2: Scope Creep (chart) + Designer Utilisation (bars) ────── */}
       <div className="grid grid-cols-2 gap-4 mb-4">
 
+        {/* Scope Creep — horizontal bar chart */}
         <div className="bg-white rounded-xl border border-slate-200 p-6">
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-4">
             Scope Creep Index
           </p>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-slate-100">
-                <th className="pb-2 text-left   text-xs font-semibold text-slate-400">Project</th>
-                <th className="pb-2 text-right  text-xs font-semibold text-slate-400">Total</th>
-                <th className="pb-2 text-right  text-xs font-semibold text-slate-400">Unplanned</th>
-                <th className="pb-2 text-right  text-xs font-semibold text-slate-400">Index</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {scopeCreep.map(row => (
-                <tr key={row.project_id}>
-                  <td className="py-2 pr-3 text-slate-700 font-medium truncate max-w-[130px]">
-                    {row.project_name}
-                  </td>
-                  <td className="py-2 text-right font-mono text-slate-500">{row.total_tasks}</td>
-                  <td className="py-2 text-right font-mono text-slate-500">{row.unplanned_tasks}</td>
-                  <td className="py-2 text-right">
-                    <span className={`font-mono font-semibold ${
-                      row.scope_creep_index > 30 ? 'text-rose-600'
-                        : row.scope_creep_index > 15 ? 'text-amber-600'
-                        : 'text-emerald-600'
-                    }`}>
-                      {row.scope_creep_index}%
-                    </span>
-                  </td>
-                </tr>
-              ))}
-              {scopeCreep.length === 0 && (
-                <tr>
-                  <td colSpan={4} className="py-6 text-center text-xs text-slate-400">No data</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+          {scopeCreep.length === 0 ? (
+            <div className="h-44 flex items-center justify-center text-sm text-slate-400">No data</div>
+          ) : (
+            <ResponsiveContainer width="100%" height={hBarHeight(scopeCreep.length)}>
+              <BarChart
+                layout="vertical"
+                data={scopeCreep}
+                margin={{ top: 4, right: 40, left: 4, bottom: 4 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
+                <XAxis
+                  type="number"
+                  domain={[0, 100]}
+                  tick={{ fontSize: 10, fill: '#94a3b8' }}
+                  tickFormatter={v => `${v}%`}
+                />
+                <YAxis
+                  type="category"
+                  dataKey="project_name"
+                  tick={{ fontSize: 10, fill: '#64748b' }}
+                  width={120}
+                  tickFormatter={(v: string) => v.length > 18 ? `${v.slice(0, 18)}…` : v}
+                />
+                <Tooltip content={<ScopeTooltip />} />
+                <Bar dataKey="scope_creep_index" name="Scope Creep %" radius={[0, 3, 3, 0]}>
+                  {scopeCreep.map((row, i) => (
+                    <Cell key={i} fill={scopeColor(row.scope_creep_index)} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          )}
         </div>
 
+        {/* Designer Utilisation — progress bars (already visual, compact) */}
         <div className="bg-white rounded-xl border border-slate-200 p-6">
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-4">
             Designer Utilisation
@@ -381,7 +433,10 @@ export default function AnalyticsDashboard() {
                   <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
                     <div
                       className="h-full rounded-full transition-[width]"
-                      style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: utilBarColor(pct) }}
+                      style={{
+                        width:           `${Math.min(pct, 100)}%`,
+                        backgroundColor: utilBarColor(pct),
+                      }}
                     />
                   </div>
                   <p className="text-xs text-slate-400 mt-1 font-mono">
@@ -397,7 +452,7 @@ export default function AnalyticsDashboard() {
         </div>
       </div>
 
-      {/* ── Client Profitability ranking ─────────────────────────────────── */}
+      {/* ── Client Profitability — table (multi-column, better as table) ── */}
       <div className="bg-white rounded-xl border border-slate-200 p-6 mb-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-4">
           Client Profitability Ranking
@@ -418,7 +473,7 @@ export default function AnalyticsDashboard() {
               <tr key={row.client_id}>
                 <td className="py-2.5 pr-3 font-mono text-xs text-slate-400">{i + 1}</td>
                 <td className="py-2.5 pr-4 text-slate-700 font-medium">{row.client_name}</td>
-                <td className="py-2.5 text-right font-mono text-slate-900">{row.total_revenue.toLocaleString()}</td>
+                <td className="py-2.5 text-right font-mono text-slate-900">{formatTND(row.total_revenue)}</td>
                 <td className="py-2.5 text-right font-mono text-slate-500">{row.total_hours.toFixed(1)}</td>
                 <td className="py-2.5 text-right font-mono font-semibold text-blue-700">
                   {row.ehr !== null ? row.ehr.toFixed(2) : '—'}
@@ -439,48 +494,53 @@ export default function AnalyticsDashboard() {
         </table>
       </div>
 
-      {/* ── Profit Margin per project ────────────────────────────────────── */}
+      {/* ── Profit Margin — horizontal bar chart ────────────────────────── */}
       <div className="bg-white rounded-xl border border-slate-200 p-6">
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-4">
-          Profit Margin per Project
-        </p>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-slate-100">
-              <th className="pb-2 text-left  text-xs font-semibold text-slate-400">Project</th>
-              <th className="pb-2 text-right text-xs font-semibold text-slate-400">EHR</th>
-              <th className="pb-2 text-right text-xs font-semibold text-slate-400">Avg Designer Rate</th>
-              <th className="pb-2 text-right text-xs font-semibold text-slate-400">Margin</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-50">
-            {profitMargin.map(row => (
-              <tr key={row.project_id}>
-                <td className="py-2.5 pr-4 text-slate-700 font-medium">{row.project_name}</td>
-                <td className="py-2.5 text-right font-mono text-slate-900">{row.ehr.toFixed(2)}</td>
-                <td className="py-2.5 text-right font-mono text-slate-500">
-                  {row.avg_designer_rate !== null ? row.avg_designer_rate.toFixed(2) : '—'}
-                </td>
-                <td className="py-2.5 text-right">
-                  {row.profit_margin_pct !== null ? (
-                    <span className={`font-mono font-semibold ${
-                      row.profit_margin_pct < 0 ? 'text-rose-600'
-                        : row.profit_margin_pct < 20 ? 'text-amber-600'
-                        : 'text-emerald-600'
-                    }`}>
-                      {row.profit_margin_pct.toFixed(1)}%
-                    </span>
-                  ) : <span className="text-slate-400">—</span>}
-                </td>
-              </tr>
-            ))}
-            {profitMargin.length === 0 && (
-              <tr>
-                <td colSpan={4} className="py-6 text-center text-xs text-slate-400">No data</td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+        <div className="flex items-baseline justify-between mb-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+            Profit Margin per Project
+          </p>
+          {profitMargin.length > 0 && marginChartData.length < profitMargin.length && (
+            <span className="text-[10px] text-slate-400">
+              {profitMargin.length - marginChartData.length} project(s) excluded — no designer rate set
+            </span>
+          )}
+        </div>
+
+        {marginChartData.length === 0 ? (
+          <div className="h-44 flex items-center justify-center text-sm text-slate-400">
+            No data — ensure designer hourly rates are configured
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height={hBarHeight(marginChartData.length)}>
+            <BarChart
+              layout="vertical"
+              data={marginChartData}
+              margin={{ top: 4, right: 50, left: 4, bottom: 4 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
+              <XAxis
+                type="number"
+                tick={{ fontSize: 10, fill: '#94a3b8' }}
+                tickFormatter={v => `${v}%`}
+              />
+              <YAxis
+                type="category"
+                dataKey="project_name"
+                tick={{ fontSize: 10, fill: '#64748b' }}
+                width={120}
+                tickFormatter={(v: string) => v.length > 18 ? `${v.slice(0, 18)}…` : v}
+              />
+              <Tooltip content={<MarginTooltip />} />
+              {/* Reference line at 0 for negative margin visibility */}
+              <Bar dataKey="profit_margin_pct" name="Profit Margin %" radius={[0, 3, 3, 0]}>
+                {marginChartData.map((row, i) => (
+                  <Cell key={i} fill={marginColor(row.profit_margin_pct)} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        )}
       </div>
 
     </AppShell>

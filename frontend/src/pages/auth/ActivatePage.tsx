@@ -239,7 +239,7 @@ export default function ActivatePage() {
                 <div>
                   <label className={labelCls}>
                     Specialization{' '}
-                    <span className="normal-case tracking-normal">(optional)</span>
+                    <span className="normal-case tracking-normal">(Optional)</span>
                   </label>
                   <input
                     type="text"
@@ -293,7 +293,7 @@ export default function ActivatePage() {
                 <div>
                   <label className={labelCls}>
                     Industry{' '}
-                    <span className="normal-case tracking-normal">(optional)</span>
+                    <span className="normal-case tracking-normal">(Optional)</span>
                   </label>
                   {/* Free text — "Fortune 500", "3PL Logistics" are valid industry names */}
                   <input

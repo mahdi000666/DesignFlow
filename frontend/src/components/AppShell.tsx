@@ -31,6 +31,29 @@ function IconAnalytics() {
   );
 }
 
+function IconTeam() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" className="shrink-0">
+      <circle cx="5.5" cy="4.5" r="2" stroke="currentColor" strokeWidth="1.4" />
+      <circle cx="10.5" cy="4.5" r="2" stroke="currentColor" strokeWidth="1.4" />
+      <path d="M1 12.5c0-2.485 2.015-4.5 4.5-4.5S10 10.015 10 12.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+      <path d="M10.5 8c1.657 0 3 1.343 3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function IconSettings() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" className="shrink-0">
+      <circle cx="7.5" cy="7.5" r="2" stroke="currentColor" strokeWidth="1.4" />
+      <path
+        d="M7.5 1.5v1M7.5 12.5v1M1.5 7.5h1M12.5 7.5h1M3.4 3.4l.7.7M10.9 10.9l.7.7M10.9 4.1l-.7.7M4.1 10.9l-.7.7"
+        stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 // ─── Nav config ──────────────────────────────────────────────────────────────
 
 interface NavItem {
@@ -44,13 +67,17 @@ const NAV_BY_ROLE: Record<string, NavItem[]> = {
     { label: 'Dashboard', path: '/manager',           icon: <IconDashboard /> },
     { label: 'Analytics', path: '/manager/analytics', icon: <IconAnalytics /> },
     { label: 'Projects',  path: '/manager/projects',  icon: <IconProjects /> },
+    { label: 'Team',      path: '/manager/team',      icon: <IconTeam /> },
+    { label: 'Settings',  path: '/settings',          icon: <IconSettings /> },
   ],
   Designer: [
     { label: 'Dashboard',   path: '/designer',          icon: <IconDashboard /> },
     { label: 'My Projects', path: '/designer/projects', icon: <IconProjects /> },
+    { label: 'Settings',    path: '/settings',          icon: <IconSettings /> },
   ],
   Client: [
-    { label: 'Dashboard',   path: '/client',          icon: <IconDashboard /> },
+    { label: 'Dashboard', path: '/client',   icon: <IconDashboard /> },
+    { label: 'Settings',  path: '/settings', icon: <IconSettings /> },
   ],
 };
 
@@ -58,7 +85,7 @@ const NAV_BY_ROLE: Record<string, NavItem[]> = {
 
 interface AppShellProps {
   title:       string;
-  breadcrumb?: string;
+  breadcrumb?: string | React.ReactNode;
   actions?:    ReactNode;
   children:    ReactNode;
 }
@@ -77,6 +104,13 @@ export default function AppShell({ title, breadcrumb, actions, children }: AppSh
       ? location.pathname === path
       : location.pathname.startsWith(path);
   };
+
+  const linkCls = (path: string) =>
+    `flex items-center gap-3 py-2 rounded-md text-sm transition-colors ${
+      isActive(path)
+        ? 'bg-slate-800 text-white border-l-[3px] border-blue-500 pl-[9px] pr-3'
+        : 'text-slate-400 hover:text-white hover:bg-slate-800 px-3'
+    }`;
 
   const initials = user?.full_name
     ? user.full_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
@@ -124,18 +158,10 @@ export default function AppShell({ title, breadcrumb, actions, children }: AppSh
           </div>
         </div>
 
-        {/* Nav items */}
+        {/* Main nav */}
         <nav className="flex-1 px-2.5 py-3 space-y-0.5 overflow-y-auto">
           {navItems.map(item => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`flex items-center gap-3 py-2 rounded-md text-sm transition-colors ${
-                isActive(item.path)
-                  ? 'bg-slate-800 text-white border-l-[3px] border-blue-500 pl-[9px] pr-3'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800 px-3'
-              }`}
-            >
+            <Link key={item.path} to={item.path} className={linkCls(item.path)}>
               {item.icon}
               {item.label}
             </Link>

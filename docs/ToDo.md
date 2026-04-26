@@ -1,8 +1,20 @@
-1. In Designer dashboard, "hours this week" remained 0 despite me logging hours in a project, also "Utilisation" has "-".
-2. Recent Time logs also dont display any time logs, despite me logging some.
-3. In Designer Project detail, "My Hours Logged" remains 0 despite me logging.
 
-What files do I need to hand to you? let me know!
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+DesignFlow
+a web-based project management and profitability analytics system for graphic design agencies.
 
 In order to save tokens, you may only generate the document for S3 chapter.
 
@@ -21,8 +33,8 @@ Table rows must follow the following pattern: first row (#000000), second row (#
 4. Keep it concise, avoid bloat, filler and repetitions.
 5. Avoid AI-ish language, em dashes, semicolons and technical identifiers in prose.
 
-```
 Directory structure:
+```
     ├── backend/
     │   ├── apps/
     │   │   ├── analytics/

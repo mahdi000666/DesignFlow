@@ -19,6 +19,7 @@ import AppShell from '../../components/AppShell';
 import type { Task } from '../../types/task';
 import type { TimeLogPayload } from '../../types/timelog';
 import type { Project } from '../../types/project';
+import { formatTND } from '../../utils/format';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -120,9 +121,6 @@ export default function DesignerProjectDetail() {
     : tasks.filter(t => t.status === statusFilter);
 
   // ── Derived metrics (use optional chaining — project may be undefined during loading) ──
-
-  const fmtTND = (v: number) =>
-    `${Math.round(v).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '\u00A0')} TND`;
 
   const budgetPct = project?.budget_hours && project?.actual_hours != null
     ? Math.min(100, (project.actual_hours / Number(project.budget_hours)) * 100)
@@ -255,7 +253,7 @@ export default function DesignerProjectDetail() {
                 { label: 'LOGGED',    value: `${Math.round(project.actual_hours)} h`,                cls: 'text-slate-900' },
                 { label: 'BUDGET',    value: `${Math.round(Number(project.budget_hours))} h`,        cls: 'text-slate-900' },
                 { label: 'REMAINING', value: `${Math.round(remaining ?? 0)} h`,                      cls: remaining != null && remaining < 10 ? 'text-rose-600' : 'text-blue-700' },
-                { label: 'CONTRACT',  value: project.budget_amount != null ? fmtTND(Number(project.budget_amount)) : '—', cls: 'text-slate-900' },
+                { label: 'CONTRACT',  value: project.budget_amount != null ? formatTND(Number(project.budget_amount)) : '—', cls: 'text-slate-900' },
               ].map(col => (
                 <div key={col.label} className="text-right border-l border-slate-100 pl-5">
                   <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{col.label}</p>
@@ -298,12 +296,12 @@ export default function DesignerProjectDetail() {
               <p className="text-xs text-slate-400">
                 Target EHR:{' '}
                 <span className={`font-semibold ${ehrGood ? 'line-through text-slate-400' : 'text-rose-600'}`}>
-                  {fmtTND(targetEHR)}
+                  {formatTND(targetEHR)}
                 </span>
                 {' · '}
                 Current EHR:{' '}
                 <span className={`font-semibold ${ehrGood ? 'text-emerald-600' : 'text-rose-600'}`}>
-                  {fmtTND(currentEHR)}
+                  {formatTND(currentEHR)}
                 </span>
               </p>
             )}

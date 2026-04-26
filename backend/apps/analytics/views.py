@@ -450,7 +450,7 @@ class AISummaryView(APIView):
         )
 
         prompt = (
-            'You are a project health analyst for a design agency. '
+            'You are a project health analyst for a tunisian design agency. '
             'Write a 3-4 sentence plain-English health summary for this project. '
             'Flag the single biggest risk and suggest one concrete action for the manager.\n\n'
             f'Project: {project.project_name}\n'

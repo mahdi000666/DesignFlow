@@ -14,6 +14,7 @@ import FeedbackList from '../../components/FeedbackList';
 import FileUploadPanel from '../../components/FileUploadPanel';
 import MessageBoard from '../../components/MessageBoard';
 import type { FeedbackPayload } from '../../types/feedback';
+import { formatTND } from '../../utils/format';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -29,9 +30,6 @@ const CATEGORY_COLORS: Record<string, string> = {
 
 const barColor = (pct: number) =>
   pct >= 100 ? '#ef4444' : pct >= 80 ? '#f59e0b' : '#3b82f6';
-
-const fmtTND = (v: number) =>
-  `${Math.round(v).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '\u00A0')} TND`;
 
 function UnreadBadge({ count }: { count: number }) {
   if (count === 0) return null;
@@ -154,7 +152,7 @@ export default function ClientProjectDetail() {
         )}
         {project.budget_amount != null && (
           <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
-            {fmtTND(Number(project.budget_amount))} contract value
+            {formatTND(Number(project.budget_amount))} contract value
           </span>
         )}
       </div>
@@ -205,7 +203,7 @@ export default function ClientProjectDetail() {
                 { label: 'LOGGED',    value: `${Math.round(project.actual_hours)} h`,                cls: 'text-slate-900' },
                 { label: 'BUDGET',    value: `${Math.round(Number(project.budget_hours))} h`,        cls: 'text-slate-900' },
                 { label: 'REMAINING', value: `${Math.round(remaining ?? 0)} h`,                      cls: remaining != null && remaining < 10 ? 'text-rose-600' : 'text-blue-700' },
-                { label: 'CONTRACT',  value: project.budget_amount != null ? fmtTND(Number(project.budget_amount)) : '—', cls: 'text-slate-900' },
+                { label: 'CONTRACT',  value: project.budget_amount != null ? formatTND(Number(project.budget_amount)) : '—', cls: 'text-slate-900' },
               ].map(col => (
                 <div key={col.label} className="text-right border-l border-slate-100 pl-5">
                   <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{col.label}</p>
@@ -246,12 +244,12 @@ export default function ClientProjectDetail() {
               <p className="text-xs text-slate-400">
                 Target EHR:{' '}
                 <span className={`font-semibold ${ehrGood ? 'line-through text-slate-400' : 'text-rose-600'}`}>
-                  {fmtTND(targetEHR)}
+                  {formatTND(targetEHR)}
                 </span>
                 {' · '}
                 Current EHR:{' '}
                 <span className={`font-semibold ${ehrGood ? 'text-emerald-600' : 'text-rose-600'}`}>
-                  {fmtTND(currentEHR)}
+                  {formatTND(currentEHR)}
                 </span>
               </p>
             )}

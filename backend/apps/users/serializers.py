@@ -18,11 +18,8 @@ class ActivateAccountSerializer(serializers.Serializer):
     token    = serializers.CharField()
     password = serializers.CharField(min_length=8, write_only=True)
 
-    # Designer profile fields — ignored for other roles.
     specialization           = serializers.CharField(required=False, allow_blank=True, default='')
     available_hours_per_week = serializers.IntegerField(required=False, allow_null=True, default=None)
-
-    # Client profile fields — ignored for other roles.
     phone    = serializers.CharField(required=False, allow_blank=True, default='')
     industry = serializers.CharField(required=False, allow_blank=True, default='')
 
@@ -48,7 +45,6 @@ class ActivateAccountSerializer(serializers.Serializer):
         invitation.is_used = True
         invitation.save()
 
-        # Persist role-specific fields if provided.
         if user.role == 'Designer':
             profile = Designer.objects.get(user=user)
             if data.get('specialization'):
@@ -56,7 +52,6 @@ class ActivateAccountSerializer(serializers.Serializer):
             if data.get('available_hours_per_week') is not None:
                 profile.available_hours_per_week = data['available_hours_per_week']
             profile.save()
-
         elif user.role == 'Client':
             profile = Client.objects.get(user=user)
             if data.get('phone'):
@@ -68,15 +63,61 @@ class ActivateAccountSerializer(serializers.Serializer):
         return user
 
 
+class InviteUserSerializer(serializers.Serializer):
+    """
+    Used by POST /api/users/invite/ (Manager only).
+    Triggers the existing post_save signal which creates the profile row
+    and fires the invitation email — no signal changes required.
+    """
+    email       = serializers.EmailField()
+    full_name   = serializers.CharField(max_length=100)
+    role        = serializers.ChoiceField(choices=['Designer', 'Client'])
+    hourly_rate = serializers.DecimalField(
+        max_digits=10, decimal_places=2, required=False, allow_null=True,
+    )
+
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError('A user with this email already exists.')
+        return value
+
+    def validate_full_name(self, value):
+        name = value.strip()
+        if len(name) < 2:
+            raise serializers.ValidationError('Full name must be at least 2 characters.')
+        if not any(c.isalpha() for c in name):
+            raise serializers.ValidationError('Full name must contain at least one letter.')
+        return name
+
+    def validate(self, data):
+        if data['role'] == 'Designer' and not data.get('hourly_rate'):
+            raise serializers.ValidationError(
+                {'hourly_rate': 'Hourly rate is required for Designer accounts.'}
+            )
+        return data
+
+    def save(self):
+        data = self.validated_data
+        # create_user saves the User, which fires post_save → profile created + invitation email sent.
+        user = User.objects.create_user(
+            email=data['email'],
+            full_name=data['full_name'],
+            role=data['role'],
+        )
+        if data['role'] == 'Designer' and data.get('hourly_rate'):
+            Designer.objects.filter(user=user).update(hourly_rate=data['hourly_rate'])
+        return user
+
+
 class UserMeSerializer(serializers.ModelSerializer):
-    hourly_rate = serializers.SerializerMethodField(read_only=True)
-    specialization = serializers.CharField(required=False, allow_blank=True)
+    hourly_rate              = serializers.SerializerMethodField(read_only=True)
+    specialization           = serializers.CharField(required=False, allow_blank=True)
     available_hours_per_week = serializers.IntegerField(required=False, allow_null=True)
-    phone = serializers.CharField(required=False, allow_blank=True)
-    industry = serializers.CharField(required=False, allow_blank=True)
+    phone                    = serializers.CharField(required=False, allow_blank=True)
+    industry                 = serializers.CharField(required=False, allow_blank=True)
 
     class Meta:
-        model = User
+        model  = User
         fields = [
             'id', 'email', 'full_name', 'role',
             'hourly_rate', 'specialization', 'available_hours_per_week',
@@ -94,22 +135,22 @@ class UserMeSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        data['specialization'] = ''
+        data['specialization']           = ''
         data['available_hours_per_week'] = None
-        data['phone'] = ''
-        data['industry'] = ''
+        data['phone']                    = ''
+        data['industry']                 = ''
 
         if instance.role == 'Designer':
             try:
                 profile = instance.designer_profile
-                data['specialization'] = profile.specialization
+                data['specialization']           = profile.specialization
                 data['available_hours_per_week'] = profile.available_hours_per_week
             except Designer.DoesNotExist:
                 pass
         elif instance.role == 'Client':
             try:
                 profile = instance.client_profile
-                data['phone'] = profile.phone
+                data['phone']    = profile.phone
                 data['industry'] = profile.industry
             except Client.DoesNotExist:
                 pass

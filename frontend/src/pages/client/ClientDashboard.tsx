@@ -7,6 +7,7 @@ import { getAllFeedback } from '../../api/feedbacks';
 import AppShell from '../../components/AppShell';
 import type { Project } from '../../types/project';
 import type { ReactNode } from 'react';
+import { formatTND } from '../../utils/format';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -24,9 +25,6 @@ const STATUS_DOT: Record<Project['status'], string> = {
 
 const barColor = (pct: number) =>
   pct >= 100 ? '#ef4444' : pct >= 80 ? '#f59e0b' : '#3b82f6';
-
-const fmtTND = (v: number) =>
-  `${Math.round(v).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '\u00A0')} TND`;
 
 function KPICard({
   label, value, subtitle, borderColor,
@@ -97,7 +95,7 @@ export default function ClientDashboard() {
         />
         <KPICard
           label="Total Contract Value"
-          value={fmtTND(totalContractValue)}
+          value={formatTND(totalContractValue)}
           subtitle="across all projects"
           borderColor="#10b981"
         />
@@ -168,7 +166,7 @@ export default function ClientDashboard() {
                       ) : null}
                       {p.budget_amount != null && (
                         <span className="font-mono text-xs font-semibold text-slate-700">
-                          {fmtTND(Number(p.budget_amount))}
+                          {formatTND(Number(p.budget_amount))}
                         </span>
                       )}
                     </div>

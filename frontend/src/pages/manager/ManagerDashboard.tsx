@@ -9,11 +9,9 @@ import { getAllFiles } from '../../api/files';
 import { getAllCompletedTasks } from '../../api/tasks';
 import AppShell from '../../components/AppShell';
 import { useMemo } from 'react';
+import { formatTND } from '../../utils/format';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-
-const formatTND = (n: number) =>
-  `${Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '\u00A0')} TND`;
 
 const timeAgo = (dateStr: string) => {
   const diff = Date.now() - new Date(dateStr).getTime();

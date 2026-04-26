@@ -12,6 +12,8 @@ import ClientDashboard from './pages/client/ClientDashboard';
 import ClientProjectDetail from './pages/client/ClientProjectDetail';
 import DesignerProjectDetail from './pages/designer/DesignerProjectDetail';
 import AnalyticsDashboard from './pages/manager/AnalyticsDashboard';
+import TeamPage from './pages/manager/TeamPage';
+import SettingsPage from './pages/SettingsPage';
 
 function RootRedirect() {
   const { user } = useAuth();
@@ -40,15 +42,26 @@ export default function App() {
         <Route path="/login"    element={<PublicRoute><LoginPage /></PublicRoute>} />
         <Route path="/activate" element={<ActivatePage />} />
 
+        {/* Settings — all authenticated roles */}
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute allowedRoles={['Manager', 'Designer', 'Client']}>
+              <SettingsPage />
+            </ProtectedRoute>
+          }
+        />
+
         {/* Manager */}
         <Route path="/manager" element={<ProtectedRoute allowedRoles={['Manager']}><ManagerDashboard /></ProtectedRoute>} />
-        <Route path="/manager/analytics"   element={<ProtectedRoute allowedRoles={['Manager']}><AnalyticsDashboard /></ProtectedRoute>} />
-        <Route path="/manager/projects"    element={<ProtectedRoute allowedRoles={['Manager']}><ProjectList /></ProtectedRoute>} />
+        <Route path="/manager/analytics" element={<ProtectedRoute allowedRoles={['Manager']}><AnalyticsDashboard /></ProtectedRoute>} />
+        <Route path="/manager/projects"  element={<ProtectedRoute allowedRoles={['Manager']}><ProjectList /></ProtectedRoute>} />
         <Route path="/manager/projects/:id" element={<ProtectedRoute allowedRoles={['Manager']}><ProjectDetail /></ProtectedRoute>} />
+        <Route path="/manager/team"      element={<ProtectedRoute allowedRoles={['Manager']}><TeamPage /></ProtectedRoute>} />
 
         {/* Designer */}
         <Route path="/designer" element={<ProtectedRoute allowedRoles={['Designer']}><DesignerDashboard /></ProtectedRoute>} />
-        <Route path="/designer/projects"    element={<ProtectedRoute allowedRoles={['Designer']}><DesignerProjects /></ProtectedRoute>} />
+        <Route path="/designer/projects"     element={<ProtectedRoute allowedRoles={['Designer']}><DesignerProjects /></ProtectedRoute>} />
         <Route path="/designer/projects/:id" element={<ProtectedRoute allowedRoles={['Designer']}><DesignerProjectDetail /></ProtectedRoute>} />
 
         {/* Client */}
