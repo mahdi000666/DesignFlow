@@ -36,11 +36,11 @@ def on_user_created(sender, instance, created, **kwargs):
 
     # Send the email
     send_mail(
-        subject='You have been invited to DesignOps',
+        subject='You have been invited to DesignFlow',
         message=f"""
 Hi {instance.full_name},
 
-You have been added to the DesignOps platform as a {instance.role}.
+You have been added to the DesignFlow platform as a {instance.role}.
 
 Click the link below to set your password and activate your account:
 {activation_link}

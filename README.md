@@ -1,4 +1,4 @@
-# DesignOps: Design Project Profitability Analytics System
+# DesignFlow - Design agency operations platform
 
 ## Tech Stack
 - **Backend:** Python 3.12, Django 5, Django REST Framework, PostgreSQL 16
@@ -20,4 +20,4 @@ See `docs/SETUP.md` for full setup instructions.
 See `docs/diagrams/` for system design.
 
 ## Project Structure
-See `docs/ARCHITECTURE.md` for system architecture and API reference.
+See `docs/PROJECT_CONTEXT.md` for system architecture and API reference.

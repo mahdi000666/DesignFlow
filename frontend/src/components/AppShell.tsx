@@ -3,54 +3,54 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { Initials } from '../utils/format';
 
-// ─── Icons ───────────────────────────────────────────────────────────────────
+// ─── Icons (DesignFlow style — 18×18, lucide-like strokes) ──────────────────
 
 function IconDashboard() {
   return (
-    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" className="shrink-0">
-      <rect x="1" y="1" width="5.5" height="5.5" rx="1" stroke="currentColor" strokeWidth="1.4" />
-      <rect x="8.5" y="1" width="5.5" height="5.5" rx="1" stroke="currentColor" strokeWidth="1.4" />
-      <rect x="1" y="8.5" width="5.5" height="5.5" rx="1" stroke="currentColor" strokeWidth="1.4" />
-      <rect x="8.5" y="8.5" width="5.5" height="5.5" rx="1" stroke="currentColor" strokeWidth="1.4" />
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+      <rect x="3" y="3" width="7" height="7" rx="1" />
+      <rect x="14" y="3" width="7" height="7" rx="1" />
+      <rect x="3" y="14" width="7" height="7" rx="1" />
+      <rect x="14" y="14" width="7" height="7" rx="1" />
     </svg>
   );
 }
 
 function IconProjects() {
   return (
-    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" className="shrink-0">
-      <path d="M1.5 3.5a1 1 0 011-1H6l1.5 2H13a1 1 0 011 1v7a1 1 0 01-1 1H2.5a1 1 0 01-1-1v-9z" stroke="currentColor" strokeWidth="1.4" />
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+      <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
     </svg>
   );
 }
 
 function IconAnalytics() {
   return (
-    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" className="shrink-0">
-      <path d="M1.5 11.5l3.5-4.5 3 2 3-5.5 2.5 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+      <path d="M3 3v18h18" />
+      <path d="M18 17V9" />
+      <path d="M13 17V5" />
+      <path d="M8 17v-3" />
     </svg>
   );
 }
 
 function IconTeam() {
   return (
-    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" className="shrink-0">
-      <circle cx="5.5" cy="4.5" r="2" stroke="currentColor" strokeWidth="1.4" />
-      <circle cx="10.5" cy="4.5" r="2" stroke="currentColor" strokeWidth="1.4" />
-      <path d="M1 12.5c0-2.485 2.015-4.5 4.5-4.5S10 10.015 10 12.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-      <path d="M10.5 8c1.657 0 3 1.343 3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+      <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M22 21v-2a4 4 0 00-3-3.87" />
+      <path d="M16 3.13a4 4 0 010 7.75" />
     </svg>
   );
 }
 
 function IconSettings() {
   return (
-    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" className="shrink-0">
-      <circle cx="7.5" cy="7.5" r="2" stroke="currentColor" strokeWidth="1.4" />
-      <path
-        d="M7.5 1.5v1M7.5 12.5v1M1.5 7.5h1M12.5 7.5h1M3.4 3.4l.7.7M10.9 10.9l.7.7M10.9 4.1l-.7.7M4.1 10.9l-.7.7"
-        stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"
-      />
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+      <path d="M12.22 2h-.44a2 2 0 00-2 2v.18a2 2 0 01-1 1.73l-.43.25a2 2 0 01-2 0l-.15-.08a2 2 0 00-2.73.73l-.22.38a2 2 0 00.73 2.73l.15.1a2 2 0 011 1.72v.51a2 2 0 01-1 1.74l-.15.09a2 2 0 00-.73 2.73l.22.38a2 2 0 002.73.73l.15-.08a2 2 0 012 0l.43.25a2 2 0 011 1.73V20a2 2 0 002 2h.44a2 2 0 002-2v-.18a2 2 0 011-1.73l.43-.25a2 2 0 012 0l.15.08a2 2 0 002.73-.73l.22-.39a2 2 0 00-.73-2.73l-.15-.1a2 2 0 01-1-1.72v-.51a2 2 0 011-1.74l.15-.09a2 2 0 00.73-2.73l-.22-.38a2 2 0 00-2.73-.73l-.15.08a2 2 0 01-2 0l-.43-.25a2 2 0 01-1-1.73V4a2 2 0 00-2-2z" />
+      <circle cx="12" cy="12" r="3" />
     </svg>
   );
 }
@@ -107,11 +107,11 @@ export default function AppShell({ title, breadcrumb, actions, children }: AppSh
   };
 
   const linkCls = (path: string) =>
-    `flex items-center gap-3 py-2 rounded-md text-sm transition-colors ${
+    `flex items-center gap-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 ${
       isActive(path)
-        ? 'bg-slate-800 text-white border-l-[3px] border-blue-500 pl-[9px] pr-3'
-        : 'text-slate-400 hover:text-white hover:bg-slate-800 px-3'
-    }`;
+        ? 'bg-primary text-white shadow-sm'
+        : 'text-slate-400 hover:text-white hover:bg-slate-800/60 px-3'
+    } ${isActive(path) ? 'px-3' : ''}`;
 
   const avatarInitials = user?.full_name ? Initials(user.full_name) : '??';
 
@@ -119,36 +119,33 @@ export default function AppShell({ title, breadcrumb, actions, children }: AppSh
     <div className="flex h-screen overflow-hidden bg-slate-50 font-sans antialiased">
 
       {/* ── Sidebar ─────────────────────────────────────────────────────────── */}
-      <aside className="w-[220px] bg-slate-900 flex flex-col shrink-0 border-r border-slate-800">
+      <aside className="w-60 bg-sidebar flex flex-col shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.08)]">
 
         {/* Logo */}
-        <div className="px-5 pt-5 pb-4 border-b border-slate-800">
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-md bg-blue-600 flex items-center justify-center shrink-0">
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <rect x="1" y="1" width="5" height="5" rx="1" fill="white" />
-                <rect x="8" y="1" width="5" height="5" rx="1" fill="white" fillOpacity="0.55" />
-                <rect x="1" y="8" width="5" height="5" rx="1" fill="white" fillOpacity="0.55" />
-                <rect x="8" y="8" width="5" height="5" rx="1" fill="white" />
-              </svg>
-            </div>
-            <span className="text-white font-semibold text-sm tracking-tight">DesignOps</span>
+        <div className="flex h-16 items-center gap-2.5 border-b border-sidebar-border px-6">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-white">
+              <path d="M12 2L2 7l10 5 10-5-10-5z" />
+              <path d="M2 17l10 5 10-5" />
+              <path d="M2 12l10 5 10-5" />
+            </svg>
           </div>
+          <span className="text-white font-bold text-base tracking-tight">DesignFlow</span>
         </div>
 
         {/* Profile */}
-        <div className="px-4 py-3.5 border-b border-slate-800">
+        <div className="border-b border-sidebar-border p-4">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-semibold shrink-0">
+            <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white text-xs font-semibold shrink-0">
               {avatarInitials}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-white text-xs font-medium truncate">{user?.full_name}</p>
+              <p className="text-white text-sm font-medium truncate">{user?.full_name}</p>
               <div className="flex items-center justify-between gap-2">
-                <p className="text-slate-300 text-xs">{role}</p>
+                <p className="text-slate-400 text-xs">{role}</p>
                 <button
                   onClick={logout}
-                  className="text-slate-300 text-[10px] hover:text-slate-100 transition-colors"
+                  className="text-slate-400 text-[10px] hover:text-slate-100 transition-colors"
                 >
                   Sign out
                 </button>
@@ -158,7 +155,7 @@ export default function AppShell({ title, breadcrumb, actions, children }: AppSh
         </div>
 
         {/* Main nav */}
-        <nav className="flex-1 px-2.5 py-3 space-y-0.5 overflow-y-auto">
+        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
           {navItems.map(item => (
             <Link key={item.path} to={item.path} className={linkCls(item.path)}>
               {item.icon}
@@ -172,12 +169,12 @@ export default function AppShell({ title, breadcrumb, actions, children }: AppSh
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
 
         {/* Topbar */}
-        <header className="bg-white border-b border-slate-200 px-8 py-4 flex items-center justify-between shrink-0">
+        <header className="bg-white border-b border-slate-200 px-8 py-4 flex items-center justify-between shrink-0 shadow-sm">
           <div className="min-w-0">
             {breadcrumb && (
               <p className="text-[11px] text-slate-400 font-medium mb-1">{breadcrumb}</p>
             )}
-            <h1 className="font-display text-[26px] leading-tight text-slate-900">{title}</h1>
+            <h1 className="text-xl font-semibold text-slate-900">{title}</h1>
           </div>
           {actions && (
             <div className="flex items-center gap-2.5 shrink-0">

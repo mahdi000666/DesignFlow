@@ -1,4 +1,4 @@
-# Project Context — DesignOps: Design Project Profitability Analytics System
+# Project Context: DesignFlow - Design agency operations platform
 
 > This file is the fast-read primer. For full Django model code see DATA_MODEL.md. For Code conventions and sprint checklists see DEVELOPMENT.md.
 
@@ -37,7 +37,7 @@ A web-based **project management + BI system** for a graphic design agency. Trac
 ## Folder Structure
 
 ```
-DesignOps/
+DesignFlow/
 ├── backend/
 │   ├── core/               # settings, urls, wsgi
 │   └── apps/

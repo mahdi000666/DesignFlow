@@ -1,11 +1,13 @@
-Im redesigning my UI. Already configured my tailwind and index with the new design.
-Im gonna provide the current files so you could check for any inconsistencies in terms of colors and styling and update them accordingly.
-Then you are gonna update the design of login and activation pages.
+After completing all the sprints, I decided to redesign my UI. I picked a nice design and setup the tailwind and index files as the base to built on top of them.
+1. Before I start redesigning the pages, I need you to check the files I uploaded for any inconsistencies in terms of colors and styling and update them accordingly. Also check for any duplicate code and correct that.
+2. Then you are gonna build the new AppShell.tsx to take into account the new design.
+3. I encountered a bug while setting up the new design. tailwindconfig.js is not being read or used, meaning that If I delete it's content or change it, nothing happens to the UI. How do I fix this?
 
 Note: Keep all existing hooks, data-fetching and logic, only change the JSX/styling.
-
-
-
+content: [
+    './index.html',
+    './src/**/*.{js,ts,jsx,tsx}',  // 🔥 Only the src folder
+  ],
 
 DesignFlow
 a web-based project management and profitability analytics system for graphic design agencies.

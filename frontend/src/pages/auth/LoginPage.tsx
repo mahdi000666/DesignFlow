@@ -54,7 +54,7 @@ export default function LoginPage() {
             </svg>
           </div>
           <div className="text-center">
-            <div className="font-display text-[26px] text-ink leading-tight">DesignOps</div>
+            <div className="font-display text-[26px] text-ink leading-tight">DesignFlow</div>
           </div>
         </div>
 
