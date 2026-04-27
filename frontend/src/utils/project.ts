@@ -9,18 +9,17 @@
 import type { Project } from '../types/project';
 
 // ─── Status badge Tailwind classes ───────────────────────────────────────────
-// Standardised on amber for OnHold (removed the erroneous violet variant that
-// appeared in manager-only pages).
+// Standardised on primary (indigo) for Active to match DesignFlow theme.
 
 export const STATUS_BADGE: Record<Project['status'], string> = {
-  Active:    'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-200',
-  Completed: 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200',
+  Active:    'bg-primary-50 text-primary-700 ring-1 ring-inset ring-primary-200',
+  Completed: 'bg-green-50 text-green-700 ring-1 ring-inset ring-green-200',
   OnHold:    'bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200',
 };
 
 export const STATUS_DOT: Record<Project['status'], string> = {
-  Active:    'bg-blue-500',
-  Completed: 'bg-emerald-500',
+  Active:    'bg-primary',
+  Completed: 'bg-green-500',
   OnHold:    'bg-amber-500',
 };
 
@@ -29,13 +28,11 @@ export const statusLabel = (status: Project['status']): string =>
   status === 'OnHold' ? 'On Hold' : status;
 
 // ─── Budget bar colour ───────────────────────────────────────────────────────
-// Standardised on teal for healthy (<80 %), amber for warning (80-99 %),
+// Standardised on primary for healthy (<80 %), amber for warning (80-99 %),
 // red for over-budget (≥100 %).
-// Previously, manager list / dashboard used teal while detail pages used blue;
-// teal is the correct semantic choice (green ≈ healthy).
 
 export const barColor = (pct: number): string =>
-  pct >= 100 ? '#ef4444' : pct >= 80 ? '#f59e0b' : '#0d9488';
+  pct >= 100 ? '#ef4444' : pct >= 80 ? '#f59e0b' : '#6366f1';
 
 // ─── Category colour map ─────────────────────────────────────────────────────
 // Named map used in project detail pages.
@@ -65,5 +62,5 @@ export const CATEGORY_PALETTE: string[] = [
   'bg-orange-50 text-orange-700',
   'bg-pink-50 text-pink-700',
   'bg-cyan-50 text-cyan-700',
-  'bg-rose-50 text-rose-700',
+  'bg-red-50 text-red-700',
 ];

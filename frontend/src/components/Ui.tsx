@@ -57,32 +57,28 @@ export function PriorityBadge({ value }: { value: Priority | string }) {
 interface ProgressBarProps {
   value: number;        // 0–100
   showLabel?: boolean;
-  color?: string;       // override fill color (Tailwind bg-* class or CSS color)
+  color?: string;       // override fill color (Tailwind bg-* class)
   height?: string;      // Tailwind h-* class
 }
 
 export function ProgressBar({
   value,
   showLabel = false,
-  color = 'bg-brand-500',
+  color = 'bg-primary',
   height = 'h-1.5',
 }: ProgressBarProps) {
   const pct = Math.min(100, Math.max(0, value));
-  const fillColor =
-    pct >= 90 ? 'bg-red-500' :
-    pct >= 70 ? 'bg-amber-500' :
-    color;
 
   return (
     <div className="flex items-center gap-2">
-      <div className={`flex-1 ${height} rounded-full bg-[#e8edf5] overflow-hidden`}>
+      <div className={`flex-1 ${height} rounded-full bg-slate-100 overflow-hidden`}>
         <div
-          className={`${height} rounded-full ${fillColor} transition-all duration-500`}
+          className={`${height} rounded-full ${color} transition-all duration-500`}
           style={{ width: `${pct}%` }}
         />
       </div>
       {showLabel && (
-        <span className="text-xs font-semibold text-ink-secondary w-9 text-right">
+        <span className="text-xs font-semibold text-slate-500 w-9 text-right">
           {Math.round(pct)}%
         </span>
       )}
@@ -93,10 +89,10 @@ export function ProgressBar({
 // ─── Avatar ───────────────────────────────────────────────────────────────────
 
 const AVATAR_COLORS = [
-  'bg-brand-100 text-brand-700',
-  'bg-emerald-100 text-emerald-700',
+  'bg-primary-100 text-primary-700',
+  'bg-green-100 text-green-700',
   'bg-amber-100 text-amber-700',
-  'bg-rose-100 text-rose-700',
+  'bg-red-100 text-red-700',
   'bg-purple-100 text-purple-700',
   'bg-teal-100 text-teal-700',
 ];
@@ -117,7 +113,7 @@ interface AvatarProps {
   className?: string;
 }
 
-const SIZES = { sm: 'w-7 h-7 text-2xs', md: 'w-9 h-9 text-xs', lg: 'w-11 h-11 text-sm' };
+const SIZES = { sm: 'w-7 h-7 text-[10px]', md: 'w-9 h-9 text-xs', lg: 'w-11 h-11 text-sm' };
 
 export function Avatar({ name, size = 'md', className = '' }: AvatarProps) {
   return (
@@ -130,7 +126,7 @@ export function Avatar({ name, size = 'md', className = '' }: AvatarProps) {
   );
 }
 
-// ─── KPI Card ─────────────────────────────────────────────────────────────────
+// ─── KPI Card (merged from KPICard.tsx + KpiCard from Ui.tsx) ────────────────
 
 interface KpiCardProps {
   label: string;
@@ -140,29 +136,47 @@ interface KpiCardProps {
   icon?: React.ReactNode;
   prefix?: string;
   suffix?: string;
+  borderColor?: string;    // optional colored left rail
 }
 
-export function KpiCard({ label, value, change, changeLabel = 'vs last month', icon, prefix, suffix }: KpiCardProps) {
+export function KpiCard({
+  label,
+  value,
+  change,
+  changeLabel = 'vs last month',
+  icon,
+  prefix,
+  suffix,
+  borderColor,
+}: KpiCardProps) {
   const isPositive = (change ?? 0) >= 0;
   const isNeutral  = change === undefined || change === 0;
 
   return (
-    <div className="kpi-card animate-fade-in">
-      <div className="flex items-start justify-between">
-        <span className="text-xs font-semibold text-ink-muted uppercase tracking-wide">{label}</span>
+    <div className="kpi-card">
+      {borderColor && (
+        <div
+          className="absolute left-0 inset-y-0 w-1 rounded-l-xl"
+          style={{ backgroundColor: borderColor }}
+        />
+      )}
+      <div className="flex items-start justify-between mb-3">
+        <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+          {label}
+        </span>
         {icon && (
-          <span className="w-8 h-8 rounded-lg bg-brand-50 flex items-center justify-center text-brand-500">
+          <span className="w-8 h-8 rounded-lg bg-primary-50 flex items-center justify-center text-primary">
             {icon}
           </span>
         )}
       </div>
 
-      <p className="text-2xl font-bold text-ink-primary leading-none">
+      <p className="text-2xl font-bold text-slate-900 leading-none mb-2">
         {prefix}<span>{value}</span>{suffix}
       </p>
 
       {change !== undefined && (
-        <div className={`flex items-center gap-1 text-xs font-medium ${isNeutral ? 'text-ink-muted' : isPositive ? 'text-emerald-600' : 'text-red-500'}`}>
+        <div className={`flex items-center gap-1 text-xs font-medium ${isNeutral ? 'text-slate-400' : isPositive ? 'text-green-600' : 'text-red-500'}`}>
           {isNeutral ? (
             <Minus size={12} />
           ) : isPositive ? (
@@ -171,7 +185,7 @@ export function KpiCard({ label, value, change, changeLabel = 'vs last month', i
             <TrendingDown size={12} />
           )}
           <span>{isPositive && change > 0 ? '+' : ''}{change}%</span>
-          <span className="text-ink-muted font-normal">{changeLabel}</span>
+          <span className="text-slate-400 font-normal">{changeLabel}</span>
         </div>
       )}
     </div>
@@ -211,7 +225,7 @@ export function EmptyState({ icon, message, action }: {
 }) {
   return (
     <div className="empty-state gap-3">
-      {icon && <div className="text-ink-muted opacity-40">{icon}</div>}
+      {icon && <div className="text-slate-400 opacity-40">{icon}</div>}
       <p className="text-sm">{message}</p>
       {action}
     </div>
@@ -239,7 +253,7 @@ export function Spinner({ size = 20 }: { size?: number }) {
       stroke="currentColor"
       strokeWidth={2.5}
       strokeLinecap="round"
-      className="animate-spin text-brand-500"
+      className="animate-spin text-primary"
     >
       <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
     </svg>

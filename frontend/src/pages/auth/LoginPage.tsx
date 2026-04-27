@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import apiClient from '../../api/clients';
 import { useAuth } from '../../hooks/useAuth';
+import { BrandMark, AuthInput, AlertBox, AuthButton, LoginIllustration } from '../../components/AuthComponents';
 
 // Role → dashboard path mapping.
-// Adding a new role only requires one line here.
 const ROLE_HOME: Record<string, string> = {
   Manager:  '/manager',
   Designer: '/designer',
@@ -16,12 +16,13 @@ export default function LoginPage() {
   const location  = useLocation();
   const { login } = useAuth();
 
-  const [email,    setEmail]    = useState('');
-  const [password, setPassword] = useState('');
-  const [error,    setError]    = useState('');
-  const [loading,  setLoading]  = useState(false);
+  const [email,      setEmail]      = useState('');
+  const [password,   setPassword]   = useState('');
+  const [showPwd,    setShowPwd]    = useState(false);
+  const [remember,   setRemember]   = useState(false);
+  const [error,      setError]      = useState('');
+  const [loading,    setLoading]    = useState(false);
 
-  // Show a success message when arriving from the activation page.
   const justActivated = (location.state as { activated?: boolean } | null)?.activated === true;
 
   const handleSubmit = async () => {
@@ -40,80 +41,85 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-bg">
-      <div className="w-full max-w-sm">
-
-        {/* Brand mark */}
-        <div className="flex flex-col items-center mb-8 gap-3">
-          <div className="w-11 h-11 rounded-xl bg-blue-600 flex items-center justify-center shadow-sm">
-            <svg width="22" height="22" viewBox="0 0 14 14" fill="none">
-              <rect x="1" y="1" width="5" height="5" rx="1" fill="white" />
-              <rect x="8" y="1" width="5" height="5" rx="1" fill="white" fillOpacity="0.55" />
-              <rect x="1" y="8" width="5" height="5" rx="1" fill="white" fillOpacity="0.55" />
-              <rect x="8" y="8" width="5" height="5" rx="1" fill="white" />
-            </svg>
-          </div>
-          <div className="text-center">
-            <div className="font-display text-[26px] text-ink leading-tight">DesignFlow</div>
-          </div>
-        </div>
-
-        <div className="bg-surface border border-border rounded-lg p-8">
-          <div className="mb-6">
-            <h1 className="font-sans text-[15px] font-semibold text-ink">Sign in</h1>
-            <p className="font-sans text-[13px] text-ink3 mt-0.5">Access your workspace</p>
+    <div className="min-h-screen bg-white flex">
+      {/* Left Side — Form */}
+      <div className="w-full lg:w-1/2 flex flex-col justify-center px-8 sm:px-12 lg:px-20 xl:px-28">
+        <div className="max-w-md w-full mx-auto">
+          {/* Logo */}
+          <div className="mb-10">
+            <BrandMark />
           </div>
 
+          {/* Welcome */}
+          <h1 className="text-2xl font-bold text-slate-900 mb-1">Welcome back</h1>
+          <p className="text-sm text-slate-500 mb-8">Sign in to continue to your account.</p>
+
+          {/* Alerts */}
           {justActivated && (
-            <div className="mb-5 px-3 py-[10px] rounded bg-success-light border border-success/20 font-sans text-[13px] text-success">
+            <AlertBox variant="success">
               Account activated — you can now sign in.
-            </div>
+            </AlertBox>
           )}
+          {error && <AlertBox variant="error">{error}</AlertBox>}
 
-          {error && (
-            <div className="mb-5 px-3 py-[10px] rounded bg-danger-light border border-danger/20 font-sans text-[13px] text-danger">
-              {error}
-            </div>
-          )}
+          {/* Form */}
+          <div className="space-y-5">
+            <AuthInput
+              type="email"
+              label="Email"
+              value={email}
+              onChange={setEmail}
+              placeholder="your@email.com"
+            />
 
-          <div className="space-y-4">
-            <div>
-              <label className="block font-sans text-[11px] uppercase tracking-[0.6px] text-ink3 mb-[6px]">
-                Email
+            <AuthInput
+              type={showPwd ? 'text' : 'password'}
+              label="Password"
+              value={password}
+              onChange={setPassword}
+              placeholder="••••••••"
+              showToggle
+              isToggled={showPwd}
+              onToggle={() => setShowPwd(!showPwd)}
+              onKeyDown={e => e.key === 'Enter' && handleSubmit()}
+            />
+
+            <div className="flex items-center justify-between">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={remember}
+                  onChange={e => setRemember(e.target.checked)}
+                  className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary"
+                />
+                <span className="text-sm text-slate-600">Remember me</span>
               </label>
-              <input
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                className="w-full px-[14px] py-[10px] border border-slate-200 rounded-lg bg-surface font-sans text-[14px] text-ink outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors placeholder:text-ink3"
-              />
+              <button
+                type="button"
+                onClick={() => {/* TODO: forgot password flow */}}
+                className="text-sm font-medium text-primary hover:text-primary-600 transition-colors"
+              >
+                Forgot password?
+              </button>
             </div>
 
-            <div>
-              <label className="block font-sans text-[11px] uppercase tracking-[0.6px] text-ink3 mb-[6px]">
-                Password
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder="••••••••"
-                onKeyDown={e => e.key === 'Enter' && handleSubmit()}
-                className="w-full px-[14px] py-[10px] border border-slate-200 rounded-lg bg-surface font-sans text-[14px] text-ink outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors placeholder:text-ink3"
-              />
-            </div>
+            <AuthButton onClick={handleSubmit} loading={loading}>
+              Sign In
+            </AuthButton>
           </div>
 
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            className="mt-6 w-full px-3.5 py-2 rounded-lg bg-blue-700 text-white font-sans text-sm font-semibold hover:bg-blue-800 disabled:opacity-50 transition-colors"
-          >
-            {loading ? 'Signing in…' : 'Sign in'}
-          </button>
+          <p className="mt-6 text-center text-sm text-slate-500">
+            Don't have an account?{' '}
+            <span className="font-medium text-primary">Contact your manager</span>
+          </p>
         </div>
+      </div>
 
+      {/* Right Side — Illustration */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-indigo-100 to-indigo-200 items-center justify-center relative overflow-hidden">
+        <div className="absolute top-10 right-10 w-64 h-64 bg-white/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-10 left-10 w-80 h-80 bg-primary/10 rounded-full blur-3xl" />
+        <LoginIllustration />
       </div>
     </div>
   );
