@@ -110,8 +110,6 @@ export default function ResetPasswordPage() {
                 onToggle={() => setShowPwd(p => !p)}
               />
 
-              <PasswordRequirements password={password} />
-
               <AuthInput
                 type={showConf ? 'text' : 'password'}
                 label="Confirm Password"
@@ -123,6 +121,8 @@ export default function ResetPasswordPage() {
                 onToggle={() => setShowConf(p => !p)}
                 onKeyDown={e => e.key === 'Enter' && handleSubmit()}
               />
+
+              <PasswordRequirements password={password} />
 
               <div className="pt-1">
                 <AuthButton onClick={handleSubmit} loading={loading}>

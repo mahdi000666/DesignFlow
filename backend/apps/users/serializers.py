@@ -3,6 +3,8 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth.password_validation import validate_password
 from django.utils import timezone
 from .models import User, InvitationToken, Designer, Client
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError as DjangoValidationError
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -114,9 +116,13 @@ class PasswordResetRequestSerializer(serializers.Serializer):
     email = serializers.EmailField()
 
     def validate_email(self, value):
-        # Normalise but do NOT raise if missing — we handle that
-        # silently in the view to prevent email enumeration.
-        return value.lower().strip()
+        email = value.lower().strip()
+        # EmailField already validates format, but we can double-check
+        try:
+            validate_email(email)
+        except DjangoValidationError:
+            raise serializers.ValidationError('Enter a valid email address.')
+        return email
 
 
 class PasswordResetConfirmSerializer(serializers.Serializer):

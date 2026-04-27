@@ -2,14 +2,24 @@ Account icon placement
 
 
 
+1. Add input validation in login page, (valid email format and password at least 8 characters).
+2. The password reset page keeps repeating "Please satisfy all password requirements" despite me putting a valid password and matching confirmation password.
+3. I don't think the password reset page is checking for valid token on page load (verify that). I tried deleting an account with all its tokens, tried to access the password reset page with the deleted token and it still opens (should display invalid token like activate page does).
+4. Verify if any duplicated code exists between all the auth pages and AuthComponents.tsx. In case there is, add it to AuthComponents to avoid duplication.
 
 
-1. In the forgot password page, there seems to be no valid email check, I also think it would be better if we could check if the email exists in the database rather than randomly sending it no?
-2. The email reset link is not being sent. When I do it to create a new user, it works perfectly fine and gets sent within 5 seconds maximum.
 
 
 
 
+mahdi.mlika2022@gmail.com 
+
+
+"No active account found with the given credentials"
+
+shell darker color
+
+later check if can create 2 tokens in reset
 
 
 

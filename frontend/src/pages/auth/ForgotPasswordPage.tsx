@@ -34,6 +34,11 @@ export default function ForgotPasswordPage() {
     setError('');
     if (!email.trim()) return setError('Please enter your email address.');
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      return setError('Please enter a valid email address.');
+    }
+
     setLoading(true);
     try {
       await apiClient.post('/auth/password-reset/', { email });
