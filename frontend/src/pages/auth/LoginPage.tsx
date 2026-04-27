@@ -3,6 +3,7 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import apiClient from '../../api/clients';
 import { useAuth } from '../../hooks/useAuth';
 import { BrandMark, AuthInput, AlertBox, AuthButton, LoginIllustration } from '../../components/AuthComponents';
+import { isEmailValid } from '../../utils/auth';
 
 const ROLE_HOME: Record<string, string> = {
   Manager:  '/manager',
@@ -26,6 +27,18 @@ export default function LoginPage() {
 
   const handleSubmit = async () => {
     setError('');
+
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) {
+      return setError('Please enter your email address.');
+    }
+    if (!isEmailValid(trimmedEmail)) {
+      return setError('Please enter a valid email address.');
+    }
+    if (password.length < 8) {
+      return setError('Password must be at least 8 characters.');
+    }
+
     setLoading(true);
     try {
       const { data } = await apiClient.post('/auth/token/', { email, password });

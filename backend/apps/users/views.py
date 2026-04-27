@@ -55,6 +55,32 @@ activation page — without consuming the token or requiring login.
 
     return Response({'role': invitation.user.role, 'full_name': invitation.user.full_name})
 
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_password_reset_info(request):
+    """
+    GET /api/auth/password-reset-info/?token=<uuid>
+
+    Returns the email associated with a valid, unused password-reset token.
+    The frontend uses this to decide whether to show the reset form or an
+    error page — without consuming the token.
+    """
+    token_value = request.query_params.get('token', '')
+    if not token_value:
+        return Response({'detail': 'token is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        token_obj = InvitationToken.objects.select_related('user').get(token=token_value)
+    except InvitationToken.DoesNotExist:
+        return Response({'detail': 'Invalid token.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if token_obj.is_used:
+        return Response({'detail': 'This token has already been used.'}, status=status.HTTP_400_BAD_REQUEST)
+    if not token_obj.is_valid():
+        return Response({'detail': 'This token has expired.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    return Response({'email': token_obj.user.email})
+
 
 @api_view(['POST'])
 @permission_classes([AllowAny])

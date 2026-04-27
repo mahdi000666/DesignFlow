@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import apiClient from '../../api/clients';
 import {
-  BrandMark, AuthInput, AlertBox, AuthButton,
+  AuthInput, AlertBox, AuthButton,
   ActivationIllustration, PasswordRequirements,
+  AuthShell, AuthCard,
 } from '../../components/AuthComponents';
+import { isPasswordValid } from '../../utils/auth';
 
 type Role = 'Manager' | 'Designer' | 'Client';
 interface TokenInfo { role: Role; full_name: string; }
@@ -14,35 +16,6 @@ const isValidTunisianPhone = (s: string) => {
   const d = s.replace(/[+ ]/g, '');
   return d.length === 8 || (d.length === 11 && d.startsWith('216'));
 };
-
-// ─── Shared page shell ────────────────────────────────────────────────────────
-
-function Shell({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
-      <header className="h-14 bg-white border-b border-slate-200 flex items-center px-8 shrink-0">
-        <BrandMark />
-      </header>
-      <main className="flex flex-1 items-center justify-center p-6">
-        {children}
-      </main>
-    </div>
-  );
-}
-
-// ─── Card wrapper ─────────────────────────────────────────────────────────────
-
-function Card({ accent = 'primary', children }: { accent?: 'primary' | 'error'; children: React.ReactNode }) {
-  const bar = accent === 'error'
-    ? 'bg-gradient-to-r from-red-400 to-rose-400'
-    : 'bg-gradient-to-r from-primary to-indigo-400';
-  return (
-    <div className="w-full max-w-[420px] bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-      <div className={`h-[3px] ${bar}`} />
-      <div className="px-10 py-9">{children}</div>
-    </div>
-  );
-}
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -95,9 +68,9 @@ export default function ActivatePage() {
     const role = tokenInfo!.role;
 
     // ── Password ──────────────────────────────────────────────────────────
-    if (!password)            return setError('Password is required.');
-    if (password.length < 8)  return setError('Password must be at least 8 characters.');
-    if (password !== confirm)  return setError('Passwords do not match.');
+    if (!password) return setError('Password is required.');
+    if (!isPasswordValid(password)) return setError('Please satisfy all password requirements.');
+    if (password !== confirm) return setError('Passwords do not match.');
 
     // ── Designer ──────────────────────────────────────────────────────────
     if (role === 'Designer') {
@@ -146,9 +119,9 @@ export default function ActivatePage() {
 
   if (tokenLoading) {
     return (
-      <Shell>
+      <AuthShell>
         <p className="text-sm text-slate-400">Verifying invitation…</p>
-      </Shell>
+      </AuthShell>
     );
   }
 
@@ -156,8 +129,8 @@ export default function ActivatePage() {
 
   if (tokenError) {
     return (
-      <Shell>
-        <Card accent="error">
+      <AuthShell>
+        <AuthCard accent="error">
           <div className="flex flex-col items-center text-center">
             <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center mb-5">
               <svg className="w-7 h-7 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -167,8 +140,8 @@ export default function ActivatePage() {
             <h1 className="text-xl font-bold text-slate-900 mb-2">Link unavailable</h1>
             <p className="text-sm text-slate-500 leading-relaxed">{tokenError}</p>
           </div>
-        </Card>
-      </Shell>
+        </AuthCard>
+      </AuthShell>
     );
   }
 
@@ -177,8 +150,8 @@ export default function ActivatePage() {
   const role = tokenInfo!.role;
 
   return (
-    <Shell>
-      <Card>
+    <AuthShell>
+      <AuthCard>
         <div className="flex justify-center mb-7">
           <ActivationIllustration />
         </div>
@@ -280,7 +253,7 @@ export default function ActivatePage() {
             </AuthButton>
           </div>
         </div>
-      </Card>
-    </Shell>
+      </AuthCard>
+    </AuthShell>
   );
 }

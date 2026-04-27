@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import apiClient from '../../api/clients';
-import { BrandMark, AuthInput, AlertBox, AuthButton } from '../../components/AuthComponents';
+import { AuthShell, AuthCard, AuthInput, AlertBox, AuthButton } from '../../components/AuthComponents';
+import { isEmailValid } from '../../utils/auth';
 
 // Illustration — abstract envelope sent
 function SentIllustration() {
@@ -32,16 +33,18 @@ export default function ForgotPasswordPage() {
 
   const handleSubmit = async () => {
     setError('');
-    if (!email.trim()) return setError('Please enter your email address.');
+    const trimmed = email.trim();
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email.trim())) {
+    if (!trimmed) {
+      return setError('Please enter your email address.');
+    }
+    if (!isEmailValid(trimmed)) {
       return setError('Please enter a valid email address.');
     }
 
     setLoading(true);
     try {
-      await apiClient.post('/auth/password-reset/', { email });
+      await apiClient.post('/auth/password-reset/', { email: trimmed });
       setSent(true);
     } catch {
       // Always show success to avoid email enumeration
@@ -52,72 +55,62 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
-      <header className="h-14 bg-white border-b border-slate-200 flex items-center px-8 shrink-0">
-        <BrandMark />
-      </header>
-
-      <main className="flex flex-1 items-center justify-center p-6">
-        <div className="w-full max-w-[420px] bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-          <div className="h-[3px] bg-gradient-to-r from-primary to-indigo-400" />
-
-          <div className="px-10 py-9">
-            {sent ? (
-              // ── Success state ──
-              <div className="text-center">
-                <div className="flex justify-center mb-7">
-                  <SentIllustration />
-                </div>
-                <h1 className="text-xl font-bold text-slate-900 mb-2">Check your inbox</h1>
-                <p className="text-sm text-slate-500 leading-relaxed mb-8">
-                  If an account exists for <span className="font-medium text-slate-700">{email}</span>,
-                  you'll receive a password reset link within a few minutes.
-                </p>
-                <Link
-                  to="/login"
-                  className="text-sm font-medium text-primary hover:text-primary-600 transition-colors"
-                >
-                  ← Back to sign in
-                </Link>
-              </div>
-            ) : (
-              // ── Request state ──
-              <>
-                <h1 className="text-xl font-bold text-slate-900 text-center mb-1.5">
-                  Forgot your password?
-                </h1>
-                <p className="text-sm text-slate-500 text-center mb-7 leading-relaxed">
-                  Enter your email and we'll send you a reset link.
-                </p>
-
-                {error && <AlertBox variant="error">{error}</AlertBox>}
-
-                <div className="space-y-5">
-                  <AuthInput
-                    type="email"
-                    label="Email"
-                    value={email}
-                    onChange={setEmail}
-                    placeholder="your@email.com"
-                    onKeyDown={e => e.key === 'Enter' && handleSubmit()}
-                  />
-
-                  <AuthButton onClick={handleSubmit} loading={loading}>
-                    Send Reset Link
-                  </AuthButton>
-                </div>
-
-                <p className="mt-6 text-center text-sm text-slate-500">
-                  Remember it?{' '}
-                  <Link to="/login" className="font-medium text-primary hover:text-primary-600 transition-colors">
-                    Back to sign in
-                  </Link>
-                </p>
-              </>
-            )}
+    <AuthShell>
+      <AuthCard>
+        {sent ? (
+          // ── Success state ──
+          <div className="text-center">
+            <div className="flex justify-center mb-7">
+              <SentIllustration />
+            </div>
+            <h1 className="text-xl font-bold text-slate-900 mb-2">Check your inbox</h1>
+            <p className="text-sm text-slate-500 leading-relaxed mb-8">
+              If an account exists for <span className="font-medium text-slate-700">{email}</span>,
+              you'll receive a password reset link within a few minutes.
+            </p>
+            <Link
+              to="/login"
+              className="text-sm font-medium text-primary hover:text-primary-600 transition-colors"
+            >
+              ← Back to sign in
+            </Link>
           </div>
-        </div>
-      </main>
-    </div>
+        ) : (
+          // ── Request state ──
+          <>
+            <h1 className="text-xl font-bold text-slate-900 text-center mb-1.5">
+              Forgot your password?
+            </h1>
+            <p className="text-sm text-slate-500 text-center mb-7 leading-relaxed">
+              Enter your email and we'll send you a reset link.
+            </p>
+
+            {error && <AlertBox variant="error">{error}</AlertBox>}
+
+            <div className="space-y-5">
+              <AuthInput
+                type="email"
+                label="Email"
+                value={email}
+                onChange={setEmail}
+                placeholder="your@email.com"
+                onKeyDown={e => e.key === 'Enter' && handleSubmit()}
+              />
+
+              <AuthButton onClick={handleSubmit} loading={loading}>
+                Send Reset Link
+              </AuthButton>
+            </div>
+
+            <p className="mt-6 text-center text-sm text-slate-500">
+              Remember it?{' '}
+              <Link to="/login" className="font-medium text-primary hover:text-primary-600 transition-colors">
+                Back to sign in
+              </Link>
+            </p>
+          </>
+        )}
+      </AuthCard>
+    </AuthShell>
   );
 }

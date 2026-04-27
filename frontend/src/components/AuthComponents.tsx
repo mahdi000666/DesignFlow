@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { PASSWORD_REQUIREMENTS } from '../utils/auth';
 
 // ─── Brand Mark ──────────────────────────────────────────────────────────────
 
@@ -109,6 +110,45 @@ export function AuthButton({ children, onClick, loading }: AuthButtonProps) {
   );
 }
 
+// ─── Auth Shell ──────────────────────────────────────────────────────────────
+
+interface AuthShellProps {
+  children: ReactNode;
+}
+
+export function AuthShell({ children }: AuthShellProps) {
+  return (
+    <div className="min-h-screen bg-slate-50 flex flex-col">
+      <header className="h-14 bg-white border-b border-slate-200 flex items-center px-8 shrink-0">
+        <BrandMark />
+      </header>
+      <main className="flex flex-1 items-center justify-center p-6">
+        {children}
+      </main>
+    </div>
+  );
+}
+
+// ─── Auth Card ───────────────────────────────────────────────────────────────
+
+interface AuthCardProps {
+  children: ReactNode;
+  accent?: 'primary' | 'error';
+}
+
+export function AuthCard({ children, accent = 'primary' }: AuthCardProps) {
+  const bar =
+    accent === 'error'
+      ? 'bg-gradient-to-r from-red-400 to-rose-400'
+      : 'bg-gradient-to-r from-primary to-indigo-400';
+  return (
+    <div className="w-full max-w-[420px] bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+      <div className={`h-[3px] ${bar}`} />
+      <div className="px-10 py-9">{children}</div>
+    </div>
+  );
+}
+
 // ─── Password Requirements (3-state) ─────────────────────────────────────────
 
 type ReqState = 'neutral' | 'met' | 'unmet';
@@ -136,14 +176,11 @@ interface PasswordRequirementsProps {
 }
 
 export function PasswordRequirements({ password }: PasswordRequirementsProps) {
-  const checks = [
-    { label: 'At least 8 characters',          met: password.length >= 8 },
-  ];
-
   return (
     <div className="space-y-2 py-1">
-      {checks.map((c, i) => {
-        const s: ReqState = !password ? 'neutral' : c.met ? 'met' : 'unmet';
+      {PASSWORD_REQUIREMENTS.map((c, i) => {
+        const met = c.test(password);
+        const s: ReqState = !password ? 'neutral' : met ? 'met' : 'unmet';
         return (
           <div key={i} className={`flex items-center gap-2.5 text-sm ${
             s === 'met' ? 'text-green-600' : s === 'unmet' ? 'text-red-500' : 'text-slate-400'
