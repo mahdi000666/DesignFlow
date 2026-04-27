@@ -1,10 +1,9 @@
 import { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import apiClient from '../../api/clients';
 import { useAuth } from '../../hooks/useAuth';
 import { BrandMark, AuthInput, AlertBox, AuthButton, LoginIllustration } from '../../components/AuthComponents';
 
-// Role → dashboard path mapping.
 const ROLE_HOME: Record<string, string> = {
   Manager:  '/manager',
   Designer: '/designer',
@@ -16,14 +15,14 @@ export default function LoginPage() {
   const location  = useLocation();
   const { login } = useAuth();
 
-  const [email,      setEmail]      = useState('');
-  const [password,   setPassword]   = useState('');
-  const [showPwd,    setShowPwd]    = useState(false);
-  const [remember,   setRemember]   = useState(false);
-  const [error,      setError]      = useState('');
-  const [loading,    setLoading]    = useState(false);
+  const [email,    setEmail]    = useState('');
+  const [password, setPassword] = useState('');
+  const [showPwd,  setShowPwd]  = useState(false);
+  const [error,    setError]    = useState('');
+  const [loading,  setLoading]  = useState(false);
 
   const justActivated = (location.state as { activated?: boolean } | null)?.activated === true;
+  const justReset = (location.state as { passwordReset?: boolean } | null)?.passwordReset === true;
 
   const handleSubmit = async () => {
     setError('');
@@ -42,27 +41,24 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-white flex">
-      {/* Left Side — Form */}
+      {/* ── Left: Form ── */}
       <div className="w-full lg:w-1/2 flex flex-col justify-center px-8 sm:px-12 lg:px-20 xl:px-28">
         <div className="max-w-md w-full mx-auto">
-          {/* Logo */}
           <div className="mb-10">
             <BrandMark />
           </div>
 
-          {/* Welcome */}
           <h1 className="text-2xl font-bold text-slate-900 mb-1">Welcome back</h1>
           <p className="text-sm text-slate-500 mb-8">Sign in to continue to your account.</p>
 
-          {/* Alerts */}
           {justActivated && (
             <AlertBox variant="success">
               Account activated — you can now sign in.
             </AlertBox>
           )}
+          {justReset && <AlertBox variant="success">Password updated — you can now sign in.</AlertBox>}
           {error && <AlertBox variant="error">{error}</AlertBox>}
 
-          {/* Form */}
           <div className="space-y-5">
             <AuthInput
               type="email"
@@ -80,27 +76,14 @@ export default function LoginPage() {
               placeholder="••••••••"
               showToggle
               isToggled={showPwd}
-              onToggle={() => setShowPwd(!showPwd)}
+              onToggle={() => setShowPwd(p => !p)}
               onKeyDown={e => e.key === 'Enter' && handleSubmit()}
             />
 
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={remember}
-                  onChange={e => setRemember(e.target.checked)}
-                  className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary"
-                />
-                <span className="text-sm text-slate-600">Remember me</span>
-              </label>
-              <button
-                type="button"
-                onClick={() => {/* TODO: forgot password flow */}}
-                className="text-sm font-medium text-primary hover:text-primary-600 transition-colors"
-              >
+            <div className="flex justify-end">
+              <Link to="/forgot-password" className="text-sm font-medium text-primary hover:text-primary-600 transition-colors">
                 Forgot password?
-              </button>
+              </Link>
             </div>
 
             <AuthButton onClick={handleSubmit} loading={loading}>
@@ -115,11 +98,25 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Right Side — Illustration */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-indigo-100 to-indigo-200 items-center justify-center relative overflow-hidden">
-        <div className="absolute top-10 right-10 w-64 h-64 bg-white/20 rounded-full blur-3xl" />
-        <div className="absolute bottom-10 left-10 w-80 h-80 bg-primary/10 rounded-full blur-3xl" />
-        <LoginIllustration />
+      {/* ── Right: Illustration ── */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-indigo-800 via-indigo-600 to-indigo-400 items-center justify-center relative overflow-hidden">
+        {/* Decorative circles */}
+        <div className="absolute -top-28 -right-20 w-96 h-96 rounded-full bg-white/[0.06]" />
+        <div className="absolute -bottom-14 -left-14 w-64 h-64 rounded-full bg-white/[0.06]" />
+        <div className="absolute bottom-28 right-20 w-40 h-40 rounded-full bg-white/[0.06]" />
+
+        <div className="relative z-10 flex flex-col items-center px-10 max-w-md">
+          <LoginIllustration />
+          <div className="mt-8 text-center">
+            <h2 className="text-xl font-bold text-white tracking-tight mb-2">
+              Manage your design projects
+            </h2>
+            <p className="text-sm text-white/70 leading-relaxed">
+              Track budgets, timelines, and team performance<br />
+              all in one streamlined workspace.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -1,81 +1,79 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import apiClient from '../../api/clients';
-
-// ─── Types ───────────────────────────────────────────────────────────────────
+import {
+  BrandMark, AuthInput, AlertBox, AuthButton,
+  ActivationIllustration, PasswordRequirements,
+} from '../../components/AuthComponents';
 
 type Role = 'Manager' | 'Designer' | 'Client';
+interface TokenInfo { role: Role; full_name: string; }
 
-interface TokenInfo {
-  role:      Role;
-  full_name: string;
-}
-
-// ─── Styles ──────────────────────────────────────────────────────────────────
-
-const inputCls =
-  'w-full px-[14px] py-[10px] border border-slate-200 rounded-lg bg-surface font-sans text-[14px] text-ink outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors placeholder:text-ink3';
-
-const labelCls =
-  'block font-sans text-[11px] uppercase tracking-[0.6px] text-ink3 mb-[6px]';
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-// Must contain at least one letter — allows "3D Motion", "Henry VIII".
-const hasLetter = (s: string) => /[a-zA-Z]/.test(s);
-
-/**
- * Validates a Tunisian phone number.
- * After stripping + and spaces, accepts:
- *   - 8 digits  (local)          e.g. 98 123 456
- *   - 11 digits starting with 216 (international) e.g. +216 98 123 456
- */
+const hasLetter          = (s: string) => /[a-zA-Z]/.test(s);
 const isValidTunisianPhone = (s: string) => {
-  const digits = s.replace(/[+ ]/g, '');
-  return digits.length === 8 || (digits.length === 11 && digits.startsWith('216'));
+  const d = s.replace(/[+ ]/g, '');
+  return d.length === 8 || (d.length === 11 && d.startsWith('216'));
 };
 
-// ─── Shared brand mark ───────────────────────────────────────────────────────
+// ─── Shared page shell ────────────────────────────────────────────────────────
 
-function BrandMark() {
+function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex flex-col items-center mb-8 gap-3">
-      <div className="w-11 h-11 rounded-xl bg-blue-600 flex items-center justify-center shadow-sm">
-        <svg width="22" height="22" viewBox="0 0 14 14" fill="none">
-          <rect x="1" y="1" width="5" height="5" rx="1" fill="white" />
-          <rect x="8" y="1" width="5" height="5" rx="1" fill="white" fillOpacity="0.55" />
-          <rect x="1" y="8" width="5" height="5" rx="1" fill="white" fillOpacity="0.55" />
-          <rect x="8" y="8" width="5" height="5" rx="1" fill="white" />
-        </svg>
-      </div>
-      <div className="text-center">
-        <div className="font-display text-[26px] text-ink leading-tight">DesignFlow</div>
-      </div>
+    <div className="min-h-screen bg-slate-50 flex flex-col">
+      <header className="h-14 bg-white border-b border-slate-200 flex items-center px-8 shrink-0">
+        <BrandMark />
+      </header>
+      <main className="flex flex-1 items-center justify-center p-6">
+        {children}
+      </main>
     </div>
   );
 }
 
-// ─── Component ───────────────────────────────────────────────────────────────
+// ─── Card wrapper ─────────────────────────────────────────────────────────────
+
+function Card({ accent = 'primary', children }: { accent?: 'primary' | 'error'; children: React.ReactNode }) {
+  const bar = accent === 'error'
+    ? 'bg-gradient-to-r from-red-400 to-rose-400'
+    : 'bg-gradient-to-r from-primary to-indigo-400';
+  return (
+    <div className="w-full max-w-[420px] bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+      <div className={`h-[3px] ${bar}`} />
+      <div className="px-10 py-9">{children}</div>
+    </div>
+  );
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 export default function ActivatePage() {
-  const [searchParams] = useSearchParams();
-  const navigate       = useNavigate();
-  const token          = searchParams.get('token') ?? '';
+  const [params]   = useSearchParams();
+  const navigate   = useNavigate();
+  const token      = params.get('token') ?? '';
 
-  const [tokenInfo,     setTokenInfo]     = useState<TokenInfo | null>(null);
-  const [tokenError,    setTokenError]    = useState('');
-  const [tokenLoading,  setTokenLoading]  = useState(true);
+  // Token validation state
+  const [tokenInfo,    setTokenInfo]    = useState<TokenInfo | null>(null);
+  const [tokenError,   setTokenError]   = useState('');
+  const [tokenLoading, setTokenLoading] = useState(true);
 
-  const [password,   setPassword]   = useState('');
-  const [confirm,    setConfirm]    = useState('');
+  // Password fields
+  const [password,  setPassword]  = useState('');
+  const [confirm,   setConfirm]   = useState('');
+  const [showPwd,   setShowPwd]   = useState(false);
+  const [showConf,  setShowConf]  = useState(false);
+
+  // Designer profile fields
   const [spec,       setSpec]       = useState('');
   const [hoursPerWk, setHoursPerWk] = useState('');
-  const [phone,      setPhone]      = useState('');
-  const [industry,   setIndustry]   = useState('');
+
+  // Client profile fields
+  const [phone,    setPhone]    = useState('');
+  const [industry, setIndustry] = useState('');
 
   const [error,   setError]   = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Validate token on mount — if already used or expired, show error card immediately
   useEffect(() => {
     if (!token) {
       setTokenError('No token found in the URL. Check your invitation email.');
@@ -94,45 +92,30 @@ export default function ActivatePage() {
 
   const handleSubmit = async () => {
     setError('');
+    const role = tokenInfo!.role;
 
     // ── Password ──────────────────────────────────────────────────────────
-    if (!password)           { setError('Password is required.');                   return; }
-    if (password.length < 8) { setError('Password must be at least 8 characters.'); return; }
-    if (password !== confirm) { setError('Passwords do not match.');                 return; }
+    if (!password)            return setError('Password is required.');
+    if (password.length < 8)  return setError('Password must be at least 8 characters.');
+    if (password !== confirm)  return setError('Passwords do not match.');
 
     // ── Designer ──────────────────────────────────────────────────────────
-    if (tokenInfo?.role === 'Designer') {
-      if (!hoursPerWk) {
-        setError('Available hours per week is required.');
-        return;
-      }
+    if (role === 'Designer') {
+      if (!hoursPerWk) return setError('Available hours per week is required.');
       const hrs = parseInt(hoursPerWk, 10);
-      if (isNaN(hrs) || hrs < 1 || hrs > 80) {
-        setError('Available hours must be a whole number between 1 and 80.');
-        return;
-      }
-      if (spec && !hasLetter(spec)) {
-        setError('Specialization must contain at least one letter.');
-        return;
-      }
+      if (isNaN(hrs) || hrs < 1 || hrs > 80)
+        return setError('Available hours must be a whole number between 1 and 80.');
+      if (spec && !hasLetter(spec))
+        return setError('Specialization must contain at least one letter.');
     }
 
     // ── Client ────────────────────────────────────────────────────────────
-    if (tokenInfo?.role === 'Client') {
-      // Phone is required — manager needs a way to contact the client.
-      if (!phone) {
-        setError('Phone number is required.');
-        return;
-      }
-      if (!isValidTunisianPhone(phone)) {
-        setError('Enter a valid number — 8 digits local (98 123 456) or international (+216 98 123 456).');
-        return;
-      }
-      // Industry is optional but must read like a word if provided.
-      if (industry && !hasLetter(industry)) {
-        setError('Industry must contain at least one letter.');
-        return;
-      }
+    if (role === 'Client') {
+      if (!phone) return setError('Phone number is required.');
+      if (!isValidTunisianPhone(phone))
+        return setError('Enter a valid number — 8 digits local (98 123 456) or international (+216 98 123 456).');
+      if (industry && !hasLetter(industry))
+        return setError('Industry must contain at least one letter.');
     }
 
     setLoading(true);
@@ -140,185 +123,164 @@ export default function ActivatePage() {
       await apiClient.post('/auth/activate/', {
         token,
         password,
-        ...(tokenInfo?.role === 'Designer' && {
+        ...(role === 'Designer' && {
           specialization:           spec.trim(),
           available_hours_per_week: parseInt(hoursPerWk, 10),
         }),
-        ...(tokenInfo?.role === 'Client' && {
+        ...(role === 'Client' && {
           phone:    phone.trim(),
           industry: industry.trim(),
         }),
       });
-      navigate('/login', { state: { activated: true } });
+      navigate('/login', { state: { activated: true }, replace: true });
     } catch (err) {
-      const e   = err as { response?: { data?: { token?: string[]; password?: string[]; detail?: string } } };
-      const d   = e.response?.data;
-      const msg = d?.token?.[0] ?? d?.password?.[0] ?? d?.detail ?? 'Activation failed.';
-      setError(msg);
+      const e = err as { response?: { data?: { token?: string[]; password?: string[]; detail?: string } } };
+      const d = e.response?.data;
+      setError(d?.token?.[0] ?? d?.password?.[0] ?? d?.detail ?? 'Activation failed.');
     } finally {
       setLoading(false);
     }
   };
 
+  // ── Loading ───────────────────────────────────────────────────────────────
+
   if (tokenLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-bg">
-        <p className="font-sans text-[13px] text-ink3">Verifying invitation…</p>
-      </div>
+      <Shell>
+        <p className="text-sm text-slate-400">Verifying invitation…</p>
+      </Shell>
     );
   }
 
+  // ── Token invalid / expired / already used — no form shown ───────────────
+
   if (tokenError) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-bg">
-        <div className="w-full max-w-sm">
-          <BrandMark />
-          <div className="bg-surface border border-border rounded-lg px-8 py-6 text-center">
-            <div className="font-sans text-[15px] font-semibold text-ink mb-1.5">Invalid link</div>
-            <p className="font-sans text-[13px] text-ink3">{tokenError}</p>
+      <Shell>
+        <Card accent="error">
+          <div className="flex flex-col items-center text-center">
+            <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center mb-5">
+              <svg className="w-7 h-7 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </div>
+            <h1 className="text-xl font-bold text-slate-900 mb-2">Link unavailable</h1>
+            <p className="text-sm text-slate-500 leading-relaxed">{tokenError}</p>
           </div>
-        </div>
-      </div>
+        </Card>
+      </Shell>
     );
   }
+
+  // ── Activation form ───────────────────────────────────────────────────────
 
   const role = tokenInfo!.role;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-bg py-12">
-      <div className="w-full max-w-sm">
-
-        <BrandMark />
-
-        <div className="bg-surface border border-border rounded-lg p-8">
-          <div className="mb-6">
-            <h1 className="font-sans text-[15px] font-semibold text-ink">
-              Welcome, {tokenInfo!.full_name}
-            </h1>
-            <p className="font-sans text-[13px] text-ink3 mt-0.5">
-              Set your password to activate your {role} account.
-            </p>
-          </div>
-
-          {error && (
-            <div className="mb-5 px-3 py-[10px] rounded bg-danger-light border border-danger/20 font-sans text-[13px] text-danger">
-              {error}
-            </div>
-          )}
-
-          <div className="space-y-4">
-
-            {/* ── Password ───────────────────────────────────────────────── */}
-            <div>
-              <label className={labelCls}>New password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder="Min. 8 characters"
-                className={inputCls}
-              />
-            </div>
-
-            <div>
-              <label className={labelCls}>Confirm password</label>
-              <input
-                type="password"
-                value={confirm}
-                onChange={e => setConfirm(e.target.value)}
-                placeholder="Repeat password"
-                className={inputCls}
-              />
-            </div>
-
-            {/* ── Designer profile fields ───────────────────────────────── */}
-            {role === 'Designer' && (
-              <>
-                <hr className="border-border" />
-
-                <div>
-                  <label className={labelCls}>
-                    Specialization{' '}
-                    <span className="normal-case tracking-normal">(Optional)</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={spec}
-                    onChange={e => setSpec(e.target.value)}
-                    placeholder="e.g. Branding & Identity"
-                    className={inputCls}
-                  />
-                </div>
-
-                <div>
-                  {/* Required — used in the designer utilisation metric */}
-                  <label className={labelCls}>Available hours per week</label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={80}
-                    value={hoursPerWk}
-                    onChange={e => {
-                      const val = e.target.value;
-                      if (val === '' || /^\d+$/.test(val)) setHoursPerWk(val);
-                    }}
-                    placeholder="e.g. 40"
-                    className={inputCls}
-                  />
-                </div>
-              </>
-            )}
-
-            {/* ── Client profile fields ─────────────────────────────────── */}
-            {role === 'Client' && (
-              <>
-                <hr className="border-border" />
-
-                <div>
-                  {/* Required — manager needs a way to contact the client */}
-                  <label className={labelCls}>Phone</label>
-                  <input
-                    type="text"
-                    value={phone}
-                    onChange={e => {
-                      const val = e.target.value;
-                      // Only allow digits, spaces, and + sign
-                      if (val === '' || /^[0-9+ ]*$/.test(val)) setPhone(val);
-                    }}
-                    placeholder="e.g. 98 123 456 or +216 98 123 456"
-                    className={inputCls}
-                  />
-                </div>
-
-                <div>
-                  <label className={labelCls}>
-                    Industry{' '}
-                    <span className="normal-case tracking-normal">(Optional)</span>
-                  </label>
-                  {/* Free text — "Fortune 500", "3PL Logistics" are valid industry names */}
-                  <input
-                    type="text"
-                    value={industry}
-                    onChange={e => setIndustry(e.target.value)}
-                    placeholder="e.g. Food & Beverage"
-                    className={inputCls}
-                  />
-                </div>
-              </>
-            )}
-
-          </div>
-
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            className="mt-6 w-full px-3.5 py-2 rounded-lg bg-blue-700 text-white font-sans text-sm font-semibold hover:bg-blue-800 disabled:opacity-50 transition-colors"
-          >
-            {loading ? 'Activating…' : 'Activate account'}
-          </button>
+    <Shell>
+      <Card>
+        <div className="flex justify-center mb-7">
+          <ActivationIllustration />
         </div>
 
-      </div>
-    </div>
+        <h1 className="text-xl font-bold text-slate-900 text-center mb-1">
+          Welcome, {tokenInfo!.full_name}
+        </h1>
+        <p className="text-sm text-slate-500 text-center mb-7 leading-relaxed">
+          Set your password to activate your {role} account.
+        </p>
+
+        {error && <AlertBox variant="error">{error}</AlertBox>}
+
+        <div className="space-y-4">
+          {/* Password */}
+          <AuthInput
+            type={showPwd ? 'text' : 'password'}
+            label="New Password"
+            value={password}
+            onChange={setPassword}
+            placeholder="Min. 8 characters"
+            showToggle
+            isToggled={showPwd}
+            onToggle={() => setShowPwd(p => !p)}
+          />
+
+          <AuthInput
+            type={showConf ? 'text' : 'password'}
+            label="Confirm Password"
+            value={confirm}
+            onChange={setConfirm}
+            placeholder="Repeat password"
+            showToggle
+            isToggled={showConf}
+            onToggle={() => setShowConf(p => !p)}
+          />
+
+          <PasswordRequirements password={password} />
+
+          {/* Designer profile fields */}
+          {role === 'Designer' && (
+            <>
+              <hr className="border-slate-100" />
+              <AuthInput
+                label="Specialization (Optional)"
+                value={spec}
+                onChange={setSpec}
+                placeholder="e.g. Branding & Identity"
+              />
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  Available hours per week
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={80}
+                  value={hoursPerWk}
+                  onChange={e => {
+                    const v = e.target.value;
+                    if (v === '' || /^\d+$/.test(v)) setHoursPerWk(v);
+                  }}
+                  placeholder="e.g. 40"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-colors"
+                />
+              </div>
+            </>
+          )}
+
+          {/* Client profile fields */}
+          {role === 'Client' && (
+            <>
+              <hr className="border-slate-100" />
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Phone</label>
+                <input
+                  type="text"
+                  value={phone}
+                  onChange={e => {
+                    const v = e.target.value;
+                    if (v === '' || /^[0-9+ ]*$/.test(v)) setPhone(v);
+                  }}
+                  placeholder="e.g. 98 123 456 or +216 98 123 456"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-colors"
+                />
+              </div>
+              <AuthInput
+                label="Industry (Optional)"
+                value={industry}
+                onChange={setIndustry}
+                placeholder="e.g. Food & Beverage"
+              />
+            </>
+          )}
+
+          <div className="pt-1">
+            <AuthButton onClick={handleSubmit} loading={loading}>
+              Activate Account
+            </AuthButton>
+          </div>
+        </div>
+      </Card>
+    </Shell>
   );
 }

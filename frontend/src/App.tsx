@@ -14,6 +14,8 @@ import DesignerProjectDetail from './pages/designer/DesignerProjectDetail';
 import AnalyticsDashboard from './pages/manager/AnalyticsDashboard';
 import TeamPage from './pages/manager/TeamPage';
 import SettingsPage from './pages/SettingsPage';
+import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
+import ResetPasswordPage  from './pages/auth/ResetPasswordPage';
 
 function RootRedirect() {
   const { user } = useAuth();
@@ -41,6 +43,8 @@ export default function App() {
         {/* Public */}
         <Route path="/login"    element={<PublicRoute><LoginPage /></PublicRoute>} />
         <Route path="/activate" element={<ActivatePage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password"  element={<ResetPasswordPage />} />
 
         {/* Settings — all authenticated roles */}
         <Route

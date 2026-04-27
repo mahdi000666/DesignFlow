@@ -1,15 +1,11 @@
+Account icon placement
 
 
 
 
 
-
-
-
-
-
-
-
+1. In the forgot password page, there seems to be no valid email check, I also think it would be better if we could check if the email exists in the database rather than randomly sending it no?
+2. The email reset link is not being sent. When I do it to create a new user, it works perfectly fine and gets sent within 5 seconds maximum.
 
 
 
@@ -94,6 +90,7 @@ Directory structure:
             ├── components/
             │   ├── AppShell.tsx
             │   ├── AssignDesignerPanel.tsx
+            │   ├── AuthComponents.tsx
             │   ├── FeedbackForm.tsx
             │   ├── FeedbackList.tsx
             │   ├── FileUploadPanel.tsx
@@ -104,7 +101,8 @@ Directory structure:
             │   ├── TaskForm.tsx
             │   ├── TaskRow.tsx
             │   ├── TimeLogForm.tsx
-            │   └── TimeLogList.tsx
+            │   ├── TimeLogList.tsx
+            │   ├── Ui.tsx
             │   └── UnreadBadge.tsx
             ├── context/
             │   ├── authContext.ts

@@ -1,3 +1,5 @@
+import uuid
+from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -10,11 +12,15 @@ from django.db.models import Sum
 from apps.users.permissions import IsManager
 from apps.users.models import Client, Designer, InvitationToken, User
 from apps.timelog.models import TimeLog
+from django.conf import settings
+from django.core.mail import send_mail
 
 from .serializers import (
     ActivateAccountSerializer,
     CustomTokenObtainPairSerializer,
     InviteUserSerializer,
+    PasswordResetConfirmSerializer,
+    PasswordResetRequestSerializer,
     UserMeSerializer,
 )
 
@@ -215,3 +221,64 @@ def client_list(request):
 def designer_list(request):
     designers = Designer.objects.select_related('user').all()
     return Response([{'id': d.id, 'name': d.user.full_name} for d in designers])
+
+class PasswordResetRequestView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = PasswordResetRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data['email']
+
+        try:
+            user = User.objects.get(email=email, is_active=True)
+        except User.DoesNotExist:
+            # Return 200 regardless — prevents email enumeration.
+            return Response({'detail': 'If that email exists, a reset link has been sent.'})
+
+        # Invalidate any existing unused reset tokens for this user
+        # so only the latest link works.
+        InvitationToken.objects.filter(user=user, is_used=False).update(is_used=True)
+
+        token_obj = InvitationToken.objects.create(
+            user=user,
+            token=str(uuid.uuid4()),
+            expires_at=timezone.now() + timedelta(hours=2),
+        )
+
+        reset_url = f"{settings.FRONTEND_URL}/reset-password?token={token_obj.token}"
+
+        send_mail(
+            subject='Reset your DesignFlow password',
+            message=(
+                f"Hi {user.full_name},\n\n"
+                f"Click the link below to reset your password. "
+                f"This link expires in 2 hours.\n\n"
+                f"{reset_url}\n\n"
+                f"If you didn't request this, you can safely ignore this email."
+            ),
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[user.email],
+            fail_silently=False,
+        )
+
+        return Response({'detail': 'If that email exists, a reset link has been sent.'})
+
+
+class PasswordResetConfirmView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = PasswordResetConfirmSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        token_obj = serializer.validated_data['token_obj']
+        user      = token_obj.user
+
+        user.set_password(serializer.validated_data['password'])
+        user.save(update_fields=['password'])
+
+        token_obj.is_used = True
+        token_obj.save(update_fields=['is_used'])
+
+        return Response({'detail': 'Password updated successfully.'})

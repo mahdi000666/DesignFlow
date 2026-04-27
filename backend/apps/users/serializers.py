@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from django.contrib.auth.password_validation import validate_password
 from django.utils import timezone
 from .models import User, InvitationToken, Designer, Client
 
@@ -108,6 +109,37 @@ class InviteUserSerializer(serializers.Serializer):
             Designer.objects.filter(user=user).update(hourly_rate=data['hourly_rate'])
         return user
 
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        # Normalise but do NOT raise if missing — we handle that
+        # silently in the view to prevent email enumeration.
+        return value.lower().strip()
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    token    = serializers.CharField()
+    password = serializers.CharField(write_only=True)
+
+    def validate_password(self, value):
+        validate_password(value)   # runs Django's built-in validators
+        return value
+
+    def validate(self, data):
+        try:
+            token_obj = InvitationToken.objects.select_related('user').get(
+                token=data['token']
+            )
+        except InvitationToken.DoesNotExist:
+            raise serializers.ValidationError({'token': 'Invalid or expired reset link.'})
+
+        if not token_obj.is_valid():
+            raise serializers.ValidationError({'token': 'Invalid or expired reset link.'})
+
+        data['token_obj'] = token_obj
+        return data
 
 class UserMeSerializer(serializers.ModelSerializer):
     hourly_rate              = serializers.SerializerMethodField(read_only=True)
