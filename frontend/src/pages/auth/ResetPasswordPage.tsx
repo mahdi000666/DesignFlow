@@ -3,25 +3,8 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import apiClient from '../../api/clients';
 import { AuthShell, AuthCard, AuthInput, AlertBox, AuthButton, PasswordRequirements } from '../../components/AuthComponents';
 import { isPasswordValid } from '../../utils/auth';
-
-// Minimal lock illustration
-function ResetIllustration() {
-  return (
-    <div className="w-40 h-32">
-      <svg viewBox="0 0 160 130" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-        <circle cx="80" cy="65" r="60" fill="#eef2ff" />
-        <circle cx="80" cy="65" r="44" fill="#e0e7ff" />
-        {/* Shackle */}
-        <path d="M62 65 V52 Q62 35 80 35 Q98 35 98 52 V65" stroke="#a5b4fc" strokeWidth="5" strokeLinecap="round" fill="none" />
-        {/* Body */}
-        <rect x="52" y="62" width="56" height="42" rx="8" fill="#6366f1" />
-        {/* Keyhole */}
-        <circle cx="80" cy="80" r="7" fill="#eef2ff" />
-        <rect x="77" y="82" width="6" height="10" rx="3" fill="#eef2ff" />
-      </svg>
-    </div>
-  );
-}
+import ResetIllustration from '../../assets/illustrations/reset-illustration.svg?react';
+import { ErrorXIcon } from '../../components/Icons';
 
 export default function ResetPasswordPage() {
   const [params]   = useSearchParams();
@@ -91,9 +74,7 @@ export default function ResetPasswordPage() {
         <AuthCard accent="error">
           <div className="flex flex-col items-center text-center">
             <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center mb-5">
-              <svg className="w-7 h-7 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <ErrorXIcon className="w-7 h-7 text-red-500" />
             </div>
             <h1 className="text-xl font-bold text-slate-900 mb-2">Link unavailable</h1>
             <p className="text-sm text-slate-500 leading-relaxed">{tokenError}</p>

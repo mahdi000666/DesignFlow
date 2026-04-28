@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import apiClient from '../../api/clients';
 import {
-  AuthInput, AlertBox, AuthButton,
-  ActivationIllustration, PasswordRequirements,
+  AuthInput, AlertBox, AuthButton, PasswordRequirements,
   AuthShell, AuthCard,
 } from '../../components/AuthComponents';
 import { isPasswordValid } from '../../utils/auth';
+import ActivationIllustration from '../../assets/illustrations/activation-illustration.svg?react';
+import { ErrorXIcon } from '../../components/Icons';
 
 type Role = 'Manager' | 'Designer' | 'Client';
 interface TokenInfo { role: Role; full_name: string; }
@@ -133,9 +134,7 @@ export default function ActivatePage() {
         <AuthCard accent="error">
           <div className="flex flex-col items-center text-center">
             <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center mb-5">
-              <svg className="w-7 h-7 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <ErrorXIcon className="w-7 h-7 text-red-500" />
             </div>
             <h1 className="text-xl font-bold text-slate-900 mb-2">Link unavailable</h1>
             <p className="text-sm text-slate-500 leading-relaxed">{tokenError}</p>

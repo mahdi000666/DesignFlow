@@ -3,27 +3,7 @@ import { Link } from 'react-router-dom';
 import apiClient from '../../api/clients';
 import { AuthShell, AuthCard, AuthInput, AlertBox, AuthButton } from '../../components/AuthComponents';
 import { isEmailValid } from '../../utils/auth';
-
-// Illustration — abstract envelope sent
-function SentIllustration() {
-  return (
-    <div className="w-40 h-32">
-      <svg viewBox="0 0 160 130" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-        <circle cx="80" cy="65" r="60" fill="#eef2ff" />
-        <circle cx="80" cy="65" r="44" fill="#e0e7ff" />
-        {/* Envelope */}
-        <rect x="30" y="48" width="90" height="60" rx="7" fill="white" stroke="#c7d2fe" strokeWidth="1.5" />
-        <path d="M30 48 L75 76 L120 48" stroke="#c7d2fe" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-        {/* Lines inside */}
-        <line x1="45" y1="90" x2="95" y2="90" stroke="#e0e7ff" strokeWidth="2" strokeLinecap="round" />
-        <line x1="45" y1="98" x2="80" y2="98" stroke="#e0e7ff" strokeWidth="2" strokeLinecap="round" />
-        {/* Checkmark badge */}
-        <circle cx="112" cy="46" r="13" fill="#6366f1" />
-        <path d="M106 46 L110 50 L118 41" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    </div>
-  );
-}
+import SentIllustration from '../../assets/illustrations/sent-illustration.svg?react';
 
 export default function ForgotPasswordPage() {
   const [email,   setEmail]   = useState('');

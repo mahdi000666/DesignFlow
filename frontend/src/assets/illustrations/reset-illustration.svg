@@ -1,0 +1,11 @@
+<svg viewBox="0 0 160 130" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="80" cy="65" r="60" fill="#eef2ff" />
+  <circle cx="80" cy="65" r="44" fill="#e0e7ff" />
+  <!-- Shackle -->
+  <path d="M62 65 V52 Q62 35 80 35 Q98 35 98 52 V65" stroke="#a5b4fc" stroke-width="5" stroke-linecap="round" fill="none" />
+  <!-- Body -->
+  <rect x="52" y="62" width="56" height="42" rx="8" fill="#6366f1" />
+  <!-- Keyhole -->
+  <circle cx="80" cy="80" r="7" fill="#eef2ff" />
+  <rect x="77" y="82" width="6" height="10" rx="3" fill="#eef2ff" />
+</svg>

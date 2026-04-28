@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import apiClient from '../../api/clients';
 import { useAuth } from '../../hooks/useAuth';
-import { BrandMark, AuthInput, AlertBox, AuthButton, LoginIllustration } from '../../components/AuthComponents';
+import { BrandMark, AuthInput, AlertBox, AuthButton } from '../../components/AuthComponents';
 import { isEmailValid } from '../../utils/auth';
+import LoginIllustration from '../../assets/illustrations/login-illustration.svg?react';
 
 const ROLE_HOME: Record<string, string> = {
   Manager:  '/manager',

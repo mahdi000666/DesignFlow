@@ -2,8 +2,8 @@ Account icon placement
 shell darker color
 
 
-
-
+I would like to darken a bit the navbar in appshell, what line do i change?
+Is it safe to delete public/vite.svg and assets/react.svg?
 
 
 In order to save tokens, you may only generate the document for S3 chapter.
