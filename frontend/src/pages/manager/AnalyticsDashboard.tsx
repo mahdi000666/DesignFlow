@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { LineChart, Line, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList } from 'recharts';
+import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { DollarSign, Activity, Clock, TrendingUp } from 'lucide-react';
 import AppShell from '../../components/AppShell';
 import { KpiCard } from '../../components/Ui';
@@ -13,7 +13,7 @@ import {
 } from '../../hooks/useAnalytics';
 import { useProjects } from '../../hooks/useProjects';
 import { exportPDF, exportExcel } from '../../api/analytics';
-import type { AnalyticsFilters, ProfitMarginItem } from '../../types/analytic';
+import type { AnalyticsFilters } from '../../types/analytic';
 import { formatTND, formatEHR } from '../../utils/format';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -22,32 +22,12 @@ const PIE_COLORS = ['#1e40af', '#6366f1', '#60a5fa', '#93c5fd', '#bfdbfe', '#dbe
 
 const scopeColor  = (idx: number)          => idx > 30 ? '#ef4444' : idx > 15 ? '#f59e0b' : '#6366f1';
 const marginColor = (pct: number | null) => pct === null ? '#94a3b8' : pct < 0 ? '#ef4444' : pct < 20 ? '#f59e0b' : '#6366f1';
+type ChartFormatterValue = number | string | Array<number | string> | undefined;
 
-function MarginTooltip({ active, payload }: {
-  active?: boolean;
-  payload?: { payload: ProfitMarginItem }[];
-}) {
-  if (!active || !payload?.length) return null;
-  const r = payload[0].payload;
-  return (
-    <div className="bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-xs shadow-sm">
-      <p className="font-semibold text-slate-800 mb-1.5 max-w-[180px] truncate">{r.project_name}</p>
-      <p className="text-slate-500">EHR: <span className="font-mono">{formatEHR(r.ehr)}</span></p>
-      <p className="text-slate-500">
-        Avg Designer Rate:{' '}
-        <span className="font-mono">{r.avg_designer_rate !== null ? formatEHR(r.avg_designer_rate) : '—'}</span>
-      </p>
-      <p className="text-slate-500">
-        Margin:{' '}
-        <span className="font-mono font-semibold" style={{ color: marginColor(r.profit_margin_pct) }}>
-          {r.profit_margin_pct !== null ? `${r.profit_margin_pct.toFixed(1)}%` : '—'}
-        </span>
-      </p>
-    </div>
-  );
-}
+const getChartValue = (value: ChartFormatterValue) => Array.isArray(value) ? value[0] : value;
+const metricCountColor = (count: number) => count > 0 ? 'text-rose-600' : 'text-slate-400';
 
-const hBarHeight = (n: number) => Math.max(160, n * 36 + 40);
+const hBarHeight = (n: number) => Math.max(220, n * 44 + 28);
 
 // ─── Filter bar ───────────────────────────────────────────────────────────────
 
@@ -162,32 +142,32 @@ export default function AnalyticsDashboard() {
   const avgMargin = validMargins.length
     ? validMargins.reduce((s, r) => s + r.profit_margin_pct!, 0) / validMargins.length
     : null;
+  const profitMarginExtent = validMargins.length
+    ? Math.max(...validMargins.map((row) => Math.abs(row.profit_margin_pct!)), 10)
+    : 10;
+  const sortedMargins = [...validMargins].sort((a, b) => (b.profit_margin_pct ?? 0) - (a.profit_margin_pct ?? 0));
 
   // Fix #3: KPI cards with icons matching the screenshot
   const KPI_CARDS = [
     {
       label: 'Total Revenue',
       value: kpi ? formatTND(kpi.total_revenue) : '—',
-      icon: <DollarSign size={16} />,
-      borderColor: '#6366f1',
+      icon: <DollarSign size={15} />,
     },
     {
       label: 'Avg. EHR',
       value: kpi ? formatEHR(kpi.avg_ehr) : '—',
-      icon: <Activity size={16} />,
-      borderColor: '#10b981',
+      icon: <Activity size={15} />,
     },
     {
       label: 'Total Hours',
       value: `${totalHours.toFixed(1)}h`,
-      icon: <Clock size={16} />,
-      borderColor: '#f59e0b',
+      icon: <Clock size={15} />,
     },
     {
       label: 'Profit Margin',
       value: avgMargin !== null ? `${avgMargin.toFixed(1)}%` : '—',
-      icon: <TrendingUp size={16} />,
-      borderColor: marginColor(avgMargin),
+      icon: <TrendingUp size={15} />,
     },
   ];
 
@@ -240,9 +220,9 @@ export default function AnalyticsDashboard() {
       <FilterBar filters={filters} onChange={setFilters} projects={projects} clients={clients} />
 
       {/* ── Row 1: KPI cards ──────────────────────────────────────────────── */}
-      <div className="grid grid-cols-4 gap-4 mb-5">
+      <div className="grid grid-cols-4 gap-3.5 mb-4">
         {KPI_CARDS.map(c => (
-          <KpiCard key={c.label} label={c.label} value={c.value} icon={c.icon} borderColor={c.borderColor} />
+          <KpiCard key={c.label} label={c.label} value={c.value} icon={c.icon} />
         ))}
       </div>
 
@@ -267,9 +247,9 @@ export default function AnalyticsDashboard() {
                   {/* Fix #2: Tooltip formatter with proper type handling */}
                   <Tooltip
                     contentStyle={{ fontSize: 12 }}
-                    formatter={(value: number | string | Array<number | string>) => {
-                      const v = Array.isArray(value) ? value[0] : value;
-                      return [`${v}h`, 'Cumulative'];
+                    formatter={(value: ChartFormatterValue) => {
+                      const v = getChartValue(value);
+                      return [`${v ?? 0}h`, 'Cumulative'];
                     }}
                   />
                   <Line type="monotone" dataKey="cumulative_hours" stroke="#6366f1" strokeWidth={2} dot={false} />
@@ -307,9 +287,9 @@ export default function AnalyticsDashboard() {
                   </Pie>
                   {/* Fix #2: Tooltip formatter with proper type handling */}
                   <Tooltip
-                    formatter={(value: number | string | Array<number | string>) => {
-                      const v = Array.isArray(value) ? value[0] : value;
-                      return formatTND(Number(v));
+                    formatter={(value: ChartFormatterValue) => {
+                      const v = getChartValue(value);
+                      return formatTND(Number(v ?? 0));
                     }}
                     contentStyle={{ fontSize: 11 }}
                   />
@@ -342,14 +322,23 @@ export default function AnalyticsDashboard() {
         {/* Client Profitability Ranking */}
         <div className="card p-5">
           <p className="section-title mb-4">Client Profitability Ranking</p>
-          <table className="w-full text-sm">
+          <table className="w-full table-fixed text-sm">
+            <colgroup>
+              <col className="w-10" />
+              <col />
+              <col className="w-28" />
+              <col className="w-20" />
+              <col className="w-24" />
+              <col className="w-16" />
+            </colgroup>
             <thead>
               <tr className="border-b border-slate-100">
-                {['#', 'Client', 'Revenue', 'Hours', 'EHR', 'Rev.'].map(h => (
-                  <th key={h} className={`pb-2 text-xs font-semibold text-slate-400 ${h === '#' || h === 'Client' ? 'text-left' : 'text-right'}`}>
-                    {h}
-                  </th>
-                ))}
+                <th className="pb-2 pr-3 text-left text-xs font-semibold text-slate-400">#</th>
+                <th className="pb-2 pr-4 text-left text-xs font-semibold text-slate-400">Client</th>
+                <th className="pb-2 text-right text-xs font-semibold text-slate-400">Revenue</th>
+                <th className="pb-2 text-right text-xs font-semibold text-slate-400">Hours</th>
+                <th className="pb-2 text-right text-xs font-semibold text-slate-400">EHR</th>
+                <th className="pb-2 text-right text-xs font-semibold text-slate-400">Rev.</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -404,7 +393,13 @@ export default function AnalyticsDashboard() {
                       />
                     </div>
                     <p className="text-[10px] text-slate-400 mt-1 font-mono">
-                      {row.unplanned_tasks} Unplanned / {row.total_tasks} Total
+                      <span className={`font-semibold ${metricCountColor(row.unplanned_tasks)}`}>
+                        {row.unplanned_tasks}
+                      </span>{' '}
+                      <span className="text-slate-500">Unplanned</span>
+                      <span className="text-slate-300"> / </span>
+                      <span className="font-semibold text-slate-700">{row.total_tasks}</span>{' '}
+                      <span className="text-slate-500">Total</span>
                     </p>
                   </div>
                 );
@@ -417,7 +412,12 @@ export default function AnalyticsDashboard() {
       {/* ── Row 4: Profit Margin per Project ──────────────────────────────── */}
       <div className="card p-5">
         <div className="flex items-baseline justify-between mb-4">
-          <p className="section-title">Profit Margin per Project</p>
+          <div>
+            <p className="section-title">Profit Margin per Project</p>
+            <p className="mt-1 text-[10px] font-medium uppercase tracking-wide text-slate-400">
+              Profit margin vs hourly cost
+            </p>
+          </div>
           {profitMargin.length > 0 && validMargins.length < profitMargin.length && (
             <span className="text-[10px] text-slate-400">
               {profitMargin.length - validMargins.length} project(s) excluded — no designer rate set
@@ -426,51 +426,57 @@ export default function AnalyticsDashboard() {
         </div>
         {validMargins.length === 0 ? (
           <div className="h-32 flex items-center justify-center text-sm text-slate-400">
-            No data — ensure designer hourly rates are configured
+            No data - ensure designer hourly rates are configured
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height={hBarHeight(validMargins.length)}>
-            <BarChart
-              layout="vertical"
-              data={validMargins}
-              margin={{ top: 4, right: 56, left: 8, bottom: 4 }}
-              barCategoryGap="35%"
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
-              <XAxis
-                type="number"
-                tick={{ fontSize: 10, fill: '#94a3b8' }}
-                tickLine={false}
-                axisLine={false}
-                tickFormatter={v => `${v}%`}
-              />
-              <YAxis
-                type="category"
-                dataKey="project_name"
-                tick={{ fontSize: 10, fill: '#64748b' }}
-                tickLine={false}
-                axisLine={false}
-                width={130}
-                tickFormatter={(v: string) => v.length > 20 ? `${v.slice(0, 20)}…` : v}
-              />
-              <Tooltip content={<MarginTooltip />} cursor={{ fill: '#f8fafc' }} />
-              <Bar dataKey="profit_margin_pct" name="Profit Margin %" radius={[0, 3, 3, 0]} maxBarSize={10}>
-                {/* Fix #2: LabelList formatter with proper type handling */}
-                <LabelList
-                  dataKey="profit_margin_pct"
-                  position="right"
-                  formatter={(value: number | string | Array<number | string>) => {
-                    const v = Array.isArray(value) ? value[0] : value;
-                    return `${Number(v).toFixed(1)}%`;
-                  }}
-                  style={{ fontSize: 10, fontFamily: 'monospace' }}
-                />
-                {validMargins.map((row, i) => (
-                  <Cell key={i} fill={marginColor(row.profit_margin_pct)} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="space-y-3" style={{ minHeight: `${hBarHeight(sortedMargins.length)}px` }}>
+            <div className="grid grid-cols-[minmax(0,1.35fr)_minmax(260px,2fr)_76px_124px] gap-4 px-2 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+              <span>Project</span>
+              <span className="text-center">Margin Spread</span>
+              <span className="text-right">Margin</span>
+              <span className="text-right">EHR / Rate</span>
+            </div>
+            {sortedMargins.map((row) => {
+              const pct = row.profit_margin_pct ?? 0;
+              const widthPct = `${(Math.abs(pct) / profitMarginExtent) * 50}%`;
+              const ehrText = formatEHR(row.ehr);
+              const rateText = row.avg_designer_rate !== null ? formatEHR(row.avg_designer_rate) : '-';
+
+              return (
+                <div
+                  key={row.project_id}
+                  className="grid grid-cols-[minmax(0,1.35fr)_minmax(260px,2fr)_76px_124px] items-center gap-4 rounded-lg border border-slate-100 px-2 py-2.5 hover:bg-slate-50/60"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-slate-800">{row.project_name}</p>
+                  </div>
+                  <div className="relative h-10 rounded-lg bg-slate-50">
+                    <div className="absolute inset-y-2 left-0 right-0 rounded-full bg-slate-100" />
+                    <div className="absolute inset-y-1.5 left-1/2 w-px -translate-x-1/2 bg-slate-300" />
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-medium text-slate-300">-</div>
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-medium text-slate-300">+</div>
+                    <div
+                      className="absolute top-1/2 h-3 -translate-y-1/2 rounded-full"
+                      style={{
+                        width: widthPct,
+                        left: pct >= 0 ? '50%' : `calc(50% - ${widthPct})`,
+                        backgroundColor: marginColor(row.profit_margin_pct),
+                      }}
+                    />
+                  </div>
+                  <div className="text-right">
+                    <span className="font-mono text-xs font-semibold" style={{ color: marginColor(row.profit_margin_pct) }}>
+                      {pct.toFixed(1)}%
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-mono text-[11px] font-semibold text-slate-700">{ehrText}</p>
+                    <p className="font-mono text-[10px] text-slate-400">{rateText}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         )}
       </div>
 

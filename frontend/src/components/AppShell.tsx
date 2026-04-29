@@ -62,12 +62,13 @@ export default function AppShell({ title, breadcrumb, actions, children }: AppSh
       : location.pathname.startsWith(path);
   };
 
-  const linkCls = (path: string) =>
-    `flex items-center gap-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 ${
-      isActive(path)
-        ? 'bg-primary text-white shadow-sm'
-        : 'text-slate-400 hover:text-white hover:bg-slate-800/60 px-3'
-    } ${isActive(path) ? 'px-3' : ''}`;
+  {/* Nav link builder */}
+const linkCls = (path: string) =>
+  `flex items-center gap-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 ${
+    isActive(path)
+      ? 'bg-primary text-white shadow-sm'
+      : 'text-slate-400 hover:text-white hover:bg-slate-800/60 px-2.5'
+  } ${isActive(path) ? 'px-2.5' : ''}`;
 
   const avatarInitials = user?.full_name ? Initials(user.full_name) : '??';
 
@@ -75,10 +76,11 @@ export default function AppShell({ title, breadcrumb, actions, children }: AppSh
     <div className="flex h-screen overflow-hidden bg-slate-50 font-sans antialiased">
 
       {/* ── Sidebar ─────────────────────────────────────────────────────────── */}
-      <aside className="w-60 bg-sidebar flex flex-col shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.08)]">
+      {/* Sidebar shell */}
+<aside className="w-52 bg-sidebar flex flex-col shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.08)]">
 
         {/* Logo */}
-        <div className="flex h-16 items-center gap-2.5 border-b border-sidebar-border px-6">
+        <div className="flex h-14 items-center gap-2 border-b border-sidebar-border px-4">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
             <Logo />
           </div>
@@ -98,7 +100,8 @@ export default function AppShell({ title, breadcrumb, actions, children }: AppSh
         {/* Profile — identity anchor at bottom */}
         <div className="border-t border-sidebar-border p-4">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white text-xs font-semibold shrink-0">
+            {/* Bottom avatar */}
+            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-semibold shrink-0">
               {avatarInitials}
             </div>
             <div className="min-w-0 flex-1">
@@ -137,8 +140,10 @@ export default function AppShell({ title, breadcrumb, actions, children }: AppSh
         </header>
 
         {/* Scrollable content */}
-        <main className="flex-1 overflow-y-auto p-8">
-          {children}
+        <main className="flex-1 overflow-y-auto p-5">
+          <div className="max-w-7xl mx-auto">
+            {children}
+          </div>
         </main>
       </div>
     </div>
