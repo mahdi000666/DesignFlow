@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -95,8 +95,8 @@ export default function ManagerDashboard() {
   const { data: completedTasks = [] }  = useQuery({ queryKey: ['tasks-completed'], queryFn: getAllCompletedTasks });
   const { data: allTasks = [] }        = useQuery({ queryKey: ['tasks-all'],       queryFn: getAllTasks });
 
-  // Fix #1: useMemo avoids calling an impure function during render
-  const nowMs = useMemo(() => Date.now(), []);
+  // Fix #1: useState with lazy initializer avoids calling impure function during render
+  const [nowMs] = useState(() => Date.now());
 
   // ── Derived ───────────────────────────────────────────────────────────────
 
@@ -132,6 +132,12 @@ export default function ManagerDashboard() {
     [projects],
   );
 
+  // Fix #6: Sort designer utilization by descending order
+  const sortedUtilization = useMemo(
+    () => [...utilization].sort((a, b) => (b.utilization_pct ?? 0) - (a.utilization_pct ?? 0)),
+    [utilization],
+  );
+
   type ActivityItem = { id: string; type: ActivityType; label: string; sub: string; date: string };
   const activity = useMemo((): ActivityItem[] =>
     [
@@ -162,7 +168,6 @@ export default function ManagerDashboard() {
       .slice(0, 10),
   [allFeedback, allLogs, allFiles, completedTasks, projectNameById]);
 
-  // Fix #3 + #6: icons added, formatEHR applied to avg_ehr
   const KPI_CARDS = [
     {
       label: 'Total Revenue',
@@ -203,44 +208,44 @@ export default function ManagerDashboard() {
       {/* ── Row 2: Budget vs Actual + Recent Activity ──────────────────────── */}
       <div className="grid grid-cols-3 gap-4 mb-4">
 
-        {/* Fix #4: increased height, wider bars, more breathing room */}
+        {/* Fix #4: Reworked Budget vs Actual chart to match mockup */}
         <div className="col-span-2 card p-5">
           <p className="section-title mb-5">Budget vs Actual Hours</p>
           {budgetData.length === 0 ? (
             <div className="h-56 flex items-center justify-center text-sm text-slate-400">No data</div>
           ) : (
-            <ResponsiveContainer width="100%" height={265}>
+            <ResponsiveContainer width="100%" height={320}>
               <BarChart
                 data={budgetData}
-                margin={{ top: 4, right: 16, left: -10, bottom: 68 }}
-                barCategoryGap="22%"
-                barGap={4}
+                margin={{ top: 4, right: 16, left: -10, bottom: 80 }}
+                barCategoryGap="20%"
+                barGap={6}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
                 <XAxis
                   dataKey="project_name"
-                  tick={{ fontSize: 10, fill: '#94a3b8' }}
+                  tick={{ fontSize: 11, fill: '#64748b' }}
                   tickLine={false}
                   axisLine={false}
-                  angle={-35}
+                  angle={-30}
                   textAnchor="end"
                   interval={0}
-                  height={68}
+                  height={80}
                 />
                 <YAxis
-                  tick={{ fontSize: 10, fill: '#94a3b8' }}
+                  tick={{ fontSize: 11, fill: '#94a3b8' }}
                   tickLine={false}
                   axisLine={false}
                   tickFormatter={v => `${v}h`}
                 />
                 <Tooltip content={<BudgetTooltip />} cursor={{ fill: '#f8fafc' }} />
                 <Legend
-                  wrapperStyle={{ fontSize: 11, paddingTop: 4 }}
+                  wrapperStyle={{ fontSize: 12, paddingTop: 8 }}
                   iconType="square"
-                  iconSize={8}
+                  iconSize={10}
                 />
-                <Bar dataKey="budget_hours" name="Budget Hours" fill="#6366f1" radius={[3, 3, 0, 0]} maxBarSize={32} />
-                <Bar dataKey="actual_hours" name="Actual Hours" fill="#bfdbfe" radius={[3, 3, 0, 0]} maxBarSize={32} />
+                <Bar dataKey="budget_hours" name="Budget Hours" fill="#6366f1" radius={[4, 4, 0, 0]} maxBarSize={48} />
+                <Bar dataKey="actual_hours" name="Actual Hours" fill="#bfdbfe" radius={[4, 4, 0, 0]} maxBarSize={48} />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -283,14 +288,14 @@ export default function ManagerDashboard() {
       {/* ── Row 3: Designer Util + Tasks by Status + Upcoming Deadlines ─────── */}
       <div className="grid grid-cols-3 gap-4 mb-4">
 
-        {/* Designer Utilisation */}
+        {/* Designer Utilisation — Fix #6: sorted by descending order */}
         <div className="card p-5">
           <p className="section-title mb-4">Designer Utilisation</p>
-          {utilization.length === 0 ? (
+          {sortedUtilization.length === 0 ? (
             <p className="py-4 text-center text-sm text-slate-400">No designers found</p>
           ) : (
             <div className="space-y-4">
-              {utilization.map(d => {
+              {sortedUtilization.map(d => {
                 const pct = d.utilization_pct ?? 0;
                 return (
                   <div key={d.designer_id}>
@@ -406,7 +411,6 @@ export default function ManagerDashboard() {
           <p className="px-5 py-8 text-sm text-slate-400 text-center">No active projects.</p>
         ) : (
           <>
-            {/* Fix #6: widened EHR column (80px → 130px) to fit "XX,XX TND/h" */}
             <div className="grid grid-cols-[1fr_160px_130px_100px] gap-4 px-5 py-2.5 bg-slate-50/70 border-b border-slate-100">
               <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Project</span>
               <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Budget</span>
@@ -418,7 +422,6 @@ export default function ManagerDashboard() {
                 const pct = p.budget_hours && p.actual_hours != null
                   ? Math.round((p.actual_hours / Number(p.budget_hours)) * 100)
                   : null;
-                // Fix #6: retain precision for formatEHR (no Math.round)
                 const ehr = p.budget_amount && p.actual_hours > 0
                   ? Number(p.budget_amount) / p.actual_hours
                   : null;
@@ -462,7 +465,7 @@ export default function ManagerDashboard() {
                         )}
                       </div>
 
-                      {/* EHR — Fix #6: formatEHR applied */}
+                      {/* EHR — formatEHR applied */}
                       <div className="text-right">
                         {ehr !== null ? (
                           <span className={`font-mono text-xs font-bold ${isOver ? 'text-rose-600' : 'text-emerald-700'}`}>

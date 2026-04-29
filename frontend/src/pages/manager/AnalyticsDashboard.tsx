@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { LineChart, Line, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList } from 'recharts';
+import { DollarSign, Activity, Clock, TrendingUp } from 'lucide-react';
 import AppShell from '../../components/AppShell';
 import { KpiCard } from '../../components/Ui';
 import {
@@ -12,8 +13,8 @@ import {
 } from '../../hooks/useAnalytics';
 import { useProjects } from '../../hooks/useProjects';
 import { exportPDF, exportExcel } from '../../api/analytics';
-import type { AnalyticsFilters } from '../../types/analytic';
-import { formatTND } from '../../utils/format';
+import type { AnalyticsFilters, ProfitMarginItem } from '../../types/analytic';
+import { formatTND, formatEHR } from '../../utils/format';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -31,10 +32,10 @@ function MarginTooltip({ active, payload }: {
   return (
     <div className="bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-xs shadow-sm">
       <p className="font-semibold text-slate-800 mb-1.5 max-w-[180px] truncate">{r.project_name}</p>
-      <p className="text-slate-500">EHR: <span className="font-mono">{r.ehr.toFixed(2)}</span></p>
+      <p className="text-slate-500">EHR: <span className="font-mono">{formatEHR(r.ehr)}</span></p>
       <p className="text-slate-500">
         Avg Designer Rate:{' '}
-        <span className="font-mono">{r.avg_designer_rate !== null ? r.avg_designer_rate.toFixed(2) : '—'}</span>
+        <span className="font-mono">{r.avg_designer_rate !== null ? formatEHR(r.avg_designer_rate) : '—'}</span>
       </p>
       <p className="text-slate-500">
         Margin:{' '}
@@ -162,13 +163,30 @@ export default function AnalyticsDashboard() {
     ? validMargins.reduce((s, r) => s + r.profit_margin_pct!, 0) / validMargins.length
     : null;
 
+  // Fix #3: KPI cards with icons matching the screenshot
   const KPI_CARDS = [
-    { label: 'Total Revenue', value: kpi  ? formatTND(kpi.total_revenue)      : '—', borderColor: '#6366f1' },
-    { label: 'Avg. EHR',      value: kpi  ? `${kpi.avg_ehr.toFixed(2)} TND/h` : '—', borderColor: '#10b981' },
-    { label: 'Total Hours',   value: `${totalHours.toFixed(1)}h`,                      borderColor: '#f59e0b' },
+    {
+      label: 'Total Revenue',
+      value: kpi ? formatTND(kpi.total_revenue) : '—',
+      icon: <DollarSign size={16} />,
+      borderColor: '#6366f1',
+    },
+    {
+      label: 'Avg. EHR',
+      value: kpi ? formatEHR(kpi.avg_ehr) : '—',
+      icon: <Activity size={16} />,
+      borderColor: '#10b981',
+    },
+    {
+      label: 'Total Hours',
+      value: `${totalHours.toFixed(1)}h`,
+      icon: <Clock size={16} />,
+      borderColor: '#f59e0b',
+    },
     {
       label: 'Profit Margin',
       value: avgMargin !== null ? `${avgMargin.toFixed(1)}%` : '—',
+      icon: <TrendingUp size={16} />,
       borderColor: marginColor(avgMargin),
     },
   ];
@@ -197,8 +215,7 @@ export default function AnalyticsDashboard() {
 
   return (
     <AppShell
-      title="Reports"
-      breadcrumb="Reports"
+      title="Analytics"
       actions={
         <div className="flex items-center gap-2">
           <ExportBtn
@@ -225,7 +242,7 @@ export default function AnalyticsDashboard() {
       {/* ── Row 1: KPI cards ──────────────────────────────────────────────── */}
       <div className="grid grid-cols-4 gap-4 mb-5">
         {KPI_CARDS.map(c => (
-          <KpiCard key={c.label} label={c.label} value={c.value} borderColor={c.borderColor} />
+          <KpiCard key={c.label} label={c.label} value={c.value} icon={c.icon} borderColor={c.borderColor} />
         ))}
       </div>
 
@@ -247,7 +264,14 @@ export default function AnalyticsDashboard() {
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
                   <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
                   <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false} tickFormatter={v => `${v}h`} />
-                  <Tooltip contentStyle={{ fontSize: 12 }} formatter={(v: number) => [`${v}h`, 'Cumulative']} />
+                  {/* Fix #2: Tooltip formatter with proper type handling */}
+                  <Tooltip
+                    contentStyle={{ fontSize: 12 }}
+                    formatter={(value: number | string | Array<number | string>) => {
+                      const v = Array.isArray(value) ? value[0] : value;
+                      return [`${v}h`, 'Cumulative'];
+                    }}
+                  />
                   <Line type="monotone" dataKey="cumulative_hours" stroke="#6366f1" strokeWidth={2} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
@@ -281,7 +305,14 @@ export default function AnalyticsDashboard() {
                   >
                     {revenueData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
                   </Pie>
-                  <Tooltip formatter={(v: number) => formatTND(v)} contentStyle={{ fontSize: 11 }} />
+                  {/* Fix #2: Tooltip formatter with proper type handling */}
+                  <Tooltip
+                    formatter={(value: number | string | Array<number | string>) => {
+                      const v = Array.isArray(value) ? value[0] : value;
+                      return formatTND(Number(v));
+                    }}
+                    contentStyle={{ fontSize: 11 }}
+                  />
                 </PieChart>
               </ResponsiveContainer>
               <div className="flex-1 space-y-2.5 min-w-0">
@@ -328,8 +359,9 @@ export default function AnalyticsDashboard() {
                   <td className="py-2.5 pr-4 text-slate-700 font-medium truncate max-w-[110px]">{row.client_name}</td>
                   <td className="py-2.5 text-right font-mono text-slate-900 text-xs">{formatTND(row.total_revenue)}</td>
                   <td className="py-2.5 text-right font-mono text-slate-500 text-xs">{row.total_hours.toFixed(1)}</td>
+                  {/* Fix #5: Apply formatEHR */}
                   <td className="py-2.5 text-right font-mono font-semibold text-primary text-xs">
-                    {row.ehr !== null ? row.ehr.toFixed(2) : '—'}
+                    {row.ehr !== null ? formatEHR(row.ehr) : '—'}
                   </td>
                   <td className="py-2.5 text-right">
                     <span className={`font-mono text-xs ${row.revision_count > 5 ? 'text-rose-600 font-semibold' : 'text-slate-500'}`}>
@@ -372,7 +404,7 @@ export default function AnalyticsDashboard() {
                       />
                     </div>
                     <p className="text-[10px] text-slate-400 mt-1 font-mono">
-                      {row.unplanned_tasks} unplanned / {row.total_tasks} total
+                      {row.unplanned_tasks} Unplanned / {row.total_tasks} Total
                     </p>
                   </div>
                 );
@@ -423,10 +455,14 @@ export default function AnalyticsDashboard() {
               />
               <Tooltip content={<MarginTooltip />} cursor={{ fill: '#f8fafc' }} />
               <Bar dataKey="profit_margin_pct" name="Profit Margin %" radius={[0, 3, 3, 0]} maxBarSize={10}>
+                {/* Fix #2: LabelList formatter with proper type handling */}
                 <LabelList
                   dataKey="profit_margin_pct"
                   position="right"
-                  formatter={(v: number) => `${v.toFixed(1)}%`}
+                  formatter={(value: number | string | Array<number | string>) => {
+                    const v = Array.isArray(value) ? value[0] : value;
+                    return `${Number(v).toFixed(1)}%`;
+                  }}
                   style={{ fontSize: 10, fontFamily: 'monospace' }}
                 />
                 {validMargins.map((row, i) => (

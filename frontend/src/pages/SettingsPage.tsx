@@ -184,7 +184,7 @@ export default function SettingsPage() {
   const { data: me, isLoading } = useMe();
 
   return (
-    <AppShell title="Settings" breadcrumb="Account preferences and security">
+    <AppShell title="Settings">
       <div className="grid grid-cols-2 gap-5 items-start max-w-4xl">
         {isLoading ? (
           <div className="bg-white rounded-xl border border-slate-200 p-6 animate-pulse h-52" />

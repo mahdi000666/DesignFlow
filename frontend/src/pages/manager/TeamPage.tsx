@@ -327,9 +327,6 @@ export default function TeamPage() {
   const designers = data?.designers ?? [];
   const users     = data?.users     ?? [];
 
-  const designerCount = users.filter(u => u.role === 'Designer').length;
-  const clientCount   = users.filter(u => u.role === 'Client').length;
-
   const InviteBtn = (
     <button
       onClick={() => setShowInvite(true)}
@@ -345,9 +342,6 @@ export default function TeamPage() {
   return (
     <AppShell
       title="Team"
-      breadcrumb={
-        isLoading ? 'Loading…' : `${designerCount} designer${designerCount !== 1 ? 's' : ''} · ${clientCount} client${clientCount !== 1 ? 's' : ''}`
-      }
       actions={InviteBtn}
     >
       {showInvite && <InviteModal onClose={() => setShowInvite(false)} />}

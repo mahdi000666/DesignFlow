@@ -1,29 +1,33 @@
 Manager dashboard:
-1. `const nowMs = useMemo(() => Date.now(), []);`
-Error: Cannot call impure function during render
-`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+Rework the current manager dashboard to match the mockup dashboard.
+What to do:
+Ignore the navlinks they are just mockup
+Limit recent activity to 4 activties with either view all or expand/shrink (depending on your judgement and best design choice).
+Give the activites nicer icons.
+Add how many total activites inside the pie chart just like the mockup.
+Keep the upcoming deadlines the way it is (dont copy the mockup)
+Rework the kpi cards to match the icnos, remove the side colors but keep the existing icons.
+Do not add the date filter, notification or avatar icons found on top right of the mockup.
+Make sure designer utilisation is sorted by highest in descending order, designers with no utilisation ("-") should not be listed.
+Ensure the budget v actual hours chart matches the mockup (move it a little to the left so it fills the card and does not leave space)
+Keep active projects the way it is. 
 
 Analytics dashboard:
-2. ` <Tooltip contentStyle={{ fontSize: 12 }} formatter={(v: number) => [`${v}h`, 'Cumulative']} />`
-`<Tooltip formatter={(v: number) => formatTND(v)} contentStyle={{ fontSize: 11 }} />`
-` formatter={(v: number) => `${v.toFixed(1)}%`}`
-Type '(v: number) => [string, "Cumulative"]' is not assignable to type 'Formatter<number, "Cumulative"> & ((value: number, name: "Cumulative", item: Payload<number, "Cumulative">, index: number, payload: Payload<number, "Cumulative">[]) => ReactNode | [...])'.
-  Type '(v: number) => [string, "Cumulative"]' is not assignable to type 'Formatter<number, "Cumulative">'.
-    Types of parameters 'v' and 'value' are incompatible.
-      Type 'number | undefined' is not assignable to type 'number'.
-        Type 'undefined' is not assignable to type 'number'.
+1. this line of code is found in 3 places, and for each place there is the error below, fix it.
+`formatter={(value: number | string | Array<number | string>) => {`
+Type '(value: number | string | Array<number | string>) => [string, "Cumulative"]' is not assignable to type 'Formatter<string | number | (string | number)[], "Cumulative"> & ((value: string | number | (string | number)[], name: "Cumulative", item: Payload<string | number | (string | number)[], "Cumulative">, index: number, payload: Payload<...>[]) => ReactNode | [...])'.
+  Type '(value: number | string | Array<number | string>) => [string, "Cumulative"]' is not assignable to type 'Formatter<string | number | (string | number)[], "Cumulative">'.
+    Types of parameters 'value' and 'value' are incompatible.
+      Type 'string | number | (string | number)[] | undefined' is not assignable to type 'string | number | (string | number)[]'.
+        Type 'undefined' is not assignable to type 'string | number | (string | number)[]'.
+The expected type comes from property 'formatter' which is declared here on type 'IntrinsicAttributes & Omit<Props<string | number | (string | number)[], \"Cumulative\">, PropertiesReadFromContext> & { ...; }'
 
-"The expected type comes from property 'formatter' which is declared here on type 'IntrinsicAttributes & Omit<Props<number, \"Cumulative\">, PropertiesReadFromContext> & { active?: boolean | undefined; ... 25 more ...; wrapperStyle?: CSSProperties | undefined; }'"
+2. Rework the KPI cards to match the new ones.
+3. In Profit Margin per Project, the negative margin bar collides with the project name if its negative, ensure they are well aligned.
+4. Client Profitability Ranking, ensure the column titles are well aligned with the content row. Scope Creep Index, give unplanned and total some coloring.
 
-3. Change the KPI cards in analytics dashboard to match the screenshot.
-4. The budget v actual hours chart looks shrinked (as shown in the screenshot), also i want the project names to be put under the bars. Rework it to look like the screenshot.
-5. I recently added formatTND and formatEHR in utils, but there are places in analytics dashboard where formatEHR is still not being applied. find them and apply it.
-6. In designer utilisation, ensure its sorted by descending order, meaning a designer with higher utilisation is put on top.
-
-Ensure to use the tailwind and index.css as the base of the design and stlying.
-Ensure to avoid duplicated code by using UI.tsx and project.ts when possible.
-
-
+OCR
+REFERENCEES RAPPORT
 
 In order to save tokens, you may only generate the document for S3 chapter.
 
