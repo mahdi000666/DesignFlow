@@ -85,8 +85,18 @@ export default function AppShell({ title, breadcrumb, actions, children }: AppSh
           <span className="text-white font-bold text-base tracking-tight">DesignFlow</span>
         </div>
 
-        {/* Profile */}
-        <div className="border-b border-sidebar-border p-4">
+        {/* Main nav */}
+        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+          {navItems.map(item => (
+            <Link key={item.path} to={item.path} className={linkCls(item.path)}>
+              {item.icon}
+              {item.label}
+            </Link>
+          ))}
+        </nav>
+
+        {/* Profile — identity anchor at bottom */}
+        <div className="border-t border-sidebar-border p-4">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white text-xs font-semibold shrink-0">
               {avatarInitials}
@@ -106,15 +116,6 @@ export default function AppShell({ title, breadcrumb, actions, children }: AppSh
           </div>
         </div>
 
-        {/* Main nav */}
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-          {navItems.map(item => (
-            <Link key={item.path} to={item.path} className={linkCls(item.path)}>
-              {item.icon}
-              {item.label}
-            </Link>
-          ))}
-        </nav>
       </aside>
 
       {/* ── Main area ───────────────────────────────────────────────────────── */}
