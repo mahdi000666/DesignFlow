@@ -1,66 +1,27 @@
-Redesign ManagerDashboard.tsx to match the mockup dashboard. Refer to tailwind and index.css.
-What to do:
-1. Remove Budget v Actual hours & Designer utilisation from analytics dashboard and put it in manager dashboard.
-2. Keep only 4 KPI cards in manager dashboard (Total revenue, AVG. EHR, Active projects, Pending Feedback)
-3. Keep Active projects below.
-4. Merge Recent Activity and Recent Feedback.
-5. Add Tasks by Status and Upcoming Deadlines.
-6. Do not include the notification logo or the avatar beside it (on top right) from the mockup.
-7. Place the avatar/Identity anchor at the bottom left. just like mockup.
-8. Keep the original navbar and navlinks (don't implement the navlinks from the mockup).
-9. Remove the welcome back message and "Here's an overview of your agency today."
-
-Redesign AnalyticsDashboard.tsx to match the mockup Reports Dashboard.
-1. Budget v Actual hours & Designer utilisation already removed and put in ManagerDashboard.
-2. Add 4 KPI Cards. Im debating whether I should go with (Total revenue, AVG. EHR, Hours logged this week, At risk projects) or (Total revenue, AVG. EHR, Total Hours, Profit Margin). Choose whatever is more logical and implement it then explain your reasoning.
-3. Keep Profit Margin per Project. 
-
-Make sure to use Ui.tsx for shared components to avoid code duplication. Use the Kpicard from UI.tsx.
-Make sure the charts, design, colors, style and svgs are true to the mockup, tailwind and index configs.
-
-If you require additional files. Pause and let me know so you don't have to rewrite already existing logic.
-
-
-Good job here is my feedback:
 Manager dashboard:
-1. The budget v actual hours chart still does not lookup like the mockup, rework it from scratch.
-2. Get rid of the welcome back and Here's an overview messages.
-3. The desginer utilisation budget bar color does not match the mockup.
-4. Not sure if its my eyes but in active projects, the budget lines are not the same length for each project, also ensure each column title is well aligned with it's rows.
-5. `(new Date(p.deadline!).getTime() - Date.now()) / 86400000,`  "Error: Cannot call impure function during render\n\n`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render.
-
-Analytics dasbhoard:
-1. I noticed that in the mockup, the Cumulative hours chart is active without selecting a specific project, but in our case we need to select a project for it to display the time trend. Which is the correct behavior?
-2. Scope Creep Index does not use the new style and coloring.
-3. Rework Profit Margin per Project to use the new style and coloring.
-4. Compilation Skipped: Existing memoization could not be preserved
-
-React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. This dependency may be mutated later, which could cause the value to change unexpectedly.
-
-C:\Users\Mahdi\Proj\PFE\DesignFlow\frontend\src\pages\manager\AnalyticsDashboard.tsx:184:7
-  182 |     if (!valid.length) return null;
-  183 |     return valid.reduce((s, r) => s + r.profit_margin_pct!, 0) / valid.length;
-> 184 |   }, [profitMargin]);
-      |       ^^^^^^^^^^^^ This dependency may be modified later
-
-In order to save tokens, if the fix is few lines of code, just tell me where to paste (before vs after), otherwise rewrite it yourself.
-
-
-Good job, my feedback:
-1. `const nowMs = useMemo(() => Date.now(), []);` 
+1. `const nowMs = useMemo(() => Date.now(), []);`
 Error: Cannot call impure function during render
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
 
-`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render.
+Analytics dashboard:
+2. ` <Tooltip contentStyle={{ fontSize: 12 }} formatter={(v: number) => [`${v}h`, 'Cumulative']} />`
+`<Tooltip formatter={(v: number) => formatTND(v)} contentStyle={{ fontSize: 11 }} />`
+` formatter={(v: number) => `${v.toFixed(1)}%`}`
+Type '(v: number) => [string, "Cumulative"]' is not assignable to type 'Formatter<number, "Cumulative"> & ((value: number, name: "Cumulative", item: Payload<number, "Cumulative">, index: number, payload: Payload<number, "Cumulative">[]) => ReactNode | [...])'.
+  Type '(v: number) => [string, "Cumulative"]' is not assignable to type 'Formatter<number, "Cumulative">'.
+    Types of parameters 'v' and 'value' are incompatible.
+      Type 'number | undefined' is not assignable to type 'number'.
+        Type 'undefined' is not assignable to type 'number'.
 
-2. The Budget v Actual hours chart still does not match, look at the screenshots to see the current chart being displayed vs mockup.
-3. Do you recommend I use formatEHR for active projects EHR tab and in analytics as well?
-4. Scope Creep Index and Profit Margin per Project are still using the green line instead of the new design color.
-5. Revert back to the old Profit Margin per Project, i think its easier to read, except make it prettier with the new design colors and make the bar lines slimmer.
+"The expected type comes from property 'formatter' which is declared here on type 'IntrinsicAttributes & Omit<Props<number, \"Cumulative\">, PropertiesReadFromContext> & { active?: boolean | undefined; ... 25 more ...; wrapperStyle?: CSSProperties | undefined; }'"
 
-Again you don't have to rewrite everything just tell me where to paste.
+3. Change the KPI cards in analytics dashboard to match the screenshot.
+4. The budget v actual hours chart looks shrinked (as shown in the screenshot), also i want the project names to be put under the bars. Rework it to look like the screenshot.
+5. I recently added formatTND and formatEHR in utils, but there are places in analytics dashboard where formatEHR is still not being applied. find them and apply it.
+6. In designer utilisation, ensure its sorted by descending order, meaning a designer with higher utilisation is put on top.
 
-
-KPI CARDS
+Ensure to use the tailwind and index.css as the base of the design and stlying.
+Ensure to avoid duplicated code by using UI.tsx and project.ts when possible.
 
 
 

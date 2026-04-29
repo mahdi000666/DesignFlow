@@ -1,10 +1,11 @@
-import { useMemo, useRef } from 'react';
+import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer, PieChart, Pie, Cell,
 } from 'recharts';
+import { DollarSign, Activity, FolderOpen, MessageSquare } from 'lucide-react';
 import AppShell from '../../components/AppShell';
 import { KpiCard } from '../../components/Ui';
 import { useKPISummary, useBudgetVariance, useDesignerUtilization } from '../../hooks/useAnalytics';
@@ -13,7 +14,7 @@ import { getAllFeedback } from '../../api/feedbacks';
 import { getAllTimeLogs } from '../../api/timelogs';
 import { getAllFiles } from '../../api/files';
 import { getAllCompletedTasks, getAllTasks } from '../../api/tasks';
-import { formatTND } from '../../utils/format';
+import { formatTND, formatEHR } from '../../utils/format';
 import { barColor, CATEGORY_PALETTE } from '../../utils/project';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -24,7 +25,7 @@ const DONUT_COLORS = {
   Completed:  '#10b981',
 };
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const timeAgo = (d: string): string => {
   const mins = Math.floor((Date.now() - new Date(d).getTime()) / 60000);
@@ -94,8 +95,8 @@ export default function ManagerDashboard() {
   const { data: completedTasks = [] }  = useQuery({ queryKey: ['tasks-completed'], queryFn: getAllCompletedTasks });
   const { data: allTasks = [] }        = useQuery({ queryKey: ['tasks-all'],       queryFn: getAllTasks });
 
-  // Stable reference date — avoids impure Date.now() during render
-  const nowMs = useRef(Date.now()).current;
+  // Fix #1: useMemo avoids calling an impure function during render
+  const nowMs = useMemo(() => Date.now(), []);
 
   // ── Derived ───────────────────────────────────────────────────────────────
 
@@ -161,11 +162,32 @@ export default function ManagerDashboard() {
       .slice(0, 10),
   [allFeedback, allLogs, allFiles, completedTasks, projectNameById]);
 
+  // Fix #3 + #6: icons added, formatEHR applied to avg_ehr
   const KPI_CARDS = [
-    { label: 'Total Revenue',    value: kpi ? formatTND(kpi.total_revenue)      : '—', borderColor: '#6366f1' },
-    { label: 'Avg. EHR',         value: kpi ? `${kpi.avg_ehr.toFixed(2)} TND/h` : '—', borderColor: '#10b981' },
-    { label: 'Active Projects',  value: kpi ? String(kpi.active_projects)       : '—', borderColor: '#f59e0b' },
-    { label: 'Pending Feedback', value: kpi ? String(kpi.pending_feedback)      : '—', borderColor: '#ef4444' },
+    {
+      label: 'Total Revenue',
+      value: kpi ? formatTND(kpi.total_revenue) : '—',
+      icon: <DollarSign size={15} />,
+      borderColor: '#6366f1',
+    },
+    {
+      label: 'Avg. EHR',
+      value: kpi ? formatEHR(kpi.avg_ehr) : '—',
+      icon: <Activity size={15} />,
+      borderColor: '#10b981',
+    },
+    {
+      label: 'Active Projects',
+      value: kpi ? String(kpi.active_projects) : '—',
+      icon: <FolderOpen size={15} />,
+      borderColor: '#f59e0b',
+    },
+    {
+      label: 'Pending Feedback',
+      value: kpi ? String(kpi.pending_feedback) : '—',
+      icon: <MessageSquare size={15} />,
+      borderColor: '#ef4444',
+    },
   ];
 
   return (
@@ -174,25 +196,25 @@ export default function ManagerDashboard() {
       {/* ── Row 1: KPI cards ────────────────────────────────────────────────── */}
       <div className="grid grid-cols-4 gap-4 mb-5">
         {KPI_CARDS.map(c => (
-          <KpiCard key={c.label} label={c.label} value={c.value} borderColor={c.borderColor} />
+          <KpiCard key={c.label} label={c.label} value={c.value} icon={c.icon} borderColor={c.borderColor} />
         ))}
       </div>
 
       {/* ── Row 2: Budget vs Actual + Recent Activity ──────────────────────── */}
       <div className="grid grid-cols-3 gap-4 mb-4">
 
-        {/* Budget vs Actual Hours */}
+        {/* Fix #4: increased height, wider bars, more breathing room */}
         <div className="col-span-2 card p-5">
           <p className="section-title mb-5">Budget vs Actual Hours</p>
           {budgetData.length === 0 ? (
             <div className="h-56 flex items-center justify-center text-sm text-slate-400">No data</div>
           ) : (
-            <ResponsiveContainer width="100%" height={230}>
+            <ResponsiveContainer width="100%" height={265}>
               <BarChart
                 data={budgetData}
-                margin={{ top: 4, right: 16, left: -10, bottom: 60 }}
-                barCategoryGap="30%"
-                barGap={3}
+                margin={{ top: 4, right: 16, left: -10, bottom: 68 }}
+                barCategoryGap="22%"
+                barGap={4}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
                 <XAxis
@@ -203,7 +225,7 @@ export default function ManagerDashboard() {
                   angle={-35}
                   textAnchor="end"
                   interval={0}
-                  height={64}
+                  height={68}
                 />
                 <YAxis
                   tick={{ fontSize: 10, fill: '#94a3b8' }}
@@ -217,8 +239,8 @@ export default function ManagerDashboard() {
                   iconType="square"
                   iconSize={8}
                 />
-                <Bar dataKey="budget_hours" name="Budget Hours" fill="#6366f1" radius={[3, 3, 0, 0]} maxBarSize={22} />
-                <Bar dataKey="actual_hours" name="Actual Hours" fill="#bfdbfe" radius={[3, 3, 0, 0]} maxBarSize={22} />
+                <Bar dataKey="budget_hours" name="Budget Hours" fill="#6366f1" radius={[3, 3, 0, 0]} maxBarSize={32} />
+                <Bar dataKey="actual_hours" name="Actual Hours" fill="#bfdbfe" radius={[3, 3, 0, 0]} maxBarSize={32} />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -384,8 +406,8 @@ export default function ManagerDashboard() {
           <p className="px-5 py-8 text-sm text-slate-400 text-center">No active projects.</p>
         ) : (
           <>
-            {/* Header */}
-            <div className="grid grid-cols-[1fr_180px_80px_100px] gap-4 px-5 py-2.5 bg-slate-50/70 border-b border-slate-100">
+            {/* Fix #6: widened EHR column (80px → 130px) to fit "XX,XX TND/h" */}
+            <div className="grid grid-cols-[1fr_160px_130px_100px] gap-4 px-5 py-2.5 bg-slate-50/70 border-b border-slate-100">
               <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Project</span>
               <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Budget</span>
               <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 text-right">EHR</span>
@@ -396,15 +418,16 @@ export default function ManagerDashboard() {
                 const pct = p.budget_hours && p.actual_hours != null
                   ? Math.round((p.actual_hours / Number(p.budget_hours)) * 100)
                   : null;
+                // Fix #6: retain precision for formatEHR (no Math.round)
                 const ehr = p.budget_amount && p.actual_hours > 0
-                  ? Math.round(Number(p.budget_amount) / p.actual_hours)
+                  ? Number(p.budget_amount) / p.actual_hours
                   : null;
                 const isOver = p.budget_hours != null && p.actual_hours > Number(p.budget_hours);
                 return (
                   <li key={p.id}>
                     <Link
                       to={`/manager/projects/${p.id}`}
-                      className="grid grid-cols-[1fr_180px_80px_100px] gap-4 items-center px-5 py-3.5 hover:bg-slate-50 transition-colors"
+                      className="grid grid-cols-[1fr_160px_130px_100px] gap-4 items-center px-5 py-3.5 hover:bg-slate-50 transition-colors"
                     >
                       {/* Name + client */}
                       <div className="min-w-0">
@@ -419,7 +442,7 @@ export default function ManagerDashboard() {
                         </div>
                       </div>
 
-                      {/* Budget bar — fixed-width track so all rows align */}
+                      {/* Budget bar */}
                       <div className="flex items-center gap-2.5">
                         <div className="w-20 shrink-0 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                           {pct !== null && (
@@ -439,11 +462,11 @@ export default function ManagerDashboard() {
                         )}
                       </div>
 
-                      {/* EHR */}
+                      {/* EHR — Fix #6: formatEHR applied */}
                       <div className="text-right">
                         {ehr !== null ? (
-                          <span className={`font-mono text-sm font-bold ${isOver ? 'text-rose-600' : 'text-emerald-700'}`}>
-                            {ehr}
+                          <span className={`font-mono text-xs font-bold ${isOver ? 'text-rose-600' : 'text-emerald-700'}`}>
+                            {formatEHR(ehr)}
                           </span>
                         ) : (
                           <span className="text-slate-300 text-sm">—</span>
