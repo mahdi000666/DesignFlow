@@ -18,13 +18,11 @@ const STATUS_CYCLE: Record<Project['status'], Project['status']> = {
   OnHold:    'Active',
 };
 
-// EHR: red if over budget, emerald otherwise
 const ehrColor = (actualHours: number, budgetHours: number | null) => {
   if (budgetHours == null) return 'text-emerald-700';
   return actualHours > Number(budgetHours) ? 'text-rose-600' : 'text-emerald-700';
 };
 
-// Scope creep: amber low, red high
 const scColor = (pct: number) =>
   pct === 0 ? 'text-slate-400' : pct <= 20 ? 'text-amber-600' : 'text-rose-600';
 
@@ -42,7 +40,6 @@ export default function ProjectList() {
   const [statusFilter, setStatusFilter] = useState<Project['status'] | 'All'>('All');
   const [clientFilter, setClientFilter] = useState('All');
 
-  // Status cycle mutation — updates any project without pre-binding projectId
   const cycleStatus = useMutation({
     mutationFn: async ({ id, status }: { id: number; status: Project['status'] }) => {
       const { data } = await apiClient.patch(`/projects/${id}/`, { status });
@@ -74,7 +71,6 @@ export default function ProjectList() {
     return new Map(uniqueCategories.map((cat, i) => [cat, CATEGORY_PALETTE[i % CATEGORY_PALETTE.length]]));
   }, [projects]);
 
-  // Scope creep by project_id — field name assumed from backend serializer
   const scopeCreepMap = useMemo(() => {
     const map = new Map<number, { index: number; unplanned: number; total: number }>();
     (scopeCreepData as ScopeCreepItem[]).forEach(sc => {
@@ -104,7 +100,7 @@ export default function ProjectList() {
   };
 
   const selectCls =
-    'px-3 py-2 border border-slate-200 rounded-lg bg-white text-sm text-slate-600 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 cursor-pointer transition-colors hover:bg-slate-50';
+    'px-3 py-2 border border-slate-200 rounded-lg bg-white text-sm text-slate-600 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 cursor-pointer transition-colors hover:bg-slate-50';
 
   return (
     <AppShell
@@ -115,14 +111,13 @@ export default function ProjectList() {
           className={
             showForm
               ? 'border border-slate-200 text-slate-600 px-3.5 py-2 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors'
-              : 'bg-blue-700 text-white px-3.5 py-2 rounded-lg text-sm font-semibold hover:bg-blue-800 transition-colors'
+              : 'bg-primary text-white px-3.5 py-2 rounded-lg text-sm font-semibold hover:bg-primary-600 transition-colors'
           }
         >
           {showForm ? 'Cancel' : '+ New project'}
         </button>
       }
     >
-      {/* Inline create form */}
       {showForm && (
         <div className="bg-white rounded-xl border border-slate-200 p-6 mb-6">
           <h3 className="text-base font-semibold text-slate-900 mb-4">Create project</h3>
@@ -130,7 +125,6 @@ export default function ProjectList() {
         </div>
       )}
 
-      {/* Filter bar */}
       <div className="flex items-center gap-2.5 mb-5 flex-wrap">
         <div className="relative">
           <svg
@@ -143,7 +137,7 @@ export default function ProjectList() {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search projects…"
-            className="pl-9 pr-4 py-2 border border-slate-200 rounded-lg bg-white text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-colors placeholder:text-slate-400 w-52"
+            className="pl-9 pr-4 py-2 border border-slate-200 rounded-lg bg-white text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-colors placeholder:text-slate-400 w-52"
           />
         </div>
         <select value={statusFilter} onChange={e => setStatusFilter(e.target.value as typeof statusFilter)} className={selectCls}>
@@ -158,7 +152,6 @@ export default function ProjectList() {
         </select>
       </div>
 
-      {/* Table */}
       {isLoading ? (
         <p className="text-sm text-slate-400">Loading projects…</p>
       ) : (
@@ -203,9 +196,8 @@ export default function ProjectList() {
                     onClick={() => navigate(`/manager/projects/${p.id}`)}
                     className="hover:bg-slate-50/70 transition-colors cursor-pointer group"
                   >
-                    {/* Project name + category */}
                     <td className="px-4 py-3.5">
-                      <span className="text-sm font-medium text-slate-900 group-hover:text-blue-700 transition-colors">
+                      <span className="text-sm font-medium text-slate-900 group-hover:text-primary transition-colors">
                         {p.project_name}
                       </span>
                       {p.category && (
@@ -217,10 +209,8 @@ export default function ProjectList() {
                       )}
                     </td>
 
-                    {/* Client */}
                     <td className="px-4 py-3.5 text-sm text-slate-600">{p.client_name}</td>
 
-                    {/* Status — clickable, cycles through statuses */}
                     <td className="px-4 py-3.5" onClick={e => e.stopPropagation()}>
                       <button
                         onClick={() => cycleStatus.mutate({ id: p.id, status: STATUS_CYCLE[p.status] })}
@@ -233,7 +223,6 @@ export default function ProjectList() {
                       </button>
                     </td>
 
-                    {/* EHR */}
                     <td className="px-4 py-3.5">
                       {ehr !== null ? (
                         <span className={`font-mono text-sm font-semibold ${ehrColor(p.actual_hours, p.budget_hours)}`}>
@@ -245,7 +234,6 @@ export default function ProjectList() {
                       )}
                     </td>
 
-                    {/* Scope Creep */}
                     <td className="px-4 py-3.5">
                       {scPct !== null ? (
                         <span className={`font-mono text-sm font-semibold ${scColor(scPct)}`}>
@@ -256,7 +244,6 @@ export default function ProjectList() {
                       )}
                     </td>
 
-                    {/* Budget utilisation bar */}
                     <td className="px-4 py-3.5">
                       {budgetPct !== null ? (
                         <div className="flex items-center gap-2.5">
@@ -273,7 +260,6 @@ export default function ProjectList() {
                       )}
                     </td>
 
-                    {/* Deadline */}
                     <td className="px-4 py-3.5 text-sm text-slate-600 whitespace-nowrap">
                       {p.deadline ?? <span className="text-slate-300">—</span>}
                     </td>

@@ -30,7 +30,7 @@ interface ClientOption {
 }
 
 const inputCls =
-  'w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-colors placeholder:text-slate-400 bg-white';
+  'w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-colors placeholder:text-slate-400 bg-white';
 
 const labelCls =
   'block text-xs font-semibold text-slate-500 mb-1.5';
@@ -160,7 +160,7 @@ const ProjectForm = ({ onSubmit, isLoading, defaults }: Props) => {
         <button
           type="submit"
           disabled={isLoading}
-          className="bg-blue-700 text-white px-3.5 py-2 rounded-lg text-sm font-semibold hover:bg-blue-800 disabled:opacity-50 transition-colors w-full"
+          className="bg-primary text-white px-3.5 py-2 rounded-lg text-sm font-semibold hover:bg-primary-600 disabled:opacity-50 transition-colors w-full"
         >
           {isLoading ? 'Saving…' : 'Save project'}
         </button>

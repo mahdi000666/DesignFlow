@@ -1,12 +1,19 @@
 import { Link } from 'react-router-dom';
+import { useMemo } from 'react';
 import { useProjects } from '../../hooks/useProjects';
 import AppShell from '../../components/AppShell';
-import { STATUS_BADGE, STATUS_DOT, barColor, statusLabel } from '../../utils/project';
-
-// ─── Component ───────────────────────────────────────────────────────────────
+import { STATUS_BADGE, STATUS_DOT, barColor, statusLabel, CATEGORY_PALETTE } from '../../utils/project';
 
 export default function DesignerProjects() {
   const { data: projects, isLoading } = useProjects();
+
+  const categoryColorMap = useMemo(() => {
+    if (!projects) return new Map<string, string>();
+    const cats = Array.from(
+      new Set(projects.map(p => p.category).filter((c): c is string => Boolean(c)))
+    ).sort();
+    return new Map(cats.map((c, i) => [c, CATEGORY_PALETTE[i % CATEGORY_PALETTE.length]]));
+  }, [projects]);
 
   return (
     <AppShell title="My Projects">
@@ -25,7 +32,6 @@ export default function DesignerProjects() {
 
             const meta = [
               p.client_name,
-              p.category || null,
               p.deadline ? `Due ${p.deadline}` : null,
             ].filter(Boolean).join(' · ');
 
@@ -33,13 +39,12 @@ export default function DesignerProjects() {
               <Link
                 key={p.id}
                 to={`/designer/projects/${p.id}`}
-                className="bg-white rounded-xl border border-slate-200 p-5 hover:border-blue-300 hover:shadow-sm transition-all block group"
+                className="bg-white rounded-xl border border-slate-200 p-5 hover:border-primary-300 hover:shadow-sm transition-all block group"
               >
-                {/* Header */}
                 <div className="flex items-start justify-between gap-4 mb-2">
                   <div>
                     <div className="flex items-center gap-2.5 flex-wrap mb-1">
-                      <span className="text-base font-semibold text-slate-900 group-hover:text-blue-700 transition-colors">
+                      <span className="text-base font-semibold text-slate-900 group-hover:text-primary transition-colors">
                         {p.project_name}
                       </span>
                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_BADGE[p.status]}`}>
@@ -47,11 +52,19 @@ export default function DesignerProjects() {
                         {statusLabel(p.status)}
                       </span>
                     </div>
-                    {meta && <p className="text-sm text-slate-400">{meta}</p>}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {meta && <p className="text-sm text-slate-400">{meta}</p>}
+                    </div>
+                    {p.category && (
+                      <div className="mt-1.5">
+                        <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide ${categoryColorMap.get(p.category) ?? 'bg-slate-50 text-slate-700'}`}>
+                          {p.category}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                {/* Progress row */}
                 <div className="flex items-center gap-3 mt-3">
                   <div className="flex-1 bg-slate-100 rounded-full h-1.5 overflow-hidden">
                     {budgetPct !== null ? (

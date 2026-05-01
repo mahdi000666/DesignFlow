@@ -7,8 +7,6 @@ import type { Project } from '../types/project';
 import type { DesignerUtilizationItem } from '../types/analytic';
 import { formatEHR, Initials } from '../utils/format';
 
-// ─── Types ───────────────────────────────────────────────────────────────────
-
 interface DesignerOption {
   id:                     number;
   name:                   string;
@@ -22,8 +20,6 @@ interface Props {
   onClose:  () => void;
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
 const AVATAR_COLORS = [
   'bg-purple-500', 'bg-teal-500', 'bg-rose-500',
   'bg-blue-500',   'bg-orange-500', 'bg-indigo-500', 'bg-pink-500',
@@ -33,8 +29,6 @@ const avatarColor = (name: string) => {
   const hash = name.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
   return AVATAR_COLORS[hash % AVATAR_COLORS.length];
 };
-
-// ─── Component ───────────────────────────────────────────────────────────────
 
 export default function AssignDesignerPanel({ project, onClose }: Props) {
   const assignDesigner = useAssignDesigner(project?.id ?? -1);
@@ -48,7 +42,6 @@ export default function AssignDesignerPanel({ project, onClose }: Props) {
     },
   });
 
-  // Designer utilization for the "XX% utilised" subtitle
   const { data: utilizationData = [] } = useDesignerUtilization();
   const utilizationMap = useMemo(() => {
     const map = new Map<number, number>();
@@ -68,24 +61,20 @@ export default function AssignDesignerPanel({ project, onClose }: Props) {
     utilization: utilizationMap.get(d.id) ?? null,
   }));
 
-  // Assigned first, then unassigned
   const sorted = [
     ...allDesigners.filter(d => d.isAssigned),
     ...allDesigners.filter(d => !d.isAssigned),
   ];
 
   return (
-    // Backdrop
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
       onClick={onClose}
     >
-      {/* Modal card */}
       <div
         className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
           <p className="text-base font-semibold text-slate-900">Assign Designer</p>
           <button
@@ -98,7 +87,6 @@ export default function AssignDesignerPanel({ project, onClose }: Props) {
           </button>
         </div>
 
-        {/* Designer list */}
         <ul className="divide-y divide-slate-100 max-h-96 overflow-y-auto px-4 py-2">
           {sorted.length === 0 && (
             <li className="py-8 text-center text-sm text-slate-400">No designers found.</li>
@@ -111,12 +99,10 @@ export default function AssignDesignerPanel({ project, onClose }: Props) {
 
             return (
               <li key={d.id} className={`flex items-center gap-4 px-2 py-4 rounded-xl ${d.isAssigned ? 'bg-slate-50' : ''}`}>
-                {/* Avatar */}
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-white text-sm font-bold ${avatarColor(d.name)}`}>
                   {Initials(d.name)}
                 </div>
 
-                {/* Info */}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-slate-900">{d.name}</p>
                   {subtitleParts.length > 0 && (
@@ -124,12 +110,11 @@ export default function AssignDesignerPanel({ project, onClose }: Props) {
                   )}
                 </div>
 
-                {/* Action */}
                 {d.isAssigned ? (
                   <button
                     onClick={() => removeDesigner.mutate(d.id)}
                     disabled={removeDesigner.isPending}
-                    className="text-sm font-semibold text-blue-600 hover:text-rose-600 disabled:opacity-40 transition-colors whitespace-nowrap"
+                    className="text-sm font-semibold text-primary hover:text-rose-600 disabled:opacity-40 transition-colors whitespace-nowrap"
                     title="Click to remove"
                   >
                     Assigned ✓
@@ -138,7 +123,7 @@ export default function AssignDesignerPanel({ project, onClose }: Props) {
                   <button
                     onClick={() => assignDesigner.mutate(d.id)}
                     disabled={assignDesigner.isPending}
-                    className="bg-blue-700 text-white text-xs font-semibold px-4 py-1.5 rounded-lg hover:bg-blue-800 disabled:opacity-50 transition-colors"
+                    className="bg-primary text-white text-xs font-semibold px-4 py-1.5 rounded-lg hover:bg-primary-600 disabled:opacity-50 transition-colors"
                   >
                     Assign
                   </button>
@@ -148,7 +133,6 @@ export default function AssignDesignerPanel({ project, onClose }: Props) {
           })}
         </ul>
 
-        {/* Footer */}
         <div className="px-6 py-4 border-t border-slate-100">
           <button
             onClick={onClose}

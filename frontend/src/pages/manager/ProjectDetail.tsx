@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
-import { useProject, useUpdateProject, useDeleteProject } from '../../hooks/useProjects';
+import { useProject, useUpdateProject, useDeleteProject, useProjects } from '../../hooks/useProjects';
 import { useTasks, useCreateTask } from '../../hooks/useTasks';
 import { useTimeLogs, useDeleteTimeLog, useUpdateTimeLog } from '../../hooks/useTimeLogs';
 import { useFiles } from '../../hooks/useFiles';
@@ -18,13 +18,20 @@ import FileUploadPanel from '../../components/FileUploadPanel';
 import FeedbackList from '../../components/FeedbackList';
 import MessageBoard from '../../components/MessageBoard';
 import AppShell from '../../components/AppShell';
+import { KpiCard } from '../../components/Ui';
+import ProjectForm from '../../components/ProjectForm';
 import type { TaskPayload, Task } from '../../types/task';
-import type { Project } from '../../types/project';
+import type { ProjectPayload } from '../../types/project';
 import { exportPDF } from '../../api/analytics';
 import type { ScopeCreepItem } from '../../types/analytic';
-import { STATUS_BADGE, STATUS_DOT, barColor, categoryClass, statusLabel } from '../../utils/project';
+import { STATUS_BADGE, STATUS_DOT, barColor, statusLabel, CATEGORY_PALETTE } from '../../utils/project';
 import UnreadBadge from '../../components/UnreadBadge';
 import { formatEHR, formatTND } from '../../utils/format';
+import {
+  BarChart3, DollarSign, AlertTriangle, MessageSquare,
+  Calendar, User, Tag, Users, Clock, CheckCircle2, Activity,
+  AlertCircle, ChevronDown, ListTodo, X,
+} from 'lucide-react';
 
 type Tab = 'tasks' | 'logs' | 'files' | 'feedback' | 'messages';
 
@@ -55,7 +62,6 @@ function AISummaryCard({ projectId }: { projectId: number }) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [fetchError,   setFetchError]   = useState(false);
 
-  // disabled by default — triggered manually via refetch()
   const { refetch } = useAISummary(projectId);
 
   const save = (summary: string) => {
@@ -92,7 +98,7 @@ function AISummaryCard({ projectId }: { projectId: number }) {
     <div className="bg-white border border-slate-200 rounded-xl overflow-hidden mb-6">
       <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-blue-700 flex items-center justify-center shrink-0">
+          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shrink-0">
             <svg width="14" height="14" viewBox="0 0 15 15" fill="none" className="text-white">
               <path d="M8.5 1.5L3 8.5h4.5L6.5 13.5l6-7H8L8.5 1.5z" fill="currentColor" />
             </svg>
@@ -122,7 +128,7 @@ function AISummaryCard({ projectId }: { projectId: number }) {
             <p className="text-sm text-slate-500">Generate an AI-powered health narrative for this project.</p>
             <button
               onClick={handleGenerate}
-              className="shrink-0 ml-4 bg-blue-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-blue-800 transition-colors"
+              className="shrink-0 ml-4 bg-primary text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-primary-600 transition-colors"
             >
               Generate Summary
             </button>
@@ -139,21 +145,6 @@ function AISummaryCard({ projectId }: { projectId: number }) {
           </>
         )}
       </div>
-    </div>
-  );
-}
-
-// ─── Metric card ─────────────────────────────────────────────────────────────
-
-function MetricCard({
-  label, value, subtitle, borderColor,
-}: { label: string; value: ReactNode; subtitle: string; borderColor: string }) {
-  return (
-    <div className={`bg-white border border-slate-200 rounded-xl px-5 py-4 relative overflow-hidden`}>
-      <div className={`absolute left-0 inset-y-0 w-1 rounded-l-xl`} style={{ backgroundColor: borderColor }} />
-      <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-2">{label}</p>
-      <p className="font-mono text-2xl font-bold text-slate-900 leading-none mb-1">{value}</p>
-      <p className="text-xs text-slate-400">{subtitle}</p>
     </div>
   );
 }
@@ -175,8 +166,8 @@ export default function ProjectDetail() {
   const { data: files    = [] } = useFiles(projectId);
   const { data: messages = [] } = useMessages(projectId);
   const { data: feedback = [] } = useFeedback(projectId);
+  const { data: allProjects = [] } = useProjects();
 
-  // Scope creep data for this project
   const { data: scopeCreepData = [] } = useScopeCreep({ project: projectId });
   const scopeEntry = (scopeCreepData as ScopeCreepItem[])[0] as ScopeCreepItem | undefined;
 
@@ -196,7 +187,10 @@ export default function ProjectDetail() {
   const [activeTab,       setActiveTab]       = useState<Tab>('tasks');
   const [showTaskForm,    setShowTaskForm]     = useState(false);
   const [showAssignPanel, setShowAssignPanel]  = useState(false);
+  const [showEditForm,    setShowEditForm]     = useState(false);
   const [statusFilter,    setStatusFilter]     = useState<Task['status'] | 'All'>('All');
+  const [statusOpen,      setStatusOpen]       = useState(false);
+  const statusRef = useRef<HTMLDivElement>(null);
 
   const taskLogMap = useMemo<Record<number, number>>(() => {
     const map: Record<number, number> = {};
@@ -205,6 +199,27 @@ export default function ProjectDetail() {
     }
     return map;
   }, [logs]);
+
+  // ── Category colors (consistent with ProjectList) ──────────────────────────
+  const categoryColorMap = useMemo(() => {
+    const cats = Array.from(
+      new Set(allProjects.map(p => p.category).filter((c): c is string => Boolean(c)))
+    ).sort();
+    return new Map(cats.map((c, i) => [c, CATEGORY_PALETTE[i % CATEGORY_PALETTE.length]]));
+  }, [allProjects]);
+
+  // Close status dropdown on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (statusRef.current && !statusRef.current.contains(e.target as Node)) {
+        setStatusOpen(false);
+      }
+    }
+    if (statusOpen) {
+      document.addEventListener('mousedown', handleClick);
+      return () => document.removeEventListener('mousedown', handleClick);
+    }
+  }, [statusOpen]);
 
   useEffect(() => { if (activeTab === 'messages') markMessagesRead(); }, [messages.length, activeTab, markMessagesRead]);
   useEffect(() => { if (activeTab === 'feedback') markFeedbackRead(); }, [feedback.length,      activeTab, markFeedbackRead]);
@@ -250,10 +265,7 @@ export default function ProjectDetail() {
   const approvals  = feedback.filter(f => f.category === 'Approval').length;
   const revRatio   = approvals > 0 ? (revisions / approvals).toFixed(1) : null;
 
-  // scopeCreepIndex
   const scopeCreepIndex = scopeEntry != null ? Math.round(scopeEntry.scope_creep_index) : null;
-  const unplannedCount = scopeEntry?.unplanned_tasks ?? 0;
-  const totalTaskCount = scopeEntry?.total_tasks ?? tasks.length;
 
   const handleCreateTask = (payload: TaskPayload) => {
     createTask.mutate(payload, { onSuccess: () => setShowTaskForm(false) });
@@ -262,6 +274,10 @@ export default function ProjectDetail() {
   const handleDelete = () => {
     if (!confirm('Delete this project? This cannot be undone.')) return;
     deleteProject.mutate(project.id, { onSuccess: () => navigate('/manager/projects') });
+  };
+
+  const handleUpdateProject = (payload: ProjectPayload) => {
+    updateProject.mutate(payload, { onSuccess: () => setShowEditForm(false) });
   };
 
   const parentTaskOptions = tasks.map(t => ({ id: t.id, task_name: t.task_name }));
@@ -274,6 +290,7 @@ export default function ProjectDetail() {
   const taskCompletedCount  = tasks.filter(t => t.status === 'Completed').length;
   const taskInProgressCount = tasks.filter(t => t.status === 'InProgress').length;
   const taskUnplannedCount  = tasks.filter(t => t.is_unplanned).length;
+  const taskTodoCount       = tasks.filter(t => t.status === 'Todo').length;
   const taskTotalEstimated  = tasks.reduce(
     (sum, t) => sum + (t.estimated_hours != null ? Number(t.estimated_hours) : 0), 0,
   );
@@ -293,7 +310,16 @@ export default function ProjectDetail() {
 
   const TABS: Tab[] = ['tasks', 'logs', 'files', 'feedback', 'messages'];
 
-  const category = categoryClass(project.category);
+    const editDefaults = {
+    project_name:  project.project_name,
+    client:        String(project.client),
+    description:   project.description,
+    budget_hours:  project.budget_hours != null ? String(project.budget_hours) : '',
+    budget_amount: project.budget_amount != null ? String(project.budget_amount) : '',
+    deadline:      project.deadline ?? '',
+    status:        project.status,
+    category:      project.category,
+  };
 
   return (
     <AppShell
@@ -303,30 +329,36 @@ export default function ProjectDetail() {
           {isManager && (
             <button
               onClick={() => setShowAssignPanel(v => !v)}
-              className="border border-slate-200 text-slate-600 px-3.5 py-2 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors"
+              className="bg-primary text-white px-3.5 py-2 rounded-lg text-sm font-semibold hover:bg-primary-600 transition-colors"
             >
               + Assign Designer
             </button>
           )}
           <button
-            onClick={() => navigate(-1)}
-            className="border border-slate-200 text-slate-600 px-3.5 py-2 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors"
-          >
-            ← Back
-          </button>
-          <button
             onClick={() => exportPDF(projectId)}
-            className="bg-blue-700 text-white px-3.5 py-2 rounded-lg text-sm font-semibold hover:bg-blue-800 transition-colors"
+            className="bg-primary text-white px-3.5 py-2 rounded-lg text-sm font-semibold hover:bg-primary-600 transition-colors"
           >
             Export PDF
           </button>
           {isManager && (
-            <button
-              onClick={handleDelete}
-              className="border border-rose-200 text-rose-600 px-3.5 py-2 rounded-lg text-sm font-medium hover:bg-rose-50 transition-colors"
-            >
-              Delete
-            </button>
+            <>
+              <button
+                onClick={() => setShowEditForm(v => !v)}
+                className={
+                  showEditForm
+                    ? 'border border-slate-200 text-slate-600 px-3.5 py-2 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors'
+                    : 'bg-white text-primary border border-primary-200 px-3.5 py-2 rounded-lg text-sm font-semibold hover:bg-primary-50 transition-colors'
+                }
+              >
+                {showEditForm ? 'Cancel' : 'Edit'}
+              </button>
+              <button
+                onClick={handleDelete}
+                className="border border-rose-200 text-rose-600 px-3.5 py-2 rounded-lg text-sm font-medium hover:bg-rose-50 transition-colors"
+              >
+                Delete
+              </button>
+            </>
           )}
         </div>
       }
@@ -347,20 +379,38 @@ export default function ProjectDetail() {
       )}
 
       {/* ── Meta chips row ────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-2 flex-wrap mb-6">
-        {/* Status — editable for manager */}
+      <div className="flex items-center gap-2.5 flex-wrap mb-6">
+        {/* Status — custom dropdown for manager */}
         {isManager ? (
-          <select
-            value={project.status}
-            onChange={e => updateProject.mutate({ status: e.target.value as Project['status'] })}
-            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border-0 outline-none cursor-pointer ${STATUS_BADGE[project.status]}`}
-          >
-            <option value="Active" className="bg-white text-slate-700">● Active</option>
-            <option value="Completed" className="bg-white text-slate-700">● Completed</option>
-            <option value="OnHold" className="bg-white text-slate-700">● On Hold</option>
-          </select>
+          <div className="relative" ref={statusRef}>
+            <button
+              onClick={() => setStatusOpen(v => !v)}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer transition-all hover:opacity-90 ${STATUS_BADGE[project.status]}`}
+            >
+              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${STATUS_DOT[project.status]}`} />
+              {statusLabel(project.status)}
+              <ChevronDown size={12} className={`transition-transform ${statusOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {statusOpen && (
+              <div className="absolute top-full left-0 mt-1.5 bg-white border border-slate-200 rounded-xl shadow-lg z-20 py-1 min-w-[140px] overflow-hidden">
+                {(['Active', 'Completed', 'OnHold'] as const).map(s => (
+                  <button
+                    key={s}
+                    onClick={() => {
+                      updateProject.mutate({ status: s });
+                      setStatusOpen(false);
+                    }}
+                    className={`w-full text-left px-3 py-2 text-xs font-medium hover:bg-slate-50 flex items-center gap-2 transition-colors ${s === project.status ? 'bg-slate-50 text-slate-900' : 'text-slate-600'}`}
+                  >
+                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${STATUS_DOT[s]}`} />
+                    {statusLabel(s)}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         ) : (
-          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_BADGE[project.status]}`}>
+          <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${STATUS_BADGE[project.status]}`}>
             <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${STATUS_DOT[project.status]}`} />
             {statusLabel(project.status)}
           </span>
@@ -368,92 +418,82 @@ export default function ProjectDetail() {
 
         {/* Deadline */}
         {project.deadline && (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
-            <svg width="11" height="11" viewBox="0 0 15 15" fill="none">
-              <rect x="1.5" y="2.5" width="12" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.3" />
-              <path d="M4.5 1v3M10.5 1v3M1.5 6h12" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-            </svg>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-blue-50 border border-blue-100 text-blue-700 shadow-sm">
+            <Calendar size={12} />
             {project.deadline}
           </span>
         )}
 
         {/* Client */}
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
-          <svg width="11" height="11" viewBox="0 0 15 15" fill="none">
-            <circle cx="7.5" cy="5" r="2.5" stroke="currentColor" strokeWidth="1.3" />
-            <path d="M2 13.5c0-3 2.5-5 5.5-5s5.5 2 5.5 5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-          </svg>
+        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-violet-50 border border-violet-100 text-violet-700 shadow-sm">
+          <User size={12} />
           {project.client_name}
         </span>
 
         {/* Category */}
         {project.category && (
-          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${category}`}>
+          <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border shadow-sm ${categoryColorMap.get(project.category) ?? 'bg-slate-50 text-slate-700 border-slate-200'}`}>
+            <Tag size={12} className="opacity-70" />
             {project.category}
           </span>
         )}
 
         {/* Designers count */}
         {project.assignments.length > 0 && (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-indigo-50 border border-indigo-100 text-indigo-700 shadow-sm">
+            <Users size={12} />
             {project.assignments.length} designer{project.assignments.length !== 1 ? 's' : ''}
           </span>
         )}
       </div>
 
-      {/* ── 4 Metric cards ────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-4 gap-4 mb-4">
-        {/* Budget Utilisation */}
-        <MetricCard
+      {/* ── Edit Form ─────────────────────────────────────────────────────── */}
+      {showEditForm && isManager && (
+        <div className="bg-white rounded-xl border border-slate-200 p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-base font-semibold text-slate-900">Edit Project</h3>
+            <button
+              onClick={() => setShowEditForm(false)}
+              className="text-slate-400 hover:text-slate-600 transition-colors"
+            >
+              <X size={18} />
+            </button>
+          </div>
+          <ProjectForm
+            onSubmit={handleUpdateProject}
+            isLoading={updateProject.isPending}
+            defaults={editDefaults}
+          />
+        </div>
+      )}
+
+      {/* ── 4 KPI cards (ManagerDashboard style) ──────────────────────────── */}
+      <div className="grid grid-cols-4 gap-3.5 mb-4">
+        <KpiCard
           label="Budget Utilisation"
           value={budgetPctRounded != null ? `${budgetPctRounded}%` : '—'}
-          subtitle={project.actual_hours != null && project.budget_hours
-            ? `${Math.round(project.actual_hours)} of ${Math.round(Number(project.budget_hours))} h used`
-            : 'No budget set'}
-          borderColor="#3b82f6"
+          icon={<BarChart3 size={15} />}
         />
-
-        {/* Effective Hourly Rate */}
-        <MetricCard
+        <KpiCard
           label="Eff. Hourly Rate"
           value={currentEHR != null ? formatEHR(currentEHR) : '—'}
-          subtitle={
-            targetEHR != null && currentEHR != null
-              ? `Target ${formatEHR(targetEHR)} · ${currentEHR >= targetEHR ? '+' : '−'}${formatEHR(Math.abs(currentEHR - targetEHR))} ${currentEHR >= targetEHR ? 'above' : 'below'}`
-              : 'No budget set'
-          }
-          borderColor={currentEHR != null && targetEHR != null
-            ? (currentEHR >= targetEHR ? '#10b981' : '#ef4444')
-            : '#10b981'}
+          icon={<DollarSign size={15} />}
         />
-
-        {/* Scope Creep Index */}
-        <MetricCard
+        <KpiCard
           label="Scope Creep Index"
           value={scopeCreepIndex != null ? `${scopeCreepIndex}%` : '—'}
-          subtitle={scopeEntry != null
-            ? `${unplannedCount} of ${totalTaskCount} tasks unplanned`
-            : 'No task data'}
-          borderColor="#f59e0b"
+          icon={<AlertTriangle size={15} />}
         />
-
-        {/* Rev : Approval Ratio */}
-        <MetricCard
+        <KpiCard
           label="Rev : Approval Ratio"
-          value={
-            revRatio != null
-              ? <span>{revRatio} <span className="text-slate-400 text-lg">: 1</span></span>
-              : approvals === 0 && revisions === 0 ? '—' : `${revisions} : 0`
-          }
-          subtitle={`${revisions} revision${revisions !== 1 ? 's' : ''} · ${approvals} approval${approvals !== 1 ? 's' : ''}`}
-          borderColor="#ef4444"
+          value={revRatio != null ? `${revRatio} : 1` : approvals === 0 && revisions === 0 ? '—' : `${revisions} : 0`}
+          icon={<MessageSquare size={15} />}
         />
       </div>
 
       {/* ── Budget Progress card ──────────────────────────────────────────── */}
       {project.budget_hours && (
         <div className="bg-white border border-slate-200 rounded-xl p-5 mb-6">
-          {/* Header row */}
           <div className="flex items-start justify-between mb-4">
             <div>
               <p className="text-sm font-semibold text-slate-900">Budget Progress</p>
@@ -463,7 +503,7 @@ export default function ProjectDetail() {
               {[
                 { label: 'LOGGED',    value: `${Math.round(project.actual_hours)} h`,                cls: 'text-slate-900' },
                 { label: 'BUDGET',    value: `${Math.round(Number(project.budget_hours))} h`,        cls: 'text-slate-900' },
-                { label: 'REMAINING', value: `${Math.round(remaining ?? 0)} h`,                      cls: remaining != null && remaining < 10 ? 'text-rose-600' : 'text-blue-700' },
+                { label: 'REMAINING', value: `${Math.round(remaining ?? 0)} h`,                      cls: remaining != null && remaining < 10 ? 'text-rose-600' : 'text-primary' },
                 {
                   label: 'CONTRACT', value: project.budget_amount != null
                     ? `${formatTND(Number(project.budget_amount))}`
@@ -478,7 +518,6 @@ export default function ProjectDetail() {
             </div>
           </div>
 
-          {/* Progress bar */}
           <div className="relative mb-1">
             <div className="bg-slate-100 rounded-full h-3 overflow-hidden">
               <div
@@ -491,7 +530,6 @@ export default function ProjectDetail() {
             </div>
           </div>
 
-          {/* Bar labels */}
           <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
             <span>0 h</span>
             <span className="font-mono font-semibold" style={{ color: barColor(budgetPct ?? 0) }}>
@@ -500,11 +538,10 @@ export default function ProjectDetail() {
             <span>{Math.round(Number(project.budget_hours))} h</span>
           </div>
 
-          {/* Legend + EHR */}
           <div className="flex items-center justify-between mt-3">
             <div className="flex items-center gap-4 text-xs text-slate-500">
               <span className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-sm bg-blue-500 inline-block" />
+                <span className="w-3 h-3 rounded-sm bg-primary inline-block" />
                 Logged — {Math.round(project.actual_hours)} h
               </span>
               <span className="flex items-center gap-1.5">
@@ -516,12 +553,12 @@ export default function ProjectDetail() {
               <p className="text-xs text-slate-400">
                 Target EHR:{' '}
                 <span className={`font-semibold ${ehrGood ? 'line-through text-slate-400' : 'text-rose-600'}`}>
-                  {Math.round(targetEHR)} TND
+                  {formatEHR(targetEHR)}
                 </span>
                 {' · '}
                 Current EHR:{' '}
                 <span className={`font-semibold ${ehrGood ? 'text-emerald-600' : 'text-rose-600'}`}>
-                  {Math.round(currentEHR)} TND
+                  {formatEHR(currentEHR)}
                 </span>
               </p>
             )}
@@ -532,15 +569,15 @@ export default function ProjectDetail() {
       {/* ── AI Summary (Manager only) ─────────────────────────────────────── */}
       {isManager && <AISummaryCard projectId={projectId} />}
 
-      {/* ── Tabs ─────────────────────────────────────────────────────────── */}
-      <div className="flex border-b border-slate-200 mb-6">
+      {/* ── Tabs (centered) ───────────────────────────────────────────────── */}
+      <div className="flex justify-center border-b border-slate-200 mb-6">
         {TABS.map(tab => (
           <button
             key={tab}
             onClick={() => handleTabClick(tab)}
             className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
               activeTab === tab
-                ? 'text-blue-700 border-blue-600'
+                ? 'text-primary border-primary'
                 : 'text-slate-500 border-transparent hover:text-slate-900'
             }`}
           >
@@ -554,17 +591,44 @@ export default function ProjectDetail() {
         <div>
           <div className="flex items-center justify-between gap-3 mb-4">
             {/* Stats — left side */}
-            <p className="text-sm text-slate-500 shrink-0">
-              <span className="font-medium text-slate-700">{tasks.length} Task{tasks.length !== 1 ? 's' : ''}</span>
-              {taskCompletedCount > 0  && <> · <span className="text-emerald-600">{taskCompletedCount} Completed</span></>}
-              {taskInProgressCount > 0 && <> · <span className="text-blue-600">{taskInProgressCount} In Progress</span></>}
-              {taskUnplannedCount > 0  && <> · <span className="text-rose-600">{taskUnplannedCount} Unplanned</span></>}
-              {taskTotalEstimated > 0  && (
-                <> <span className="text-slate-300 mx-1">|</span> Total estimated{' '}
-                  <span className="font-mono font-semibold text-slate-700">{taskTotalEstimated} h</span>
-                </>
+            <div className="flex items-center gap-2 flex-wrap">
+
+              {taskTodoCount > 0 && (
+                <div className="inline-flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5">
+                  <ListTodo size={14} className="text-slate-500" />
+                  <span className="text-xs font-medium text-slate-600">{taskTodoCount} Todo</span>
+                </div>
               )}
-            </p>
+
+              {taskCompletedCount > 0 && (
+                <div className="inline-flex items-center gap-1.5 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-1.5">
+                  <CheckCircle2 size={14} className="text-emerald-600" />
+                  <span className="text-xs font-medium text-emerald-700">{taskCompletedCount} Done</span>
+                </div>
+              )}
+
+              {taskInProgressCount > 0 && (
+                <div className="inline-flex items-center gap-1.5 bg-primary-50 border border-primary-100 rounded-lg px-3 py-1.5">
+                  <Activity size={14} className="text-primary" />
+                  <span className="text-xs font-medium text-primary-700">{taskInProgressCount} In Progress</span>
+                </div>
+              )}
+
+              {taskUnplannedCount > 0 && (
+                <div className="inline-flex items-center gap-1.5 bg-rose-50 border border-rose-100 rounded-lg px-3 py-1.5">
+                  <AlertCircle size={14} className="text-rose-600" />
+                  <span className="text-xs font-medium text-rose-700">{taskUnplannedCount} Unplanned</span>
+                </div>
+              )}
+
+              {taskTotalEstimated > 0 && (
+                <div className="inline-flex items-center gap-1.5 bg-white border border-slate-200 rounded-lg px-3 py-1.5 shadow-sm">
+                  <Clock size={14} className="text-slate-400" />
+                  <span className="text-xs text-slate-500">Est.</span>
+                  <span className="text-xs font-mono font-semibold text-slate-700">{taskTotalEstimated} h</span>
+                </div>
+              )}
+            </div>
 
             {/* Controls — right side */}
             <div className="flex items-center gap-3 shrink-0">
@@ -574,7 +638,7 @@ export default function ProjectDetail() {
                   className={
                     showTaskForm
                       ? 'border border-slate-200 text-slate-600 px-3.5 py-2 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors'
-                      : 'bg-blue-700 text-white px-3.5 py-2 rounded-lg text-sm font-semibold hover:bg-blue-800 transition-colors'
+                      : 'bg-primary text-white px-3.5 py-2 rounded-lg text-sm font-semibold hover:bg-primary-600 transition-colors'
                   }
                 >
                   {showTaskForm ? 'Cancel' : '+ Add Task'}
@@ -583,7 +647,7 @@ export default function ProjectDetail() {
               <select
                 value={statusFilter}
                 onChange={e => setStatusFilter(e.target.value as typeof statusFilter)}
-                className="px-3 py-2 border border-slate-200 rounded-lg bg-white text-sm text-slate-600 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 cursor-pointer transition-colors hover:bg-slate-50"
+                className="px-3 py-2 border border-slate-200 rounded-lg bg-white text-sm text-slate-600 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 cursor-pointer transition-colors hover:bg-slate-50"
               >
                 <option value="All">All statuses</option>
                 <option value="Todo">Todo</option>
@@ -647,11 +711,14 @@ export default function ProjectDetail() {
       {/* ── Tab: Time Logs ───────────────────────────────────────────────── */}
       {activeTab === 'logs' && (
         <div>
-          <div className="flex items-center mb-4">
-            <p className="text-sm text-slate-500">
-              Total logged{' '}
-              <span className="font-mono font-semibold text-slate-900">{totalLogged.toFixed(1)} h</span>
-            </p>
+          <div className="flex items-center gap-3 mb-4 bg-white border border-slate-200 rounded-xl px-4 py-3 shadow-sm">
+            <div className="w-8 h-8 rounded-lg bg-primary-50 flex items-center justify-center text-primary">
+              <Clock size={15} />
+            </div>
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Total Logged</p>
+              <p className="font-mono text-lg font-bold text-slate-900 leading-none">{totalLogged.toFixed(1)} h</p>
+            </div>
           </div>
           <TimeLogList
             logs={logs}
