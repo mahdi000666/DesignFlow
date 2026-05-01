@@ -112,7 +112,7 @@ export default function ClientProjectDetail() {
   const TABS: Tab[] = ['overview', 'feedback', 'files', 'messages'];
 
   return (
-    <AppShell title={project.project_name} breadcrumb={`Projects / ${project.project_name}`}>
+    <AppShell title={project.project_name}>
 
       {/* ── Meta chips ────────────────────────────────────────────────────── */}
       <div className="flex items-center gap-2 flex-wrap mb-6">

@@ -4,11 +4,12 @@ from django.utils import timezone
 from datetime import timedelta
 import uuid
 
-
+# Custom user manager, since the default one requires username field.
 class UserManager(BaseUserManager):
     def create_user(self, email, full_name, role, password=None):
         if not email:
             raise ValueError('Email is required')
+        # calls the User model from below, normalize for lower case.
         user = self.model(email=self.normalize_email(email), full_name=full_name, role=role)
         if password:
             user.set_password(password)
@@ -20,10 +21,11 @@ class UserManager(BaseUserManager):
         user.is_active = True
         user.is_staff = True
         user.is_superuser = True
+        # Save to default database.
         user.save(using=self._db)
         return user
 
-
+# AbstractBaseUser for custom user and password hashing, PermissionsMixin for permissions (is_staff).
 class User(AbstractBaseUser, PermissionsMixin):
     ROLE_CHOICES = [
         ('Manager', 'Manager'),
@@ -46,10 +48,12 @@ class User(AbstractBaseUser, PermissionsMixin):
         return f'{self.full_name} ({self.role})'
 
 
+# OneToOne = 1 User can only have 1 Profile. CASCADE = If User is deleted, the Profile is also deleted.
 class Designer(models.Model):
     user                     = models.OneToOneField(User, on_delete=models.CASCADE, related_name='designer_profile')
     hourly_rate              = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     specialization           = models.CharField(max_length=50, blank=True)
+    # Database can store it as null, can also be empty/blank.
     available_hours_per_week = models.IntegerField(null=True, blank=True)
 
     def __str__(self):
@@ -72,8 +76,10 @@ class InvitationToken(models.Model):
     is_used    = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
+        # Set expiration date if not already set, 48 hours from now (or 2 days).
         if not self.expires_at:
             self.expires_at = timezone.now() + timedelta(hours=48)
+        # Called after modifying field values to update database.
         super().save(*args, **kwargs)
 
     def is_valid(self):

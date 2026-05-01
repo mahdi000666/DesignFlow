@@ -135,7 +135,7 @@ export default function DesignerProjectDetail() {
   const TABS: Tab[] = ['tasks', 'log', 'files', 'feedback', 'messages'];
 
   return (
-    <AppShell title={project.project_name} breadcrumb={`Projects / ${project.project_name}`}>
+    <AppShell title={project.project_name}>
 
       {/* ── Meta chips ────────────────────────────────────────────────────── */}
       <div className="flex items-center gap-2 flex-wrap mb-6">

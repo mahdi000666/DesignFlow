@@ -298,7 +298,6 @@ export default function ProjectDetail() {
   return (
     <AppShell
       title={project.project_name}
-      breadcrumb={`Projects / ${project.project_name}`}
       actions={
         <div className="flex items-center gap-2">
           {isManager && (
