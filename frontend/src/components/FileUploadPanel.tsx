@@ -90,6 +90,7 @@ export default function FileUploadPanel({ projectId, role, isManager }: Props) {
   };
 
   return (
+    <div className="[&_header]:border-b-0 [&>div>div:first-child]:border-b-0 [&>div>div:first-child]:border-none">
     <SectionCard title={<span className="opacity-0">Files</span>}
       action={
         <div className="flex items-center gap-3">
@@ -158,6 +159,7 @@ export default function FileUploadPanel({ projectId, role, isManager }: Props) {
           message="No files uploaded yet. Upload your first deliverable or reference."
         />
       ) : (
+        <div className="-mt-5">
         <DataTable>
           <thead>
             <tr>
@@ -222,7 +224,9 @@ export default function FileUploadPanel({ projectId, role, isManager }: Props) {
             })}
           </tbody>
         </DataTable>
+        </div>
       )}
     </SectionCard>
+    </div>
   );
 }

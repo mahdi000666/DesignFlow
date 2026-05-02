@@ -98,7 +98,7 @@ export default function FeedbackList({ projectId, canUpdate, canReply = false }:
 
   return (
     <SectionCard title="Feedback History" action={
-      <span className="text-xs text-slate-400 font-medium">{visibleItems.length} items</span>
+      <span className="text-xs text-slate-600 font-medium">{visibleItems.length} Items</span>
     }>
       <div className="space-y-5">
         {/* ── Filter pills ──────────────────────────────────────────────── */}

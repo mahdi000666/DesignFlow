@@ -23,7 +23,7 @@ const STATUS_CYCLE: Record<Task['status'], Task['status']> = {
 
 const STATUS_BADGE: Record<Task['status'], string> = {
   Todo:       'bg-slate-100 text-slate-600 ring-1 ring-inset ring-slate-200',
-  InProgress: 'bg-primary-50 text-primary-700 ring-1 ring-inset ring-primary-200',
+  InProgress: 'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-200',
   Completed:  'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200',
 };
 
@@ -35,12 +35,12 @@ const STATUS_LABEL: Record<Task['status'], string> = {
 
 function VarianceCell({ logged, estimated }: { logged: number; estimated: number | null | undefined }) {
   if (logged === 0 || estimated == null) {
-    return <span className="text-slate-300 font-medium">—</span>;
+    return <span className="text-slate-300">—</span>;
   }
   const v = logged - Number(estimated);
-  if (v === 0) return <span className="text-slate-900 font-semibold">0h</span>;
-  if (v > 0)   return <span className="text-rose-600 font-semibold">+{v.toFixed(1)}h</span>;
-  return           <span className="text-emerald-600 font-semibold">{v.toFixed(1)}h</span>;
+  if (v === 0) return <span className="text-slate-900">0h</span>;
+  if (v > 0)   return <span className="text-red-600">+{v.toFixed(1)}h</span>;
+  return           <span className="text-emerald-600">{v.toFixed(1)}h</span>;
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -67,77 +67,78 @@ export default function TaskRow({ task, projectId, isManager, loggedHours = 0, t
     deleteTask.mutate(id);
   };
 
+  // colspan: task + status + estimated + logged + variance + actions = 6
   const SPAN = 6;
 
   return (
     <>
       {/* ── Parent task row ─────────────────────────────────────────────── */}
-      <tr className="group hover:bg-slate-50/80 transition-colors">
+      <tr className="hover:bg-slate-50/70 transition-colors group">
 
         {/* Task name + scope creep label */}
-        <td className="px-5 py-4 align-middle">
-          <span className="text-sm font-bold text-slate-900">{task.task_name}</span>
+        <td className="px-4 py-3.5 align-middle">
+          <span className="text-sm font-medium text-slate-900">{task.task_name}</span>
           {task.description && (
-            <p className="text-xs text-slate-400 mt-1 truncate max-w-xs leading-relaxed">{task.description}</p>
+            <p className="text-xs text-slate-400 mt-0.5 truncate max-w-xs">{task.description}</p>
           )}
           {task.is_unplanned && (
-            <p className="text-[11px] text-rose-600 font-bold mt-1.5 uppercase tracking-wider">Scope creep</p>
+            <p className="text-xs text-rose-600 font-medium mt-1">Scope creep</p>
           )}
         </td>
 
         {/* Status — click to cycle */}
-        <td className="px-5 py-4 w-32 align-middle text-center">
+        <td className="px-4 py-3.5 w-32 align-middle text-center">
           <button
             type="button"
             onClick={() => cycleStatus(task.id, task.status)}
             disabled={updateTask.isPending}
             title="Click to cycle status"
-            className={`status-btn ${STATUS_BADGE[task.status]} hover:shadow-sm`}
+            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium cursor-pointer hover:opacity-70 transition-opacity disabled:opacity-40 ${STATUS_BADGE[task.status]}`}
           >
             {STATUS_LABEL[task.status]}
           </button>
         </td>
 
         {/* Estimated */}
-        <td className="px-5 py-4 w-28 align-middle font-mono text-sm text-slate-900 text-center font-semibold">
+        <td className="px-4 py-3.5 w-28 align-middle font-mono text-sm text-slate-900 text-center">
           {task.estimated_hours != null
             ? `${task.estimated_hours}h`
             : <span className="text-slate-300">—</span>}
         </td>
 
         {/* Logged */}
-        <td className="px-5 py-4 w-24 align-middle font-mono text-sm text-slate-900 text-center font-semibold">
+        <td className="px-4 py-3.5 w-24 align-middle font-mono text-sm text-slate-900 text-center">
           {loggedHours > 0
             ? `${loggedHours.toFixed(1)}h`
             : <span className="text-slate-300">0h</span>}
         </td>
 
         {/* Variance */}
-        <td className="px-5 py-4 w-28 align-middle font-mono text-sm text-center">
+        <td className="px-4 py-3.5 w-28 align-middle font-mono text-sm text-center">
           <VarianceCell logged={loggedHours} estimated={task.estimated_hours} />
         </td>
 
         {/* Manager actions */}
-        <td className="px-5 py-4 w-36 align-middle">
-          <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+        <td className="px-4 py-3.5 w-36 align-middle">
+          <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
             {isManager && (
               <>
                 <button
                   onClick={() => { setAddingSubtask(v => !v); setEditing(false); }}
-                  className="text-xs font-bold text-slate-400 hover:text-amber-600 transition-colors"
+                  className="text-xs text-slate-400 hover:text-amber-600 transition-colors font-medium"
                 >
                   {addingSubtask ? 'Cancel' : '+ Sub'}
                 </button>
                 <button
                   onClick={() => { setEditing(v => !v); setAddingSubtask(false); }}
-                  className="text-xs font-bold text-slate-400 hover:text-slate-900 transition-colors"
+                  className="text-xs text-slate-400 hover:text-slate-900 transition-colors font-medium"
                 >
                   {editing ? 'Cancel' : 'Edit'}
                 </button>
                 <button
                   onClick={() => handleDelete(task.id, task.task_name)}
                   disabled={deleteTask.isPending}
-                  className="text-xs font-bold text-rose-400 hover:text-rose-600 transition-colors disabled:opacity-40"
+                  className="text-xs text-rose-400 hover:text-rose-600 transition-colors font-medium disabled:opacity-40"
                 >
                   Delete
                 </button>
@@ -149,9 +150,9 @@ export default function TaskRow({ task, projectId, isManager, loggedHours = 0, t
 
       {/* ── Inline edit form ────────────────────────────────────────────── */}
       {editing && isManager && (
-        <tr className="bg-slate-50/60">
-          <td colSpan={SPAN} className="px-6 py-5">
-            <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-4">
+        <tr className="bg-slate-50/50">
+          <td colSpan={SPAN} className="px-6 py-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-3">
               Editing: {task.task_name}
             </p>
             <TaskForm
@@ -168,58 +169,58 @@ export default function TaskRow({ task, projectId, isManager, loggedHours = 0, t
       {task.subtasks.map(sub => (
         <tr
           key={sub.id}
-          className="bg-slate-50/30 hover:bg-slate-50/60 transition-colors group/sub"
+          className="bg-slate-50/30 hover:bg-slate-50/70 transition-colors group/sub"
         >
           {/* Subtask name — indented */}
-          <td className="px-5 py-3.5 align-middle border-l-2 border-l-slate-200">
-            <div className="flex items-center gap-2 pl-2">
+          <td className="px-4 py-3 pl-10 align-middle">
+            <div className="flex items-center gap-2">
               <span className="text-slate-300 text-xs">↳</span>
-              <span className="text-sm font-medium text-slate-700">{sub.task_name}</span>
+              <span className="text-sm text-slate-600">{sub.task_name}</span>
             </div>
             {sub.is_unplanned && (
-              <p className="text-[11px] text-rose-600 font-bold mt-1 pl-5 uppercase tracking-wider">Scope creep</p>
+              <p className="text-xs text-rose-600 font-medium mt-1 pl-4">Scope creep</p>
             )}
           </td>
 
           {/* Status — click to cycle */}
-          <td className="px-5 py-3.5 w-32 align-middle text-center">
+          <td className="px-4 py-3 w-32 align-middle text-center">
             <button
               type="button"
               onClick={() => cycleStatus(sub.id, sub.status)}
               disabled={updateTask.isPending}
               title="Click to cycle status"
-              className={`status-btn ${STATUS_BADGE[sub.status]} hover:shadow-sm`}
+              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium cursor-pointer hover:opacity-70 transition-opacity disabled:opacity-40 ${STATUS_BADGE[sub.status]}`}
             >
               {STATUS_LABEL[sub.status]}
             </button>
           </td>
 
           {/* Estimated */}
-          <td className="px-5 py-3.5 w-28 align-middle font-mono text-sm text-slate-600 text-center font-semibold">
+          <td className="px-4 py-3 w-28 align-middle font-mono text-sm text-slate-600 text-center">
             {sub.estimated_hours != null
               ? `${sub.estimated_hours}h`
               : <span className="text-slate-300">—</span>}
           </td>
 
           {/* Logged */}
-          <td className="px-5 py-3.5 w-24 align-middle font-mono text-sm text-slate-600 text-center font-semibold">
+          <td className="px-4 py-3 w-24 align-middle font-mono text-sm text-slate-600 text-center">
             {(taskLogMap[sub.id] ?? 0) > 0
               ? `${(taskLogMap[sub.id]!).toFixed(1)}h`
               : <span className="text-slate-300">0h</span>}
           </td>
 
           {/* Variance */}
-          <td className="px-5 py-3.5 w-28 align-middle font-mono text-sm text-center">
+          <td className="px-4 py-3 w-28 align-middle font-mono text-sm text-center">
             <VarianceCell logged={taskLogMap[sub.id] ?? 0} estimated={sub.estimated_hours} />
           </td>
 
           {/* Manager actions */}
-          <td className="px-5 py-3.5 w-36 align-middle">
+          <td className="px-4 py-3 w-36 align-middle">
             {isManager && (
               <button
                 onClick={() => handleDelete(sub.id, sub.task_name)}
                 disabled={deleteTask.isPending}
-                className="text-xs font-bold text-rose-400 hover:text-rose-600 transition-colors opacity-0 group-hover/sub:opacity-100 disabled:opacity-40"
+                className="text-xs text-rose-400 hover:text-rose-600 transition-colors opacity-0 group-hover/sub:opacity-100 font-medium disabled:opacity-40"
               >
                 Delete
               </button>
@@ -230,9 +231,9 @@ export default function TaskRow({ task, projectId, isManager, loggedHours = 0, t
 
       {/* ── Add-subtask form ────────────────────────────────────────────── */}
       {addingSubtask && isManager && (
-        <tr className="bg-slate-50/60">
-          <td colSpan={SPAN} className="px-6 py-5 pl-12">
-            <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-4">
+        <tr className="bg-slate-50/50">
+          <td colSpan={SPAN} className="px-6 py-4 pl-12">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-3">
               New subtask of: {task.task_name}
             </p>
             <TaskForm
