@@ -23,7 +23,7 @@ import { formatEHR, formatTND } from '../../utils/format';
 import { STATUS_BADGE, STATUS_DOT, barColor, statusLabel, categoryClass } from '../../utils/project';
 import UnreadBadge from '../../components/UnreadBadge';
 import {
-  Calendar, User, Tag, Clock, CheckCircle2, Activity, FolderOpen, ListTodo, Timer, BarChart3,
+  Calendar, User, Tag, Clock, CheckCircle2, Activity, FolderOpen, ListTodo, BarChart3,
 } from 'lucide-react';
 
 type Tab = 'tasks' | 'log' | 'files' | 'feedback' | 'messages';
@@ -359,15 +359,6 @@ export default function DesignerProjectDetail() {
       {activeTab === 'log' && (
         <div>
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3 bg-white border border-slate-200 rounded-xl px-4 py-3 shadow-sm">
-              <div className="w-8 h-8 rounded-lg bg-primary-50 flex items-center justify-center text-primary">
-                <Timer size={15} />
-              </div>
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">My Hours Logged</p>
-                <p className="font-mono text-lg font-bold text-slate-900 leading-none">{myHours.toFixed(1)} h</p>
-              </div>
-            </div>
             <button
               onClick={() => setShowLogForm(v => !v)}
               className={
@@ -404,7 +395,12 @@ export default function DesignerProjectDetail() {
 
       {/* ── Tab: Feedback ────────────────────────────────────────────────── */}
       {activeTab === 'feedback' && (
+        <div className="space-y-5">
+          <div className="flex items-center justify-between">
+            <p className="section-title mb-0">Feedback History</p>
+           </div>
         <FeedbackList projectId={projectId} canUpdate={true} canReply={true} />
+        </div>
       )}
 
       {/* ── Tab: Messages ────────────────────────────────────────────────── */}

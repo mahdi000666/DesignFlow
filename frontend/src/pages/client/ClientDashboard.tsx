@@ -5,9 +5,13 @@ import { useAuth } from '../../hooks/useAuth';
 import { useProjects } from '../../hooks/useProjects';
 import { getAllFeedback } from '../../api/feedbacks';
 import AppShell from '../../components/AppShell';
-import { STATUS_BADGE, STATUS_DOT, barColor, statusLabel } from '../../utils/project';
-import KPICard from '../../components/KPICard';
+import { KpiCard } from '../../components/Ui';
+import { STATUS_BADGE, STATUS_DOT, barColor, statusLabel, categoryClass } from '../../utils/project';
 import { formatTND } from '../../utils/format';
+import {
+  FolderOpen, MessageSquare, DollarSign,
+  Calendar,
+} from 'lucide-react';
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
@@ -30,8 +34,6 @@ export default function ClientDashboard() {
     f => f.status === 'Pending' || f.status === 'InProgress',
   ).length;
 
-  const activeProjects = projects.filter(p => p.status === 'Active').length;
-
   // Open feedback count per project (for badges on cards)
   const openFeedbackByProject = useMemo(() => {
     const map: Record<number, number> = {};
@@ -50,37 +52,36 @@ export default function ClientDashboard() {
       </div>
 
       {/* ── KPI row ───────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <KPICard
-          label="My Projects"
-          value={projects.length}
-          subtitle={`${activeProjects} Active`}
-          borderColor="#3b82f6"
-        />
-        <KPICard
-          label="Pending Feedback"
-          value={pendingFeedback}
-          subtitle="Awaiting response"
-          borderColor="#f59e0b"
-        />
-        <KPICard
-          label="Total Contract Value"
-          value={formatTND(totalContractValue)}
-          subtitle="Across all projects"
-          borderColor="#10b981"
-        />
+      <div className="flex justify-center mb-4">
+        <div className="grid grid-cols-3 gap-3.5">
+          <KpiCard
+            label="My Projects"
+            value={projects.length}
+            icon={<FolderOpen size={15} />}
+          />
+          <KpiCard
+            label="Pending Feedback"
+            value={pendingFeedback}
+            icon={<MessageSquare size={15} />}
+          />
+          <KpiCard
+            label="Total Contract Value"
+            value={formatTND(totalContractValue)}
+            icon={<DollarSign size={15} />}
+          />
+        </div>
       </div>
 
       {/* ── Project list ──────────────────────────────────────────────────── */}
-      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-        <div className="px-5 py-3.5 border-b border-slate-100">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">My Projects</p>
+      <div className="card overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+          <p className="section-title mb-0">My Projects</p>
         </div>
 
         {isLoading ? (
-          <p className="text-sm text-slate-400 px-5 py-6">Loading…</p>
+          <p className="text-sm text-slate-400 px-4 py-6">Loading…</p>
         ) : projects.length === 0 ? (
-          <p className="text-sm text-slate-400 px-5 py-10 text-center">No projects yet.</p>
+          <p className="text-sm text-slate-400 px-4 py-10 text-center">No projects yet.</p>
         ) : (
           <div className="divide-y divide-slate-100">
             {projects.map(p => {
@@ -96,9 +97,9 @@ export default function ClientDashboard() {
                   className="block px-5 py-4 hover:bg-slate-50/70 transition-colors group"
                 >
                   {/* Top row */}
-                  <div className="flex items-start justify-between gap-4 mb-1">
+                  <div className="flex items-start justify-between gap-4 mb-1.5">
                     <div className="flex items-center gap-2.5 flex-wrap">
-                      <span className="text-sm font-semibold text-slate-900 group-hover:text-blue-700 transition-colors">
+                      <span className="text-sm font-semibold text-slate-900 group-hover:text-primary transition-colors">
                         {p.project_name}
                       </span>
                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${STATUS_BADGE[p.status]}`}>
@@ -108,15 +109,26 @@ export default function ClientDashboard() {
                     </div>
                     {openCount > 0 && (
                       <span className="shrink-0 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200">
-                        ● {openCount} Open feedback
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+                        {openCount} Open feedback
                       </span>
                     )}
                   </div>
 
                   {/* Meta */}
-                  <p className="text-xs text-slate-400 mb-2">
-                    {[p.category, p.deadline ? `Due ${p.deadline}` : null].filter(Boolean).join(' · ')}
-                  </p>
+                  <div className="flex items-center gap-2 flex-wrap mb-2.5">
+                    {p.category && (
+                      <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide ${categoryClass(p.category)}`}>
+                        {p.category}
+                      </span>
+                    )}
+                    {p.deadline && (
+                      <span className="inline-flex items-center gap-1 text-xs text-slate-600">
+                        <Calendar size={11} />
+                        Due {p.deadline}
+                      </span>
+                    )}
+                  </div>
 
                   {/* Progress row */}
                   <div className="flex items-center gap-3">
@@ -143,7 +155,7 @@ export default function ClientDashboard() {
 
                   {/* Description */}
                   {p.description && (
-                    <p className="text-xs text-slate-400 mt-2 line-clamp-1">{p.description}</p>
+                    <p className="text-xs text-slate-500 mt-2 line-clamp-1">{p.description}</p>
                   )}
                 </Link>
               );

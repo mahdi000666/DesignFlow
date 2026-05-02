@@ -1,20 +1,10 @@
-Good job, here is my feedback:
-The KPI cards in designer project detail are too big, reduce them to match and be consistent with the size of the KPI cards in manager project detail.
-As for the time log icon in designer dashboard, just use the ones found in manager dashboard for consistency. (found in Recent activity).
-You did correctly put the project categories in designer pages, but the colors do not match the ones in manager pages. Did you change something? For example "Motion" category is light red in manager pages, and light blue in designer pages.
 
 
-Good job here is my feedback after the changes:
-1. In designer project list, the text that displays the client name and due date is in gray and barely visible, what do I need to change to make it a little darker?
-2. Most of the project category colors, are displayed in gray like shown in the screenshot. why?
- 
+TASK COMPLETION
+Move log time button to right.
 
-EDIT PROJECT
-CHECK SECOND DESIGN LATER.
 
-OCR
-REFERENCEES RAPPORT
-
+Upload profile picture.
 
 kanban
 designer time counter when begin task
@@ -22,6 +12,11 @@ log time pauses
 designer activity history
 remove time log edit
 remove log time
+
+CHECK SECOND DESIGN LATER.
+
+OCR
+REFERENCEES RAPPORT
 
 
 

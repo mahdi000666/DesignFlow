@@ -9,14 +9,19 @@ import { useMessages, useReplies } from '../../hooks/useMessages';
 import { useUnreadCount } from '../../hooks/useUnreadCount';
 import { useAuth } from '../../hooks/useAuth';
 import AppShell from '../../components/AppShell';
+import { KpiCard, Avatar } from '../../components/Ui';
 import FeedbackForm from '../../components/FeedbackForm';
 import FeedbackList from '../../components/FeedbackList';
 import FileUploadPanel from '../../components/FileUploadPanel';
 import MessageBoard from '../../components/MessageBoard';
 import type { FeedbackPayload } from '../../types/feedback';
-import { barColor, categoryClass } from '../../utils/project';
+import { STATUS_BADGE, STATUS_DOT, barColor, statusLabel, categoryClass } from '../../utils/project';
 import UnreadBadge from '../../components/UnreadBadge';
-import { formatEHR, formatTND, Initials } from '../../utils/format';
+import { formatTND } from '../../utils/format';
+import {
+  Calendar, Tag, DollarSign, BarChart3, MessageSquare,
+  CheckCircle2,
+} from 'lucide-react';
 
 type Tab = 'overview' | 'feedback' | 'files' | 'messages';
 
@@ -48,6 +53,7 @@ export default function ClientProjectDetail() {
   const unreadFeedbackTab = unreadFeedback + unreadReplies;
 
   const [activeTab, setActiveTab] = useState<Tab>('overview');
+  const [showFeedbackForm, setShowFeedbackForm] = useState(false);
 
   useEffect(() => {
     if (activeTab === 'feedback') { markFeedbackRead(); markRepliesRead(); }
@@ -80,25 +86,12 @@ export default function ClientProjectDetail() {
     ? Math.max(0, Number(project.budget_hours) - project.actual_hours)
     : null;
 
-  const targetEHR = project.budget_amount && project.budget_hours
-    ? Number(project.budget_amount) / Number(project.budget_hours)
-    : null;
-  const currentEHR = project.budget_amount && project.actual_hours > 0
-    ? Number(project.budget_amount) / project.actual_hours
-    : null;
-  const ehrGood = currentEHR != null && targetEHR != null ? currentEHR >= targetEHR : true;
-
-  // Feedback stats
-  const resolvedFeedback = feedback.filter(f => f.status === 'Resolved').length;
-  const openFeedback     = feedback.filter(f => f.status !== 'Resolved').length;
-  const deliverableFiles = files.filter(f => f.file_type === 'deliverable').length;
-
   // Task completion
   const completedTasks = tasks.filter(t => t.status === 'Completed').length;
   const totalTasks     = tasks.length;
   const taskPct        = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
-  const category = categoryClass(project.category);
+  const openFeedbackCount = feedback.filter(f => f.status !== 'Resolved').length;
 
   const tabContent = (tab: Tab): ReactNode => {
     switch (tab) {
@@ -115,58 +108,52 @@ export default function ClientProjectDetail() {
     <AppShell title={project.project_name}>
 
       {/* ── Meta chips ────────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-2 flex-wrap mb-6">
+      <div className="flex items-center gap-2.5 flex-wrap mb-6">
+        <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${STATUS_BADGE[project.status]}`}>
+          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${STATUS_DOT[project.status]}`} />
+          {statusLabel(project.status)}
+        </span>
+
         {project.deadline && (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
-            <svg width="11" height="11" viewBox="0 0 15 15" fill="none">
-              <rect x="1.5" y="2.5" width="12" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.3" />
-              <path d="M4.5 1v3M10.5 1v3M1.5 6h12" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-            </svg>
-            Due {project.deadline}
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-blue-50 border border-blue-100 text-blue-700 shadow-sm">
+            <Calendar size={12} />
+            {project.deadline}
           </span>
         )}
+
         {project.category && (
-          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${category}`}>
+          <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border shadow-sm ${categoryClass(project.category)}`}>
+            <Tag size={12} className="opacity-70" />
             {project.category}
           </span>
         )}
+
         {project.budget_amount != null && (
-          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
-            {formatTND(Number(project.budget_amount))} contract value
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-50 border border-emerald-100 text-emerald-700 shadow-sm">
+            <DollarSign size={12} />
+            {formatTND(Number(project.budget_amount))}
           </span>
         )}
       </div>
 
       {/* ── 3 KPI cards ───────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-3 gap-4 mb-4">
-        {/* Project Progress */}
-        <div className="bg-white border border-slate-200 rounded-xl px-5 py-4 relative overflow-hidden">
-          <div className="absolute left-0 inset-y-0 w-1 rounded-l-xl bg-blue-500" />
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-2">Project Progress</p>
-          <p className="font-mono text-2xl font-bold text-slate-900 leading-none mb-1">
-            {budgetPctRounded != null ? `${budgetPctRounded}%` : '—'}
-          </p>
-          <p className="text-xs text-slate-400">
-            {project.actual_hours != null && project.budget_hours
-              ? `${Math.round(project.actual_hours)} of ${Math.round(Number(project.budget_hours))} h Used`
-              : 'No budget set'}
-          </p>
-        </div>
-
-        {/* My Feedback */}
-        <div className="bg-white border border-slate-200 rounded-xl px-5 py-4 relative overflow-hidden">
-          <div className="absolute left-0 inset-y-0 w-1 rounded-l-xl bg-amber-400" />
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-2">My Feedback</p>
-          <p className="font-mono text-2xl font-bold text-slate-900 leading-none mb-1">{feedback.length}</p>
-          <p className="text-xs text-slate-400">{resolvedFeedback} Resolved · {openFeedback} Open</p>
-        </div>
-
-        {/* Files Shared */}
-        <div className="bg-white border border-slate-200 rounded-xl px-5 py-4 relative overflow-hidden">
-          <div className="absolute left-0 inset-y-0 w-1 rounded-l-xl bg-emerald-500" />
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-2">Files Shared</p>
-          <p className="font-mono text-2xl font-bold text-slate-900 leading-none mb-1">{files.length}</p>
-          <p className="text-xs text-slate-400">{deliverableFiles} Deliverable{deliverableFiles !== 1 ? 's' : ''}</p>
+      <div className="flex justify-center mb-4">
+        <div className="grid grid-cols-3 gap-3.5">
+          <KpiCard
+            label="Budget Utilisation"
+            value={budgetPctRounded != null ? `${budgetPctRounded}%` : '—'}
+            icon={<BarChart3 size={15} />}
+          />
+          <KpiCard
+            label="Open Feedback"
+            value={openFeedbackCount}
+            icon={<MessageSquare size={15} />}
+          />
+          <KpiCard
+            label="Task Completion"
+            value={totalTasks > 0 ? `${taskPct}%` : '—'}
+            icon={<CheckCircle2 size={15} />}
+          />
         </div>
       </div>
 
@@ -182,7 +169,7 @@ export default function ClientProjectDetail() {
               {[
                 { label: 'LOGGED',    value: `${Math.round(project.actual_hours)} h`,                cls: 'text-slate-900' },
                 { label: 'BUDGET',    value: `${Math.round(Number(project.budget_hours))} h`,        cls: 'text-slate-900' },
-                { label: 'REMAINING', value: `${Math.round(remaining ?? 0)} h`,                      cls: remaining != null && remaining < 10 ? 'text-rose-600' : 'text-blue-700' },
+                { label: 'REMAINING', value: `${Math.round(remaining ?? 0)} h`,                      cls: remaining != null && remaining < 10 ? 'text-rose-600' : 'text-primary' },
                 { label: 'CONTRACT',  value: project.budget_amount != null ? formatTND(Number(project.budget_amount)) : '—', cls: 'text-slate-900' },
               ].map(col => (
                 <div key={col.label} className="text-right border-l border-slate-100 pl-5">
@@ -193,7 +180,6 @@ export default function ClientProjectDetail() {
             </div>
           </div>
 
-          {/* Progress bar */}
           <div className="bg-slate-100 rounded-full h-3 overflow-hidden mb-1">
             <div
               className="h-full rounded-full transition-[width]"
@@ -212,7 +198,7 @@ export default function ClientProjectDetail() {
           <div className="flex items-center justify-between mt-3">
             <div className="flex items-center gap-4 text-xs text-slate-500">
               <span className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-sm bg-blue-500 inline-block" />
+                <span className="w-3 h-3 rounded-sm bg-primary inline-block" />
                 Logged — {Math.round(project.actual_hours)} h
               </span>
               <span className="flex items-center gap-1.5">
@@ -220,32 +206,19 @@ export default function ClientProjectDetail() {
                 Remaining — {Math.round(remaining ?? 0)} h
               </span>
             </div>
-            {targetEHR != null && currentEHR != null && (
-              <p className="text-xs text-slate-400">
-                Target EHR:{' '}
-                <span className={`font-semibold ${ehrGood ? 'line-through text-slate-400' : 'text-rose-600'}`}>
-                  {formatEHR(targetEHR)}
-                </span>
-                {' · '}
-                Current EHR:{' '}
-                <span className={`font-semibold ${ehrGood ? 'text-emerald-600' : 'text-rose-600'}`}>
-                  {formatEHR(currentEHR)}
-                </span>
-              </p>
-            )}
           </div>
         </div>
       )}
 
-      {/* ── Tabs ─────────────────────────────────────────────────────────── */}
-      <div className="flex border-b border-slate-200 mb-6">
+      {/* ── Tabs (centered) ───────────────────────────────────────────────── */}
+      <div className="flex justify-center border-b border-slate-200 mb-6">
         {TABS.map(tab => (
           <button
             key={tab}
             onClick={() => handleTabClick(tab)}
             className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors capitalize ${
               activeTab === tab
-                ? 'text-blue-700 border-blue-600'
+                ? 'text-primary border-primary'
                 : 'text-slate-500 border-transparent hover:text-slate-900'
             }`}
           >
@@ -256,61 +229,48 @@ export default function ClientProjectDetail() {
 
       {/* ── Tab: Overview ────────────────────────────────────────────────── */}
       {activeTab === 'overview' && (
-        <div className="space-y-6">
+        <div className="grid grid-cols-2 gap-3.5">
           {/* Description */}
           {project.description && (
-            <div>
-              <p className="text-sm font-semibold text-slate-900 mb-2">Project Description</p>
+            <div className="card p-5 col-span-2">
+              <p className="section-title mb-3">Project Description</p>
               <p className="text-sm text-slate-500 leading-relaxed">{project.description}</p>
             </div>
           )}
 
           {/* Task Completion */}
           {totalTasks > 0 && (
-            <div>
-              <p className="text-sm font-semibold text-slate-900 mb-3">Task Completion</p>
-              <div className="flex items-center gap-4 mb-1">
-                <div className="flex-1 bg-slate-100 rounded-full h-2.5 overflow-hidden">
+            <div className="card p-5">
+              <div className="flex items-center justify-between mb-3">
+                <p className="section-title mb-0">Task Completion</p>
+                <span className="font-mono text-sm font-bold text-slate-900">{taskPct}%</span>
+              </div>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="flex-1 bg-slate-100 rounded-full h-2 overflow-hidden">
                   <div
-                    className="h-full rounded-full transition-[width]"
-                    style={{ width: `${taskPct}%`, backgroundColor: '#3b82f6' }}
+                    className="h-full rounded-full bg-primary transition-[width]"
+                    style={{ width: `${taskPct}%` }}
                   />
                 </div>
-                <span className="font-mono text-sm font-semibold text-slate-700 shrink-0">
-                  {completedTasks} / {totalTasks}
-                </span>
               </div>
-              <p className="text-xs text-slate-400">{taskPct}% of tasks complete</p>
+              <p className="text-xs text-slate-400">{completedTasks} of {totalTasks} tasks completed</p>
             </div>
           )}
 
-          {/* Assigned Designers */}
+          {/* Assigned Designers — full width */}
           {project.assignments.length > 0 && (
-            <div>
-              <p className="text-sm font-semibold text-slate-900 mb-3">Assigned Designers</p>
+            <div className="card p-5 col-span-2">
+              <p className="section-title mb-4">Assigned Designers</p>
               <div className="flex flex-wrap gap-3">
-                {project.assignments.map(a => {
-                  const initials = Initials(a.designer_name);
-                  // Cycle through accent colours by designer_id
-                  const colours = [
-                    'bg-violet-500', 'bg-teal-500', 'bg-blue-500',
-                    'bg-rose-500', 'bg-amber-500', 'bg-emerald-500',
-                  ];
-                  const colour = colours[a.designer_id % colours.length];
-                  return (
-                    <div
-                      key={a.designer_id}
-                      className="flex items-center gap-3 bg-white border border-slate-200 rounded-xl px-4 py-2.5"
-                    >
-                      <div className={`w-9 h-9 rounded-full ${colour} flex items-center justify-center text-white text-xs font-semibold shrink-0`}>
-                        {initials}
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-slate-800">{a.designer_name}</p>
-                      </div>
-                    </div>
-                  );
-                })}
+                {project.assignments.map(a => (
+                  <div
+                    key={a.designer_id}
+                    className="flex items-center gap-3 bg-slate-50 rounded-xl px-4 py-2.5 border border-slate-100"
+                  >
+                    <Avatar name={a.designer_name} size="sm" />
+                    <p className="text-sm font-medium text-slate-800">{a.designer_name}</p>
+                  </div>
+                ))}
               </div>
             </div>
           )}
@@ -320,11 +280,28 @@ export default function ClientProjectDetail() {
       {/* ── Tab: Feedback ────────────────────────────────────────────────── */}
       {activeTab === 'feedback' && (
         <div className="space-y-5">
-          <FeedbackForm
-            projectId={projectId}
-            onSubmit={(payload: FeedbackPayload) => createFeedback.mutate(payload)}
-            isLoading={createFeedback.isPending}
-          />
+          <div className="flex items-center justify-between">
+            <p className="section-title mb-0">Feedback History</p>
+            <button
+              onClick={() => setShowFeedbackForm(v => !v)}
+              className={
+                showFeedbackForm
+                  ? 'border border-slate-200 text-slate-600 px-3.5 py-2 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors'
+                  : 'bg-primary text-white px-3.5 py-2 rounded-lg text-sm font-semibold hover:bg-primary-600 transition-colors'
+              }
+            >
+              {showFeedbackForm ? 'Cancel' : '+ Submit Feedback'}
+            </button>
+          </div>
+          {showFeedbackForm && (
+            <FeedbackForm
+              projectId={projectId}
+              onSubmit={(payload: FeedbackPayload) => {
+                createFeedback.mutate(payload, { onSuccess: () => setShowFeedbackForm(false) });
+              }}
+              isLoading={createFeedback.isPending}
+            />
+          )}
           <FeedbackList projectId={projectId} canUpdate={false} />
         </div>
       )}
