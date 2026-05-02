@@ -31,14 +31,14 @@ export default function ClientDashboard() {
   );
 
   const pendingFeedback = allFeedback.filter(
-    f => f.status === 'Pending' || f.status === 'InProgress',
+    f => (f.status === 'Pending' || f.status === 'InProgress') && f.category !== 'Approval',
   ).length;
 
   // Open feedback count per project (for badges on cards)
   const openFeedbackByProject = useMemo(() => {
     const map: Record<number, number> = {};
     for (const f of allFeedback) {
-      if (f.status !== 'Resolved') {
+      if (f.status !== 'Resolved' && f.category !== 'Approval') {
         map[f.project] = (map[f.project] ?? 0) + 1;
       }
     }

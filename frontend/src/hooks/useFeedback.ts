@@ -6,6 +6,8 @@ export const useFeedback = (projectId: number) =>
   useQuery({
     queryKey: ['feedback', projectId],
     queryFn:  () => api.getFeedback(projectId),
+    refetchInterval: 3_000,
+    refetchIntervalInBackground: false,
   });
 
 export const useCreateFeedback = (projectId: number) => {

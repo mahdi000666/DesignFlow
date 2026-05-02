@@ -31,6 +31,10 @@ class TaskViewSet(viewsets.ModelViewSet):
             qs = Task.objects.filter(
                 project__assignments__designer__user=user
             ).select_related('project').prefetch_related('subtasks')
+        elif user.role == 'Client':
+            qs = Task.objects.filter(
+                project__client__user=user
+            ).select_related('project').prefetch_related('subtasks')
         else:
             qs = Task.objects.none()
 

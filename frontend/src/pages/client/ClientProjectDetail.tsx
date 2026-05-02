@@ -91,7 +91,9 @@ export default function ClientProjectDetail() {
   const totalTasks     = tasks.length;
   const taskPct        = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
-  const openFeedbackCount = feedback.filter(f => f.status !== 'Resolved').length;
+  const openFeedbackCount = feedback.filter(
+    f => f.status !== 'Resolved' && f.category !== 'Approval',
+  ).length;
 
   const tabContent = (tab: Tab): ReactNode => {
     switch (tab) {

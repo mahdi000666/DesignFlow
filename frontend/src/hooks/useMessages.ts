@@ -6,12 +6,16 @@ export const useMessages = (projectId: number) =>
   useQuery({
     queryKey: ['messages', projectId],
     queryFn:  () => api.getMessages(projectId),
+    refetchInterval: 3_000,
+    refetchIntervalInBackground: false,
   });
 
 export const useReplies = (projectId: number) =>
   useQuery({
     queryKey: ['replies', projectId],
     queryFn:  () => api.getReplies(projectId),
+    refetchInterval: 3_000,
+    refetchIntervalInBackground: false,
   });
 
 export const useCreateMessage = (projectId: number) => {

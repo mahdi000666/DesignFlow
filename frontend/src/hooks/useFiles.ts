@@ -6,6 +6,8 @@ export const useFiles = (projectId: number) =>
   useQuery({
     queryKey: ['files', projectId],
     queryFn:  () => api.getFiles(projectId),
+    refetchInterval: 3_000,
+    refetchIntervalInBackground: false,
   });
 
 export const useUploadFile = (projectId: number) => {

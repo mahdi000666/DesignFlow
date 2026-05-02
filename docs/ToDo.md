@@ -1,9 +1,14 @@
-OPEN FEEDBACK ISSUE, APPROVALS SHOULDNT COUNT AS OPEN FEEDBACK
-RED BADGE ISSUE. RED BADGE ONLY SHOWS UP AFTER YOU REFRESH PAGE.
+1. I get this error when i run manage.py runserver while inside a project detail page.
+```
+C:\Users\Mahdi\Proj\PFE\DesignFlow\venv\Lib\site-packages\rest_framework\pagination.py:208: UnorderedObjectListWarning: Pagination may yield inconsistent results with an unordered object_list: <class 'apps.files.models.FileUpload'> QuerySet.
+  paginator = self.django_paginator_class(queryset, page_size)
+C:\Users\Mahdi\Proj\PFE\DesignFlow\venv\Lib\site-packages\rest_framework\pagination.py:208: UnorderedObjectListWarning: Pagination may yield inconsistent results with an unordered object_list: <class 'apps.feedback.models.Feedback'> QuerySet.
+  paginator = self.django_paginator_class(queryset, page_size)
+```
+2. What is revision to approal ratio and how it is calculated? give examples.
+3. Im wondering why does the excel client total revenu does not match the client revenu in the chart? The EHR also does not seem to match. And the total hours/revisions/approvals do not make sense as well, why?
+4. 
 
-TASK COMPLETION
-Move log time button to right.
-EXPORT PDF  (TRY DEEP, CHAT, GEMINI)
 CHECK EXCEL EXPORT
 
 CHECK SECOND DESIGN LATER.
