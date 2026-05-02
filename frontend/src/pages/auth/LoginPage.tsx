@@ -4,7 +4,7 @@ import apiClient from '../../api/clients';
 import { useAuth } from '../../hooks/useAuth';
 import { BrandMark, AuthInput, AlertBox, AuthButton } from '../../components/AuthComponents';
 import { isEmailValid } from '../../utils/auth';
-import LoginIllustration from '../../assets/illustrations/login-illustration.svg?react';
+import LoginIllustration from '../../assets/illustrations/login.svg?react';
 
 const ROLE_HOME: Record<string, string> = {
   Manager:  '/manager',

@@ -43,42 +43,46 @@ export default function MessageBoard({ projectId }: Props) {
   };
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 flex flex-col" style={{ height: 480 }}>
+    <div className="card overflow-hidden flex flex-col" style={{ height: 520 }}>
 
       {/* ── Messages ──────────────────────────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto p-5 space-y-4">
+      <div className="flex-1 overflow-y-auto p-6 space-y-5">
         {isLoading ? (
-          <p className="text-sm text-slate-400 text-center pt-10">Loading messages…</p>
+          <p className="text-sm text-slate-400 text-center pt-10 font-medium">Loading messages…</p>
         ) : messages.length === 0 ? (
-          <p className="text-sm text-slate-400 text-center pt-10">
-            No messages yet. Start the conversation.
-          </p>
+          <div className="flex flex-col items-center justify-center h-full text-slate-400">
+            <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center mb-3 shadow-sm">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              </svg>
+            </div>
+            <p className="text-sm font-medium">No messages yet. Start the conversation.</p>
+          </div>
         ) : (
           messages.map(msg => {
-            // isOwn = true means this message was sent by the logged-in user.
             const isOwn = msg.sender === Number(user?.user_id);
             return (
               <div key={msg.id} className={`flex gap-3 ${isOwn ? 'flex-row-reverse' : ''}`}>
 
                 {/* Avatar */}
-                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-semibold shrink-0 ${
-                  isOwn ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-600'
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 shadow-sm ring-2 ring-white ${
+                  isOwn ? 'bg-primary text-white' : 'bg-slate-200 text-slate-600'
                 }`}>
                   {Initials(msg.sender_name)}
                 </div>
 
                 {/* Bubble + meta */}
-                <div className={`flex flex-col gap-1 max-w-[70%] ${isOwn ? 'items-end' : 'items-start'}`}>
-                  <div className="flex items-baseline gap-2">
+                <div className={`flex flex-col gap-1 max-w-[75%] ${isOwn ? 'items-end' : 'items-start'}`}>
+                  <div className="flex items-center gap-2">
                     {!isOwn && (
-                      <span className="text-xs font-semibold text-slate-700">{msg.sender_name}</span>
+                      <span className="text-xs font-bold text-slate-700">{msg.sender_name}</span>
                     )}
-                    <span className="text-[11px] text-slate-400">{fmt(msg.created_at)}</span>
+                    <span className="text-[11px] text-slate-400 font-medium">{fmt(msg.created_at)}</span>
                   </div>
-                  <div className={`rounded-xl px-3.5 py-2 text-sm leading-relaxed whitespace-pre-wrap ${
+                  <div className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap shadow-sm ${
                     isOwn
-                      ? 'bg-blue-600 text-white rounded-tl-sm'
-                      : 'bg-slate-100 text-slate-800 rounded-tr-sm'
+                      ? 'bg-primary text-white rounded-tr-sm'
+                      : 'bg-slate-100 text-slate-800 rounded-tl-sm'
                   }`}>
                     {msg.content_text}
                   </div>
@@ -91,19 +95,19 @@ export default function MessageBoard({ projectId }: Props) {
       </div>
 
       {/* ── Compose ───────────────────────────────────────────────────────── */}
-      <div className="border-t border-slate-200 p-3 flex gap-3 items-end shrink-0">
+      <div className="bg-slate-50 border-t border-slate-100 p-4 flex gap-3 items-center">
         <textarea
           value={text}
           onChange={e => setText(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Type a message… (Enter to send, Shift+Enter for newline)"
           rows={2}
-          className="flex-1 resize-none rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-colors"
+          className="compose-box"
         />
         <button
           onClick={handleSend}
           disabled={!text.trim() || createMessage.isPending}
-          className="bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shrink-0"
+          className="btn-primary h-10 px-5 shrink-0"
         >
           Send
         </button>

@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import apiClient from '../../api/clients';
 import { AuthShell, AuthCard, AuthInput, AlertBox, AuthButton, PasswordRequirements } from '../../components/AuthComponents';
 import { isPasswordValid } from '../../utils/auth';
-import ResetIllustration from '../../assets/illustrations/reset-illustration.svg?react';
+import ResetIllustration from '../../assets/illustrations/reset.svg?react';
 import { ErrorXIcon } from '../../components/Icons';
 
 export default function ResetPasswordPage() {

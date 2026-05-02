@@ -2,8 +2,10 @@
 
 TASK COMPLETION
 Move log time button to right.
+EXPORT PDF
+CHECK EXCEL EXPORT
 
-
+CHECK SECOND DESIGN LATER.
 Upload profile picture.
 
 kanban
@@ -13,7 +15,7 @@ designer activity history
 remove time log edit
 remove log time
 
-CHECK SECOND DESIGN LATER.
+
 
 OCR
 REFERENCEES RAPPORT

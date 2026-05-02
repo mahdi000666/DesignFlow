@@ -6,7 +6,7 @@ import {
   AuthShell, AuthCard,
 } from '../../components/AuthComponents';
 import { isPasswordValid } from '../../utils/auth';
-import ActivationIllustration from '../../assets/illustrations/activation-illustration.svg?react';
+import ActivationIllustration from '../../assets/illustrations/activation.svg?react';
 import { ErrorXIcon } from '../../components/Icons';
 
 type Role = 'Manager' | 'Designer' | 'Client';

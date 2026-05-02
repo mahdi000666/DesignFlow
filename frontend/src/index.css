@@ -150,6 +150,30 @@
   .data-table td {
     @apply px-4 py-3 border-b border-slate-100;
   }
+  /* ─── Interactive lift ─────────────────────────────────────────────── */
+  .hover-lift {
+    @apply transition-all duration-300 hover:-translate-y-0.5 hover:shadow-card-hover;
+  }
+
+  /* ─── Status button (clickable badges) ─────────────────────────────── */
+  .status-btn {
+    @apply inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-semibold cursor-pointer select-none transition-all active:scale-95;
+  }
+
+  /* ─── Thread connector ─────────────────────────────────────────────── */
+  .thread-line {
+    @apply border-l-2 border-slate-100 pl-4 ml-1;
+  }
+
+  /* ─── Compose area (chat / reply) ──────────────────────────────────── */
+  .compose-box {
+    @apply flex-1 resize-none rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all shadow-sm;
+  }
+
+  /* ─── File type dot ────────────────────────────────────────────────── */
+  .file-dot {
+    @apply w-2 h-2 rounded-full shrink-0;
+  }
 }
 
 @layer utilities {
@@ -157,3 +181,4 @@
     text-wrap: balance;
   }
 }
+

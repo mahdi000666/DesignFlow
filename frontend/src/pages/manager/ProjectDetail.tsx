@@ -286,9 +286,6 @@ export default function ProjectDetail() {
     (sum, t) => sum + (t.estimated_hours != null ? Number(t.estimated_hours) : 0), 0,
   );
 
-  // ── Time log stats ─────────────────────────────────────────────────────────
-  const totalLogged = logs.reduce((sum, l) => sum + Number(l.hours_spent), 0);
-
   const tabContent = (tab: Tab): ReactNode => {
     switch (tab) {
       case 'tasks':    return `Tasks (${tasks.length})`;
@@ -702,15 +699,6 @@ export default function ProjectDetail() {
       {/* ── Tab: Time Logs ───────────────────────────────────────────────── */}
       {activeTab === 'logs' && (
         <div>
-          <div className="flex items-center gap-3 mb-4 bg-white border border-slate-200 rounded-xl px-4 py-3 shadow-sm">
-            <div className="w-8 h-8 rounded-lg bg-primary-50 flex items-center justify-center text-primary">
-              <Clock size={15} />
-            </div>
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Total Logged</p>
-              <p className="font-mono text-lg font-bold text-slate-900 leading-none">{totalLogged.toFixed(1)} h</p>
-            </div>
-          </div>
           <TimeLogList
             logs={logs}
             isManager={isManager}
@@ -732,9 +720,6 @@ export default function ProjectDetail() {
       {/* ── Tab: Feedback ────────────────────────────────────────────────── */}
       {activeTab === 'feedback' && (
          <div className="space-y-5">
-          <div className="flex items-center justify-between">
-            <p className="section-title mb-0">Feedback History</p>
-           </div>
         <FeedbackList projectId={projectId} canUpdate={true} canReply={true} />
          </div>
       )}

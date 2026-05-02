@@ -10,17 +10,13 @@ type FeedbackCategory = 'Revision' | 'Approval' | 'Question';
 type AnyStatus = ProjectStatus | TaskStatus | FeedbackStatus | FeedbackCategory | string;
 
 const STATUS_STYLES: Record<string, string> = {
-  // Project
   Active:     'badge-active',
   Completed:  'badge-done',
   OnHold:     'badge-hold',
-  // Task
   InProgress: 'badge-active',
   Todo:       'badge-pending',
-  // Feedback status
   Pending:    'badge-pending',
   Resolved:   'badge-done',
-  // Feedback category
   Revision:   'badge-revision',
   Approval:   'badge-done',
   Question:   'badge-hold',
@@ -55,10 +51,10 @@ export function PriorityBadge({ value }: { value: Priority | string }) {
 // ─── Progress Bar ─────────────────────────────────────────────────────────────
 
 interface ProgressBarProps {
-  value: number;        // 0–100
+  value: number;
   showLabel?: boolean;
-  color?: string;       // override fill color (Tailwind bg-* class)
-  height?: string;      // Tailwind h-* class
+  color?: string;
+  height?: string;
 }
 
 export function ProgressBar({
@@ -118,7 +114,7 @@ const SIZES = { sm: 'w-7 h-7 text-[10px]', md: 'w-9 h-9 text-xs', lg: 'w-11 h-11
 export function Avatar({ name, size = 'md', className = '' }: AvatarProps) {
   return (
     <span
-      className={`inline-flex items-center justify-center rounded-full font-semibold flex-shrink-0
+      className={`inline-flex items-center justify-center rounded-full font-bold flex-shrink-0 shadow-sm ring-2 ring-white
                   ${SIZES[size]} ${nameToColor(name)} ${className}`}
     >
       {initials(name)}
@@ -126,17 +122,17 @@ export function Avatar({ name, size = 'md', className = '' }: AvatarProps) {
   );
 }
 
-// ─── KPI Card (merged from KPICard.tsx + KpiCard from Ui.tsx) ────────────────
+// ─── KPI Card ─────────────────────────────────────────────────────────────────
 
 interface KpiCardProps {
   label: string;
   value: string | number;
-  change?: number;         // e.g. +12.5 → +12.5%, negative = decrease
-  changeLabel?: string;    // e.g. "vs last month"
+  change?: number;
+  changeLabel?: string;
   icon?: React.ReactNode;
   prefix?: string;
   suffix?: string;
-  borderColor?: string;    // optional colored left rail
+  borderColor?: string;
 }
 
 export function KpiCard({
@@ -153,7 +149,7 @@ export function KpiCard({
   const isNeutral  = change === undefined || change === 0;
 
   return (
-    <div className="kpi-card">
+    <div className="kpi-card hover-lift">
       {borderColor && (
         <div
           className="absolute left-0 inset-y-0 w-1 rounded-l-xl"
@@ -165,7 +161,7 @@ export function KpiCard({
           {label}
         </span>
         {icon && (
-          <span className="w-8 h-8 rounded-lg bg-primary-50 flex items-center justify-center text-primary">
+          <span className="w-8 h-8 rounded-lg bg-primary-50 flex items-center justify-center text-primary shadow-sm">
             {icon}
           </span>
         )}
@@ -195,7 +191,7 @@ export function KpiCard({
 // ─── Section Card ─────────────────────────────────────────────────────────────
 
 interface SectionCardProps {
-  title?: string;
+  title?: React.ReactNode;
   action?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
@@ -204,14 +200,14 @@ interface SectionCardProps {
 
 export function SectionCard({ title, action, children, className = '', noPad = false }: SectionCardProps) {
   return (
-    <div className={`card ${noPad ? '' : 'p-5'} ${className}`}>
+    <div className={`card overflow-hidden ${className}`}>
       {(title || action) && (
-        <div className={`flex items-center justify-between ${noPad ? 'px-5 pt-5 pb-4' : 'mb-4'}`}>
+        <div className="flex items-center justify-between border-b border-slate-100 px-5 pt-5 pb-4">
           {title && <h3 className="section-title mb-0">{title}</h3>}
           {action && <div>{action}</div>}
         </div>
       )}
-      {children}
+      <div className={noPad ? '' : 'p-5'}>{children}</div>
     </div>
   );
 }
@@ -224,9 +220,13 @@ export function EmptyState({ icon, message, action }: {
   action?: React.ReactNode;
 }) {
   return (
-    <div className="empty-state gap-3">
-      {icon && <div className="text-slate-400 opacity-40">{icon}</div>}
-      <p className="text-sm">{message}</p>
+    <div className="card flex flex-col items-center justify-center py-12 px-6 text-center">
+      {icon && (
+        <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 mb-4 shadow-sm">
+          {icon}
+        </div>
+      )}
+      <p className="text-sm font-medium text-slate-500 mb-3">{message}</p>
       {action}
     </div>
   );
@@ -236,7 +236,7 @@ export function EmptyState({ icon, message, action }: {
 
 export function DataTable({ children }: { children: React.ReactNode }) {
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-hidden rounded-xl border border-slate-200 shadow-sm">
       <table className="data-table">{children}</table>
     </div>
   );

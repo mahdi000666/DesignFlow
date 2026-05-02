@@ -280,8 +280,7 @@ export default function ClientProjectDetail() {
       {/* ── Tab: Feedback ────────────────────────────────────────────────── */}
       {activeTab === 'feedback' && (
         <div className="space-y-5">
-          <div className="flex items-center justify-between">
-            <p className="section-title mb-0">Feedback History</p>
+          <div className="flex items-center justify-end">
             <button
               onClick={() => setShowFeedbackForm(v => !v)}
               className={

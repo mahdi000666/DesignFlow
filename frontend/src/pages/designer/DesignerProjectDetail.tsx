@@ -396,9 +396,6 @@ export default function DesignerProjectDetail() {
       {/* ── Tab: Feedback ────────────────────────────────────────────────── */}
       {activeTab === 'feedback' && (
         <div className="space-y-5">
-          <div className="flex items-center justify-between">
-            <p className="section-title mb-0">Feedback History</p>
-           </div>
         <FeedbackList projectId={projectId} canUpdate={true} canReply={true} />
         </div>
       )}

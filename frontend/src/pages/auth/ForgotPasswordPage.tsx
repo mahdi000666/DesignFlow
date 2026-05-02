@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import apiClient from '../../api/clients';
 import { AuthShell, AuthCard, AuthInput, AlertBox, AuthButton } from '../../components/AuthComponents';
 import { isEmailValid } from '../../utils/auth';
-import SentIllustration from '../../assets/illustrations/sent-illustration.svg?react';
+import SentIllustration from '../../assets/illustrations/sent.svg?react';
 
 export default function ForgotPasswordPage() {
   const [email,   setEmail]   = useState('');
