@@ -35,32 +35,33 @@ export const barColor = (pct: number): string =>
   pct >= 100 ? '#ef4444' : pct >= 80 ? '#f59e0b' : '#6366f1';
 
 // ─── Category colour map ─────────────────────────────────────────────────────
-// Named map used in project detail pages.
-// For list pages that cycle colours by index, derive the palette from this map
-// or use CATEGORY_PALETTE below.
-
-export const CATEGORY_COLORS: Record<string, string> = {
-  Branding:  'text-purple-700 bg-purple-50',
-  UX:        'text-blue-700 bg-blue-50',
-  Motion:    'text-orange-700 bg-orange-50',
-  Editorial: 'text-pink-700 bg-pink-50',
-  Web:       'text-cyan-700 bg-cyan-50',
-};
-
-// Fallback class when the category isn't in the map above.
-export const CATEGORY_FALLBACK = 'text-slate-600 bg-slate-100';
-
-/** Returns the Tailwind class string for a given category (with fallback). */
-export const categoryClass = (category: string | null | undefined): string =>
-  (category && CATEGORY_COLORS[category]) ? CATEGORY_COLORS[category] : CATEGORY_FALLBACK;
-
-// Ordered palette used by list/dashboard pages that assign colours to arbitrary
-// category strings by index.
-export const CATEGORY_PALETTE: string[] = [
-  'bg-purple-50 text-purple-700',
-  'bg-blue-50 text-blue-700',
-  'bg-orange-50 text-orange-700',
-  'bg-pink-50 text-pink-700',
-  'bg-cyan-50 text-cyan-700',
-  'bg-red-50 text-red-700',
+// ─── Deterministic colour palette ───────────────────────────────────────────
+const PALETTE = [
+  'text-purple-700 bg-purple-50',
+  'text-blue-700 bg-blue-50',
+  'text-orange-700 bg-orange-50',
+  'text-pink-700 bg-pink-50',
+  'text-cyan-700 bg-cyan-50',
+  'text-red-700 bg-red-50',
+  'text-indigo-700 bg-indigo-50',
+  'text-amber-700 bg-amber-50',
+  'text-lime-700 bg-lime-50',
+  'text-rose-700 bg-rose-50',
+  'text-sky-700 bg-sky-50',
 ];
+
+/** Simple string hash → stable index into the palette. */
+function hashString(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return Math.abs(hash);
+}
+
+/** Returns a stable Tailwind class string for any category name. */
+export function categoryClass(category: string | null | undefined): string {
+  if (!category) return 'text-slate-600 bg-slate-100';
+  const idx = hashString(category) % PALETTE.length;
+  return PALETTE[idx];
+}

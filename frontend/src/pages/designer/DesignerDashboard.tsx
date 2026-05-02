@@ -8,11 +8,8 @@ import { getAllTasks } from '../../api/tasks';
 import AppShell from '../../components/AppShell';
 import apiClient from '../../api/clients';
 import { KpiCard } from '../../components/Ui';
-import { STATUS_BADGE, STATUS_DOT, barColor, statusLabel, CATEGORY_PALETTE } from '../../utils/project';
-import {
-  FolderOpen, Clock, Activity,
-  ListTodo, Timer,
-} from 'lucide-react';
+import { STATUS_BADGE, STATUS_DOT, barColor, statusLabel, categoryClass } from '../../utils/project';
+import { FolderOpen, Clock, Activity, ListTodo } from 'lucide-react';
 
 export default function DesignerDashboard() {
   const { user } = useAuth();
@@ -62,13 +59,6 @@ export default function DesignerDashboard() {
         .slice(0, 5),
     [allLogs, userId],
   );
-
-  const categoryColorMap = useMemo(() => {
-    const cats = Array.from(
-      new Set(projects.map(p => p.category).filter((c): c is string => Boolean(c)))
-    ).sort();
-    return new Map(cats.map((c, i) => [c, CATEGORY_PALETTE[i % CATEGORY_PALETTE.length]]));
-  }, [projects]);
 
   return (
     <AppShell title="Dashboard">
@@ -128,7 +118,7 @@ export default function DesignerDashboard() {
                       </div>
                       {p.category && (
                         <div className="mb-1.5">
-                          <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide ${categoryColorMap.get(p.category) ?? 'bg-slate-50 text-slate-700'}`}>
+                          <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide ${categoryClass(p.category)}`}>
                             {p.category}
                           </span>
                         </div>
@@ -196,7 +186,7 @@ export default function DesignerDashboard() {
                     <p className="text-[11px] text-slate-400 mt-0.5 truncate">{log.project_name}</p>
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
-                    <Timer size={12} className="text-slate-400" />
+                    <Clock size={12} className="text-slate-400" />
                     <span className="font-mono text-sm font-semibold text-slate-700">
                       {Number(log.hours_spent).toFixed(1)} h
                     </span>

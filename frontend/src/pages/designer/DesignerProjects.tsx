@@ -1,19 +1,10 @@
 import { Link } from 'react-router-dom';
-import { useMemo } from 'react';
 import { useProjects } from '../../hooks/useProjects';
 import AppShell from '../../components/AppShell';
-import { STATUS_BADGE, STATUS_DOT, barColor, statusLabel, CATEGORY_PALETTE } from '../../utils/project';
+import { STATUS_BADGE, STATUS_DOT, barColor, statusLabel, categoryClass } from '../../utils/project';
 
 export default function DesignerProjects() {
   const { data: projects, isLoading } = useProjects();
-
-  const categoryColorMap = useMemo(() => {
-    if (!projects) return new Map<string, string>();
-    const cats = Array.from(
-      new Set(projects.map(p => p.category).filter((c): c is string => Boolean(c)))
-    ).sort();
-    return new Map(cats.map((c, i) => [c, CATEGORY_PALETTE[i % CATEGORY_PALETTE.length]]));
-  }, [projects]);
 
   return (
     <AppShell title="My Projects">
@@ -53,11 +44,11 @@ export default function DesignerProjects() {
                       </span>
                     </div>
                     <div className="flex items-center gap-2 flex-wrap">
-                      {meta && <p className="text-sm text-slate-400">{meta}</p>}
+                      {meta && <p className="text-sm text-slate-700">{meta}</p>}
                     </div>
                     {p.category && (
                       <div className="mt-1.5">
-                        <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide ${categoryColorMap.get(p.category) ?? 'bg-slate-50 text-slate-700'}`}>
+                        <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide ${categoryClass(p.category)}`}>
                           {p.category}
                         </span>
                       </div>

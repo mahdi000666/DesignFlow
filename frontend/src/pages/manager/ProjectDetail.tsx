@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useMemo, useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
-import { useProject, useUpdateProject, useDeleteProject, useProjects } from '../../hooks/useProjects';
+import { useProject, useUpdateProject, useDeleteProject } from '../../hooks/useProjects';
 import { useTasks, useCreateTask } from '../../hooks/useTasks';
 import { useTimeLogs, useDeleteTimeLog, useUpdateTimeLog } from '../../hooks/useTimeLogs';
 import { useFiles } from '../../hooks/useFiles';
@@ -24,7 +24,7 @@ import type { TaskPayload, Task } from '../../types/task';
 import type { ProjectPayload } from '../../types/project';
 import { exportPDF } from '../../api/analytics';
 import type { ScopeCreepItem } from '../../types/analytic';
-import { STATUS_BADGE, STATUS_DOT, barColor, statusLabel, CATEGORY_PALETTE } from '../../utils/project';
+import { STATUS_BADGE, STATUS_DOT, barColor, statusLabel, categoryClass } from '../../utils/project';
 import UnreadBadge from '../../components/UnreadBadge';
 import { formatEHR, formatTND } from '../../utils/format';
 import {
@@ -166,7 +166,6 @@ export default function ProjectDetail() {
   const { data: files    = [] } = useFiles(projectId);
   const { data: messages = [] } = useMessages(projectId);
   const { data: feedback = [] } = useFeedback(projectId);
-  const { data: allProjects = [] } = useProjects();
 
   const { data: scopeCreepData = [] } = useScopeCreep({ project: projectId });
   const scopeEntry = (scopeCreepData as ScopeCreepItem[])[0] as ScopeCreepItem | undefined;
@@ -199,14 +198,6 @@ export default function ProjectDetail() {
     }
     return map;
   }, [logs]);
-
-  // ── Category colors (consistent with ProjectList) ──────────────────────────
-  const categoryColorMap = useMemo(() => {
-    const cats = Array.from(
-      new Set(allProjects.map(p => p.category).filter((c): c is string => Boolean(c)))
-    ).sort();
-    return new Map(cats.map((c, i) => [c, CATEGORY_PALETTE[i % CATEGORY_PALETTE.length]]));
-  }, [allProjects]);
 
   // Close status dropdown on outside click
   useEffect(() => {
@@ -432,7 +423,7 @@ export default function ProjectDetail() {
 
         {/* Category */}
         {project.category && (
-          <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border shadow-sm ${categoryColorMap.get(project.category) ?? 'bg-slate-50 text-slate-700 border-slate-200'}`}>
+          <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border shadow-sm ${categoryClass(project.category)}`}>
             <Tag size={12} className="opacity-70" />
             {project.category}
           </span>
@@ -638,7 +629,7 @@ export default function ProjectDetail() {
                   className={
                     showTaskForm
                       ? 'border border-slate-200 text-slate-600 px-3.5 py-2 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors'
-                      : 'bg-primary text-white px-3.5 py-2 rounded-lg text-sm font-semibold hover:bg-primary-600 transition-colors'
+                      : 'bg-primary text-white px-3.5 py-1.5 rounded-lg text-sm font-semibold hover:bg-primary-600 transition-colors'
                   }
                 >
                   {showTaskForm ? 'Cancel' : '+ Add Task'}

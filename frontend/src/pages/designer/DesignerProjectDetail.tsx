@@ -1,7 +1,7 @@
 import { useParams } from 'react-router-dom';
 import { useState, useMemo, useEffect } from 'react';
 import type { ReactNode } from 'react';
-import { useProject, useProjects } from '../../hooks/useProjects';
+import { useProject } from '../../hooks/useProjects';
 import { useTasks } from '../../hooks/useTasks';
 import { useTimeLogs, useCreateTimeLog, useUpdateTimeLog } from '../../hooks/useTimeLogs';
 import { useFiles } from '../../hooks/useFiles';
@@ -20,7 +20,7 @@ import { KpiCard } from '../../components/Ui';
 import type { Task } from '../../types/task';
 import type { TimeLogPayload } from '../../types/timelog';
 import { formatEHR, formatTND } from '../../utils/format';
-import { STATUS_BADGE, STATUS_DOT, barColor, statusLabel, CATEGORY_PALETTE } from '../../utils/project';
+import { STATUS_BADGE, STATUS_DOT, barColor, statusLabel, categoryClass } from '../../utils/project';
 import UnreadBadge from '../../components/UnreadBadge';
 import {
   Calendar, User, Tag, Clock, CheckCircle2, Activity, FolderOpen, ListTodo, Timer, BarChart3,
@@ -41,7 +41,6 @@ export default function DesignerProjectDetail() {
   const { data: files    = [] } = useFiles(projectId);
   const { data: messages = [] } = useMessages(projectId);
   const { data: feedback = [] } = useFeedback(projectId);
-  const { data: allProjects = [] } = useProjects();
 
   const { count: unreadMessages, markRead: markMessagesRead } =
     useUnreadCount(messages, projectId, 'messages', userId);
@@ -115,13 +114,6 @@ export default function DesignerProjectDetail() {
   const taskTodoCount = tasks.filter(t => t.status === 'Todo').length;
   const taskInProgressCount = tasks.filter(t => t.status === 'InProgress').length;
 
-  const categoryColorMap = useMemo(() => {
-    const cats = Array.from(
-      new Set(allProjects.map(p => p.category).filter((c): c is string => Boolean(c)))
-    ).sort();
-    return new Map(cats.map((c, i) => [c, CATEGORY_PALETTE[i % CATEGORY_PALETTE.length]]));
-  }, [allProjects]);
-
   if (loadingProject) {
     return <AppShell title="Project"><p className="text-sm text-slate-400">Loading…</p></AppShell>;
   }
@@ -164,7 +156,7 @@ export default function DesignerProjectDetail() {
         </span>
 
         {project.category && (
-          <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border shadow-sm ${categoryColorMap.get(project.category) ?? 'bg-slate-50 text-slate-700 border-slate-200'}`}>
+          <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border shadow-sm ${categoryClass(project.category)}`}>
             <Tag size={12} className="opacity-70" />
             {project.category}
           </span>
@@ -172,7 +164,7 @@ export default function DesignerProjectDetail() {
       </div>
 
       {/* ── 3 KPI cards ───────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-3 gap-3.5 mb-4">
+      <div className="grid grid-cols-4 gap-3.5 mb-4">
         <KpiCard
           label="My Tasks"
           value={tasks.length}
@@ -187,6 +179,11 @@ export default function DesignerProjectDetail() {
           label="Budget Utilisation"
           value={budgetPctRounded != null ? `${budgetPctRounded}%` : '—'}
           icon={<BarChart3 size={15} />}
+        />
+        <KpiCard
+          label="Tasks Done"
+          value={taskDoneCount}
+          icon={<CheckCircle2 size={15} />}
         />
       </div>
 

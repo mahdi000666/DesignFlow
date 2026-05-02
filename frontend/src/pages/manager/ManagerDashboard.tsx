@@ -18,7 +18,7 @@ import { getAllTimeLogs } from '../../api/timelogs';
 import { getAllFiles } from '../../api/files';
 import { getAllCompletedTasks, getAllTasks } from '../../api/tasks';
 import { formatTND, formatEHR } from '../../utils/format';
-import { barColor, CATEGORY_PALETTE } from '../../utils/project';
+import { barColor, categoryClass } from '../../utils/project';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -109,13 +109,6 @@ export default function ManagerDashboard() {
     () => Object.fromEntries(projects.map(p => [p.id, p.project_name])),
     [projects],
   );
-
-  const categoryColorMap = useMemo(() => {
-    const cats = Array.from(
-      new Set(projects.map(p => p.category).filter((c): c is string => Boolean(c))),
-    ).sort();
-    return new Map(cats.map((c, i) => [c, CATEGORY_PALETTE[i % CATEGORY_PALETTE.length]]));
-  }, [projects]);
 
   const taskStatusData = useMemo(() => [
     { name: 'To Do',       value: allTasks.filter(t => t.status === 'Todo').length,       color: DONUT_COLORS.Todo },
@@ -518,8 +511,7 @@ export default function ManagerDashboard() {
                           <span className="text-xs text-slate-500">{p.client_name}</span>
                           {p.category && (
                             <span
-                              className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide ${categoryColorMap.get(p.category) ?? 'bg-slate-50 text-slate-700'
-                                }`}
+                              className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide ${categoryClass(p.category)}`}
                             >
                               {p.category}
                             </span>

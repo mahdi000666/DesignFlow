@@ -8,7 +8,7 @@ import AppShell from '../../components/AppShell';
 import apiClient from '../../api/clients';
 import type { Project, ProjectPayload } from '../../types/project';
 import type { ScopeCreepItem } from '../../types/analytic';
-import { STATUS_BADGE, STATUS_DOT, barColor, statusLabel, CATEGORY_PALETTE } from '../../utils/project';
+import { STATUS_BADGE, STATUS_DOT, barColor, statusLabel, categoryClass } from '../../utils/project';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -63,13 +63,6 @@ export default function ProjectList() {
     () => Array.from(new Set(projects.map(p => p.client_name))).sort(),
     [projects]
   );
-
-  const categoryColorMap = useMemo(() => {
-    const uniqueCategories = Array.from(
-      new Set(projects.map(p => p.category).filter((c): c is string => Boolean(c)))
-    ).sort();
-    return new Map(uniqueCategories.map((cat, i) => [cat, CATEGORY_PALETTE[i % CATEGORY_PALETTE.length]]));
-  }, [projects]);
 
   const scopeCreepMap = useMemo(() => {
     const map = new Map<number, { index: number; unplanned: number; total: number }>();
@@ -202,7 +195,7 @@ export default function ProjectList() {
                       </span>
                       {p.category && (
                         <div className="mt-1">
-                          <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide ${categoryColorMap.get(p.category) ?? 'bg-slate-50 text-slate-700'}`}>
+                          <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide ${categoryClass(p.category)}`}>
                             {p.category}
                           </span>
                         </div>

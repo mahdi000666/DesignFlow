@@ -4,6 +4,10 @@ As for the time log icon in designer dashboard, just use the ones found in manag
 You did correctly put the project categories in designer pages, but the colors do not match the ones in manager pages. Did you change something? For example "Motion" category is light red in manager pages, and light blue in designer pages.
 
 
+Good job here is my feedback after the changes:
+1. In designer project list, the text that displays the client name and due date is in gray and barely visible, what do I need to change to make it a little darker?
+2. Most of the project category colors, are displayed in gray like shown in the screenshot. why?
+ 
 
 EDIT PROJECT
 CHECK SECOND DESIGN LATER.
