@@ -134,7 +134,7 @@ export default function DesignerProjectDetail() {
   const TABS: Tab[] = ['tasks', 'log', 'files', 'feedback', 'messages'];
 
   return (
-    <AppShell title={project.project_name}>
+    <AppShell title={project.project_name} breadcrumb={project.description || undefined}>
 
       {/* ── Meta chips ────────────────────────────────────────────────────── */}
       <div className="flex items-center gap-2.5 flex-wrap mb-6">
@@ -143,47 +143,52 @@ export default function DesignerProjectDetail() {
           {statusLabel(project.status)}
         </span>
 
-        {project.deadline && (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-blue-50 border border-blue-100 text-blue-700 shadow-sm">
-            <Calendar size={12} />
-            {project.deadline}
-          </span>
-        )}
-
-        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-violet-50 border border-violet-100 text-violet-700 shadow-sm">
-          <User size={12} />
-          {project.client_name}
-        </span>
-
         {project.category && (
           <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border shadow-sm ${categoryClass(project.category)}`}>
             <Tag size={12} className="opacity-70" />
             {project.category}
           </span>
         )}
+
+        {project.deadline && (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-slate-100 border border-slate-200 text-slate-600">
+            <Calendar size={12} className="text-blue-500" />
+            {project.deadline}
+          </span>
+        )}
+
+        {/* Client */}
+        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-slate-100 border border-slate-200 text-slate-600">
+          <User size={12} className="text-purple-500" />
+          {project.client_name}
+        </span>
       </div>
 
-      {/* ── 3 KPI cards ───────────────────────────────────────────────────── */}
+      {/* ── 4 KPI cards ───────────────────────────────────────────────────── */}
       <div className="grid grid-cols-4 gap-3.5 mb-4">
         <KpiCard
           label="My Tasks"
           value={tasks.length}
           icon={<FolderOpen size={15} />}
+          borderColor="#6366f1"
         />
         <KpiCard
           label="My Hours Logged"
           value={`${myHours.toFixed(1)} h`}
           icon={<Clock size={15} />}
+          borderColor="#22c55e"
         />
         <KpiCard
           label="Budget Utilisation"
           value={budgetPctRounded != null ? `${budgetPctRounded}%` : '—'}
           icon={<BarChart3 size={15} />}
+          borderColor="#f59e0b"
         />
         <KpiCard
           label="Tasks Done"
           value={taskDoneCount}
           icon={<CheckCircle2 size={15} />}
+          borderColor="#3b82f6"
         />
       </div>
 

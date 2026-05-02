@@ -156,7 +156,7 @@ export function KpiCard({
           style={{ backgroundColor: borderColor }}
         />
       )}
-      <div className="flex items-start justify-between mb-3">
+      <div className="flex items-start justify-between gap-3 mb-3">
         <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
           {label}
         </span>

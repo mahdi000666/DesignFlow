@@ -58,16 +58,19 @@ export default function ClientDashboard() {
             label="My Projects"
             value={projects.length}
             icon={<FolderOpen size={15} />}
+            borderColor="#22c55e"
           />
           <KpiCard
             label="Pending Feedback"
             value={pendingFeedback}
             icon={<MessageSquare size={15} />}
+            borderColor="#f59e0b"
           />
           <KpiCard
             label="Total Contract Value"
             value={formatTND(totalContractValue)}
             icon={<DollarSign size={15} />}
+            borderColor="#3b82f6"
           />
         </div>
       </div>
@@ -110,7 +113,7 @@ export default function ClientDashboard() {
                     {openCount > 0 && (
                       <span className="shrink-0 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200">
                         <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
-                        {openCount} Open feedback
+                        {openCount} Open feedback{openCount !== 1 ? 's' : ''}
                       </span>
                     )}
                   </div>

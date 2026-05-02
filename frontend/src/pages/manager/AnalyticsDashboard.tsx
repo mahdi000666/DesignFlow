@@ -153,21 +153,25 @@ export default function AnalyticsDashboard() {
       label: 'Total Revenue',
       value: kpi ? formatTND(kpi.total_revenue) : '—',
       icon: <DollarSign size={15} />,
+      borderColor: "#6366f1",
     },
     {
       label: 'Avg. EHR',
       value: kpi ? formatEHR(kpi.avg_ehr) : '—',
       icon: <Activity size={15} />,
+      borderColor: "#22c55e",
     },
     {
       label: 'Total Hours',
       value: `${totalHours.toFixed(1)}h`,
       icon: <Clock size={15} />,
+      borderColor: "#f59e0b",
     },
     {
       label: 'Profit Margin',
       value: avgMargin !== null ? `${avgMargin.toFixed(1)}%` : '—',
       icon: <TrendingUp size={15} />,
+      borderColor: "#3b82f6",
     },
   ];
 
@@ -222,7 +226,7 @@ export default function AnalyticsDashboard() {
       {/* ── Row 1: KPI cards ──────────────────────────────────────────────── */}
       <div className="grid grid-cols-4 gap-3.5 mb-4">
         {KPI_CARDS.map(c => (
-          <KpiCard key={c.label} label={c.label} value={c.value} icon={c.icon} />
+          <KpiCard key={c.label} label={c.label} value={c.value} icon={c.icon} borderColor={c.borderColor} />
         ))}
       </div>
 

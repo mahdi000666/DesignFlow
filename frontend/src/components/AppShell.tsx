@@ -77,7 +77,7 @@ const linkCls = (path: string) =>
 
       {/* ── Sidebar ─────────────────────────────────────────────────────────── */}
       {/* Sidebar shell */}
-<aside className="w-52 bg-sidebar flex flex-col shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.08)]">
+<aside className="w-56 bg-sidebar flex flex-col shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.08)]">
 
         {/* Logo */}
         <div className="flex h-14 items-center gap-2 border-b border-sidebar-border px-4">
@@ -126,14 +126,19 @@ const linkCls = (path: string) =>
 
         {/* Topbar */}
         <header className="bg-white border-b border-slate-200 px-8 py-4 flex items-center justify-between shrink-0 shadow-sm">
-          <div className="min-w-0">
-            {breadcrumb && (
-              <p className="text-[11px] text-slate-400 font-medium mb-1">{breadcrumb}</p>
-            )}
+          {/* Left: Title + Breadcrumb stacked */}
+          <div className="flex flex-col min-w-0">
             <h1 className="text-xl font-semibold text-slate-900">{title}</h1>
+            {breadcrumb && (
+              <p className="text-sm text-slate-500 mt-1 leading-relaxed max-w-3xl">
+                {breadcrumb}
+              </p>
+            )}
           </div>
+
+          {/* Right: Actions */}
           {actions && (
-            <div className="flex items-center gap-2.5 shrink-0">
+            <div className="flex items-center gap-2.5 shrink-0 ml-6">
               {actions}
             </div>
           )}

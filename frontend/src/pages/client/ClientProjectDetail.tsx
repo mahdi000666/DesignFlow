@@ -114,26 +114,27 @@ export default function ClientProjectDetail() {
           {statusLabel(project.status)}
         </span>
 
-        {project.deadline && (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-blue-50 border border-blue-100 text-blue-700 shadow-sm">
-            <Calendar size={12} />
-            {project.deadline}
-          </span>
-        )}
-
         {project.category && (
           <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border shadow-sm ${categoryClass(project.category)}`}>
             <Tag size={12} className="opacity-70" />
             {project.category}
           </span>
         )}
-
         {project.budget_amount != null && (
           <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-50 border border-emerald-100 text-emerald-700 shadow-sm">
             <DollarSign size={12} />
             {formatTND(Number(project.budget_amount))}
           </span>
         )}
+
+        {project.deadline && (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-slate-100 border border-slate-200 text-slate-600">
+            <Calendar size={12} className="text-blue-500" />
+            {project.deadline}
+          </span>
+        )}
+
+        
       </div>
 
       {/* ── 3 KPI cards ───────────────────────────────────────────────────── */}
@@ -143,16 +144,19 @@ export default function ClientProjectDetail() {
             label="Budget Utilisation"
             value={budgetPctRounded != null ? `${budgetPctRounded}%` : '—'}
             icon={<BarChart3 size={15} />}
+            borderColor="#22c55e"
           />
           <KpiCard
             label="Open Feedback"
             value={openFeedbackCount}
             icon={<MessageSquare size={15} />}
+            borderColor="#f59e0b"
           />
           <KpiCard
             label="Task Completion"
             value={totalTasks > 0 ? `${taskPct}%` : '—'}
             icon={<CheckCircle2 size={15} />}
+            borderColor="#3b82f6"
           />
         </div>
       </div>

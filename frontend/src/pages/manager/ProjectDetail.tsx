@@ -312,6 +312,7 @@ export default function ProjectDetail() {
   return (
     <AppShell
       title={project.project_name}
+      breadcrumb={project.description || undefined}
       actions={
         <div className="flex items-center gap-2">
           {isManager && (
@@ -324,7 +325,7 @@ export default function ProjectDetail() {
           )}
           <button
             onClick={() => exportPDF(projectId)}
-            className="bg-primary text-white px-3.5 py-2 rounded-lg text-sm font-semibold hover:bg-primary-600 transition-colors"
+            className="bg-white text-primary border border-primary-200 px-3.5 py-2 rounded-lg text-sm font-semibold hover:bg-primary-50 transition-colors"
           >
             Export PDF
           </button>
@@ -357,13 +358,6 @@ export default function ProjectDetail() {
           project={project}
           onClose={() => setShowAssignPanel(false)}
         />
-      )}
-
-      {/* ── Project description ───────────────────────────────────────────── */}
-      {project.description && (
-        <p className="text-sm text-slate-500 -mt-2 mb-5 leading-relaxed max-w-3xl">
-          {project.description}
-        </p>
       )}
 
       {/* ── Meta chips row ────────────────────────────────────────────────── */}
@@ -404,20 +398,6 @@ export default function ProjectDetail() {
           </span>
         )}
 
-        {/* Deadline */}
-        {project.deadline && (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-blue-50 border border-blue-100 text-blue-700 shadow-sm">
-            <Calendar size={12} />
-            {project.deadline}
-          </span>
-        )}
-
-        {/* Client */}
-        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-violet-50 border border-violet-100 text-violet-700 shadow-sm">
-          <User size={12} />
-          {project.client_name}
-        </span>
-
         {/* Category */}
         {project.category && (
           <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border shadow-sm ${categoryClass(project.category)}`}>
@@ -426,10 +406,24 @@ export default function ProjectDetail() {
           </span>
         )}
 
+        {/* Deadline */}
+        {project.deadline && (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-slate-100 border border-slate-200 text-slate-600">
+            <Calendar size={12} className="text-blue-500" />
+            {project.deadline}
+          </span>
+        )}
+
+        {/* Client */}
+        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-slate-100 border border-slate-200 text-slate-600">
+          <User size={12} className="text-purple-500" />
+          {project.client_name}
+        </span>
+
         {/* Designers count */}
         {project.assignments.length > 0 && (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-indigo-50 border border-indigo-100 text-indigo-700 shadow-sm">
-            <Users size={12} />
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-slate-100 border border-slate-200 text-slate-600">
+            <Users size={12} className="text-indigo-400" />
             {project.assignments.length} designer{project.assignments.length !== 1 ? 's' : ''}
           </span>
         )}
@@ -461,21 +455,25 @@ export default function ProjectDetail() {
           label="Budget Utilisation"
           value={budgetPctRounded != null ? `${budgetPctRounded}%` : '—'}
           icon={<BarChart3 size={15} />}
+          borderColor="#6366f1"
         />
         <KpiCard
           label="Eff. Hourly Rate"
           value={currentEHR != null ? formatEHR(currentEHR) : '—'}
           icon={<DollarSign size={15} />}
+          borderColor="#22c55e"
         />
         <KpiCard
           label="Scope Creep Index"
           value={scopeCreepIndex != null ? `${scopeCreepIndex}%` : '—'}
           icon={<AlertTriangle size={15} />}
+          borderColor="#f59e0b"
         />
         <KpiCard
           label="Rev : Approval Ratio"
           value={revRatio != null ? `${revRatio} : 1` : approvals === 0 && revisions === 0 ? '—' : `${revisions} : 0`}
           icon={<MessageSquare size={15} />}
+          borderColor="#3b82f6"
         />
       </div>
 

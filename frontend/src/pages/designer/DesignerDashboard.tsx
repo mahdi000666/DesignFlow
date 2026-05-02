@@ -69,21 +69,25 @@ export default function DesignerDashboard() {
           label="Assigned Projects"
           value={projects.length}
           icon={<FolderOpen size={15} />}
+          borderColor="#6366f1"
         />
         <KpiCard
           label="Open Tasks"
           value={openTasks.length}
           icon={<ListTodo size={15} />}
+          borderColor="#22c55e"
         />
         <KpiCard
           label="Hours This Week"
           value={`${hoursThisWeek.toFixed(1)} h`}
           icon={<Clock size={15} />}
+          borderColor="#f59e0b"
         />
         <KpiCard
           label="Utilisation"
           value={utilisation != null ? `${utilisation}%` : '—'}
           icon={<Activity size={15} />}
+          borderColor="#3b82f6"
         />
       </div>
 
@@ -180,17 +184,25 @@ export default function DesignerDashboard() {
           ) : (
             <ul className="divide-y divide-slate-100">
               {recentLogs.map(log => (
-                <li key={log.id} className="px-4 py-3 flex items-center justify-between gap-2">
-                  <div className="min-w-0">
+                <li key={log.id} className="flex items-start gap-3 px-4 py-3">
+                  {/* Styled icon container — matches ManagerDashboard "log" activity */}
+                  <div
+                    className="mt-0.5 w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+                    style={{ backgroundColor: '#eff6ff', color: '#1d4ed8' }}
+                  >
+                    <Clock size={13} />
+                  </div>
+
+                  {/* Text content */}
+                  <div className="flex-1 min-w-0">
                     <p className="text-sm text-slate-700 truncate">{log.task_name}</p>
                     <p className="text-[11px] text-slate-400 mt-0.5 truncate">{log.project_name}</p>
                   </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <Clock size={12} className="text-slate-400" />
-                    <span className="font-mono text-sm font-semibold text-slate-700">
-                      {Number(log.hours_spent).toFixed(1)} h
-                    </span>
-                  </div>
+
+                  {/* Hours — right side, no plain icon */}
+                  <span className="font-mono text-sm font-semibold text-slate-700 shrink-0">
+                    {Number(log.hours_spent).toFixed(1)} h
+                  </span>
                 </li>
               ))}
             </ul>

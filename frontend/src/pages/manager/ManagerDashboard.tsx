@@ -59,7 +59,7 @@ const ACTIVITY_CFG: Record<ActivityType, { bg: string; fg: string; icon: React.R
     icon: <Clock size={13} />,
   },
   file: {
-    bg: '#f0fdfa', fg: '#0f766e',
+    bg: '#f3e8ff', fg: '#7e22ce',
     icon: <FileText size={13} />,
   },
 };
@@ -192,21 +192,25 @@ export default function ManagerDashboard() {
       label: 'Total Revenue',
       value: kpi ? formatTND(kpi.total_revenue) : '—',
       icon: <DollarSign size={15} />,
+      borderColor: "#6366f1",
     },
     {
       label: 'Avg. EHR',
       value: kpi ? formatEHR(kpi.avg_ehr) : '—',
       icon: <Activity size={15} />,
+      borderColor: "#22c55e",
     },
     {
       label: 'Active Projects',
       value: kpi ? String(kpi.active_projects) : '—',
       icon: <FolderOpen size={15} />,
+      borderColor: "#f59e0b",
     },
     {
       label: 'Pending Feedback',
       value: kpi ? String(kpi.pending_feedback) : '—',
       icon: <MessageSquare size={15} />,
+      borderColor: "#3b82f6",
     },
   ];
 
@@ -216,7 +220,7 @@ export default function ManagerDashboard() {
       {/* ── Row 1: KPI cards ────────────────────────────────────────────────── */}
       <div className="grid grid-cols-4 gap-3.5 mb-4">
         {KPI_CARDS.map(c => (
-          <KpiCard key={c.label} label={c.label} value={c.value} icon={c.icon} />
+          <KpiCard key={c.label} label={c.label} value={c.value} icon={c.icon} borderColor={c.borderColor} />
         ))}
       </div>
 
