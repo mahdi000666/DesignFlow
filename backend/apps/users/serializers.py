@@ -203,13 +203,12 @@ class UserMeSerializer(serializers.ModelSerializer):
         return data
 
     def update(self, instance, validated_data):
-        print("VALIDATED DATA:", validated_data)
         instance.full_name = validated_data.get('full_name', instance.full_name)
 
         if 'profile_picture' in validated_data:
             instance.profile_picture = validated_data['profile_picture']
             
-        instance.save(update_fields=['full_name'])
+        instance.save(update_fields=['full_name', 'profile_picture'])
 
         if instance.role == 'Designer':
             profile = Designer.objects.get(user=instance)

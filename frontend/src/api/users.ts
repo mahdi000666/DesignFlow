@@ -38,7 +38,7 @@ export const uploadAvatar = async (file: File): Promise<MeData> => {
   const form = new FormData();
   form.append('profile_picture', file);
   const { data } = await apiClient.patch('/users/me/', form, {
-    headers: { 'Content-Type': 'multipart/form-data' },
+    headers: { 'Content-Type': undefined },
   });
   return data;
 };

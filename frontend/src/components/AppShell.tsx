@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { Initials } from '../utils/format';
+import { useMe } from '../hooks/useUsers';
 import {
   IconDashboard,
   IconProjects,
@@ -51,6 +52,7 @@ interface AppShellProps {
 
 export default function AppShell({ title, breadcrumb, actions, children }: AppShellProps) {
   const { user, logout } = useAuth();
+  const { data: me }     = useMe();
   const location         = useLocation();
   const role             = user?.role ?? 'Manager';
   const navItems         = NAV_BY_ROLE[role] ?? [];
@@ -101,8 +103,11 @@ const linkCls = (path: string) =>
         <div className="border-t border-sidebar-border p-4">
           <div className="flex items-center gap-3">
             {/* Bottom avatar */}
-            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-semibold shrink-0">
-              {avatarInitials}
+            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-semibold shrink-0 overflow-hidden">
+              {me?.avatar_url
+                ? <img src={me.avatar_url} alt={me.full_name} className="w-full h-full object-cover" />
+                : avatarInitials
+              }
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-white text-sm font-medium truncate">{user?.full_name}</p>

@@ -8,6 +8,7 @@ export interface DesignerCard {
   utilization_pct:          number | null;
   active_projects:          string[];
   is_active:                boolean;
+  avatar_url:               string | null;
 }
 
 export interface TeamUser {
@@ -17,6 +18,7 @@ export interface TeamUser {
   role:           'Manager' | 'Designer' | 'Client';
   specialization: string;
   is_active:      boolean;
+  avatar_url:     string | null;
 }
 
 export interface TeamData {

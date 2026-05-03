@@ -111,9 +111,12 @@ function DesignerCardComponent({ d }: { d: DesignerCard }) {
     <div className="card p-5 flex flex-col gap-4">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-semibold shrink-0"
-          style={{ backgroundColor: color }}>
-          {Initials(d.designer_name)}
+        <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-semibold shrink-0 overflow-hidden"
+          style={d.avatar_url ? {} : { backgroundColor: color }}>
+          {d.avatar_url
+            ? <img src={d.avatar_url} alt={d.designer_name} className="w-full h-full object-cover" />
+            : Initials(d.designer_name)
+          }
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-slate-900 truncate">{d.designer_name}</p>
@@ -182,9 +185,12 @@ function UserRow({ u }: { u: TeamUser }) {
     <tr className="border-b border-slate-50 last:border-0 hover:bg-slate-50/60 transition-colors">
       <td className="py-3 pr-4">
         <div className="flex items-center gap-3">
-          <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-semibold shrink-0"
-            style={{ backgroundColor: color }}>
-            {Initials(u.full_name)}
+          <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-semibold shrink-0 overflow-hidden"
+            style={u.avatar_url ? {} : { backgroundColor: color }}>
+            {u.avatar_url
+              ? <img src={u.avatar_url} alt={u.full_name} className="w-full h-full object-cover" />
+              : Initials(u.full_name)
+            }
           </div>
           <span className="text-sm font-medium text-slate-800">{u.full_name}</span>
         </div>

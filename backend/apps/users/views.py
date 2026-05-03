@@ -104,8 +104,6 @@ optionally saves role-specific profile fields in the same request.
 @api_view(['GET', 'PATCH'])
 @permission_classes([IsAuthenticated])
 def me(request):
-    print("FILES:", request.FILES)
-    print("DATA:", request.data)
     if request.method == 'GET':
         serializer = UserMeSerializer(request.user, context={'request': request})
         return Response(serializer.data)
@@ -203,6 +201,7 @@ def team_list(request):
             'utilization_pct':          util_pct,
             'active_projects':          active_projects,
             'is_active':                d.user.is_active,
+            'avatar_url': request.build_absolute_uri(d.user.profile_picture.url) if d.user.profile_picture else None,
         })
 
     all_users = (
@@ -232,6 +231,7 @@ def team_list(request):
             'role':           u.role,
             'specialization': spec,
             'is_active':      u.is_active,
+            'avatar_url': request.build_absolute_uri(u.profile_picture.url) if u.profile_picture else None,
         })
 
     return Response({'designers': designer_data, 'users': user_data})
