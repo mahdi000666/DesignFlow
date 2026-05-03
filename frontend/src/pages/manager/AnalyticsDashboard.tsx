@@ -396,14 +396,14 @@ export default function AnalyticsDashboard() {
                         style={{ width: `${Math.min(idx, 100)}%`, backgroundColor: color }}
                       />
                     </div>
-                    <p className="text-[10px] text-slate-400 mt-1 font-mono">
+                    <p className="text-[11px] text-slate-400 mt-1 font-mono">
                       <span className={`font-semibold ${metricCountColor(row.unplanned_tasks)}`}>
                         {row.unplanned_tasks}
                       </span>{' '}
-                      <span className="text-slate-500">Unplanned</span>
-                      <span className="text-slate-300"> / </span>
+                      <span className={`${metricCountColor(row.unplanned_tasks)}`}>Unplanned</span>
+                      <span className="text-slate-500"> / </span>
                       <span className="font-semibold text-slate-700">{row.total_tasks}</span>{' '}
-                      <span className="text-slate-500">Total</span>
+                      <span className="font-semibold text-slate-700">Total</span>
                     </p>
                   </div>
                 );

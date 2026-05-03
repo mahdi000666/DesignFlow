@@ -20,6 +20,7 @@ class Feedback(models.Model):
     resolved_at  = models.DateTimeField(null=True, blank=True)
 
     class Meta:
+        ordering = ['-submitted_at']
         indexes = [
             models.Index(fields=['project', 'category', 'status']),
             models.Index(fields=['submitted_at']),

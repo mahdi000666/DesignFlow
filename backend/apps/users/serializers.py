@@ -153,15 +153,22 @@ class UserMeSerializer(serializers.ModelSerializer):
     available_hours_per_week = serializers.IntegerField(required=False, allow_null=True)
     phone                    = serializers.CharField(required=False, allow_blank=True)
     industry                 = serializers.CharField(required=False, allow_blank=True)
+    avatar_url               = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model  = User
         fields = [
             'id', 'email', 'full_name', 'role',
             'hourly_rate', 'specialization', 'available_hours_per_week',
-            'phone', 'industry',
+            'phone', 'industry', 'avatar_url', 'profile_picture',
         ]
-        read_only_fields = ['id', 'email', 'role', 'hourly_rate']
+        read_only_fields = ['id', 'email', 'role', 'hourly_rate', 'avatar_url']
+
+    def get_avatar_url(self, obj):
+        if obj.profile_picture:
+            request = self.context.get('request')
+            return request.build_absolute_uri(obj.profile_picture.url) if request else obj.profile_picture.url
+        return None
 
     def get_hourly_rate(self, obj):
         if obj.role != 'Designer':
@@ -196,7 +203,12 @@ class UserMeSerializer(serializers.ModelSerializer):
         return data
 
     def update(self, instance, validated_data):
+        print("VALIDATED DATA:", validated_data)
         instance.full_name = validated_data.get('full_name', instance.full_name)
+
+        if 'profile_picture' in validated_data:
+            instance.profile_picture = validated_data['profile_picture']
+            
         instance.save(update_fields=['full_name'])
 
         if instance.role == 'Designer':

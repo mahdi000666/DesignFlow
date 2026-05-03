@@ -17,5 +17,8 @@ class FileUpload(models.Model):
     file_size   = models.IntegerField()                # Bytes
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        ordering = ['-uploaded_at']
+
     def __str__(self):
         return f'{self.file_name} ({self.project.project_name})'

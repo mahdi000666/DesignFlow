@@ -1,18 +1,10 @@
-1. I get this error when i run manage.py runserver while inside a project detail page.
-```
-C:\Users\Mahdi\Proj\PFE\DesignFlow\venv\Lib\site-packages\rest_framework\pagination.py:208: UnorderedObjectListWarning: Pagination may yield inconsistent results with an unordered object_list: <class 'apps.files.models.FileUpload'> QuerySet.
-  paginator = self.django_paginator_class(queryset, page_size)
-C:\Users\Mahdi\Proj\PFE\DesignFlow\venv\Lib\site-packages\rest_framework\pagination.py:208: UnorderedObjectListWarning: Pagination may yield inconsistent results with an unordered object_list: <class 'apps.feedback.models.Feedback'> QuerySet.
-  paginator = self.django_paginator_class(queryset, page_size)
-```
-2. What is revision to approal ratio and how it is calculated? give examples.
-3. Im wondering why does the excel client total revenu does not match the client revenu in the chart? The EHR also does not seem to match. And the total hours/revisions/approvals do not make sense as well, why?
-4. 
+1. Can you show the before vs after avatar div? Also its saying "Cannot find name 'uploading'."
+2. Do I run "pip install Pillow" inside the backend folder or outside? either way im getting this error:
+Fatal error in launcher: Unable to create process using '"C:\Users\Mahdi\Proj\PFE\DesignOps\venv\scripts\python.exe"  "C:\Users\Mahdi\Proj\PFE\DesignFlow\venv\Scripts\pip.exe" install Pillow': The system cannot find the file specified.
+Btw I changed the directory folder name (project name) and git repository name few days ago, but im not sure if they are related to this issue.
 
-CHECK EXCEL EXPORT
 
 CHECK SECOND DESIGN LATER.
-Upload profile picture.
 
 kanban
 designer time counter when begin task

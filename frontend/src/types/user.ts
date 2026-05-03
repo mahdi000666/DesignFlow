@@ -41,4 +41,5 @@ export interface MeData {
   available_hours_per_week: number | null;
   phone:                   string;
   industry:                string;
+  avatar_url:              string | null;
 }

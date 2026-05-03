@@ -12,6 +12,7 @@ from apps.projects.models import Project
 from apps.tasks.models import Task
 from apps.users.models import Client
 from apps.feedback.models import Feedback
+from apps.timelog.models import TimeLog
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -330,23 +331,32 @@ def generate_excel(project_id: int | None = None) -> io.BytesIO:
     style_header(ws1, headers1)
     freeze(ws1)
 
-    clients = Client.objects.select_related('user').annotate(
-        total_revenue=Sum('projects__budget_amount'),
-        total_hours=Sum('projects__tasks__time_logs__hours_spent'),
-        revision_count=Count('projects__feedback', filter=Q(projects__feedback__category='Revision')),
-        approval_count=Count('projects__feedback', filter=Q(projects__feedback__category='Approval')),
-    ).order_by('-total_revenue')
+    clients = Client.objects.select_related('user').all()
+
+    # Compute ordering key separately so we can sort without annotate fan-out
+    client_revenues = {
+        row['client_id']: float(row['rev'] or 0)
+        for row in Project.objects.values('client_id').annotate(rev=Sum('budget_amount'))
+        }
+    clients = sorted(clients, key=lambda c: client_revenues.get(c.id, 0), reverse=True)
 
     for i, c in enumerate(clients, 2):
-        revenue = float(c.total_revenue or 0)
-        hours   = float(c.total_hours   or 0)
-        ehr     = round(revenue / hours, 2) if hours > 0 else None
+        projects_qs = Project.objects.filter(client=c)
+        revenue = float(projects_qs.aggregate(t=Sum('budget_amount'))['t'] or 0)
+        hours   = float(
+            TimeLog.objects.filter(task__project__in=projects_qs)
+            .aggregate(t=Sum('hours_spent'))['t'] or 0
+        )
+        revisions = Feedback.objects.filter(project__in=projects_qs, category='Revision').count()
+        approvals  = Feedback.objects.filter(project__in=projects_qs, category='Approval').count()
+        ehr = round(revenue / hours, 2) if hours > 0 else None
+
         ws1.cell(row=i, column=1, value=c.user.full_name)
         right_cell(ws1, i, 2, round(revenue, 2))
         right_cell(ws1, i, 3, round(hours,   2))
         right_cell(ws1, i, 4, ehr or '—')
-        right_cell(ws1, i, 5, c.revision_count or 0)
-        right_cell(ws1, i, 6, c.approval_count or 0)
+        right_cell(ws1, i, 5, revisions)
+        right_cell(ws1, i, 6, approvals)
         style_row(ws1, i, len(headers1), i % 2 == 0)
 
     autofit(ws1)

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { KeyRound, User } from 'lucide-react';
 import AppShell from '../components/AppShell';
-import { useMe, useUpdateMe, useChangePassword } from '../hooks/useUsers';
+import { useMe, useUpdateMe, useChangePassword, useUploadAvatar } from '../hooks/useUsers';
 import type { MeData } from '../types/user';
 import { useAuth } from '../hooks/useAuth';
 import { Initials } from '../utils/format';
@@ -177,6 +177,7 @@ const ROLE_CHIP: Record<string, string> = {
 
 export default function SettingsPage() {
   const { data: me, isLoading } = useMe();
+  const { mutate: uploadAvatar, isPending: uploading } = useUploadAvatar();
 
   return (
     <AppShell title="Settings">
@@ -184,9 +185,22 @@ export default function SettingsPage() {
       {/* ── Avatar strip — lives outside both cards ────────────────────── */}
       {me && (
         <div className="flex items-center gap-4 bg-white border border-slate-100 rounded-xl px-5 py-4 shadow-sm mb-5">
-          <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm shrink-0">
-            {Initials(me.full_name)}
-          </div>
+          <label className="relative w-12 h-12 rounded-full cursor-pointer group shrink-0">
+            {me.avatar_url ? (
+              <img src={me.avatar_url} alt={me.full_name} className="w-12 h-12 rounded-full object-cover" />
+            ) : (
+              <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm">
+                {Initials(me.full_name)}
+              </div>
+            )}
+            <div className="absolute inset-0 rounded-full bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <span className="text-white text-[9px] font-semibold">{uploading ? '…' : 'Edit'}</span>
+            </div>
+            <input
+              type="file" accept="image/*" className="sr-only"
+              onChange={e => { const f = e.target.files?.[0]; if (f) uploadAvatar(f); }}
+            />
+          </label>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-slate-900 truncate">{me.full_name}</p>
             <p className="text-xs text-slate-600 mt-0.5 truncate">{me.email}</p>

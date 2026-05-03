@@ -104,11 +104,13 @@ optionally saves role-specific profile fields in the same request.
 @api_view(['GET', 'PATCH'])
 @permission_classes([IsAuthenticated])
 def me(request):
+    print("FILES:", request.FILES)
+    print("DATA:", request.data)
     if request.method == 'GET':
-        serializer = UserMeSerializer(request.user)
+        serializer = UserMeSerializer(request.user, context={'request': request})
         return Response(serializer.data)
 
-    serializer = UserMeSerializer(request.user, data=request.data, partial=True)
+    serializer = UserMeSerializer(request.user, data=request.data, partial=True, context={'request': request})
     serializer.is_valid(raise_exception=True)
     serializer.save()
     return Response(serializer.data)
