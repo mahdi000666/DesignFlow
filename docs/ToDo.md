@@ -1,10 +1,10 @@
-1. Can you show the before vs after avatar div? Also its saying "Cannot find name 'uploading'."
-2. Do I run "pip install Pillow" inside the backend folder or outside? either way im getting this error:
-Fatal error in launcher: Unable to create process using '"C:\Users\Mahdi\Proj\PFE\DesignOps\venv\scripts\python.exe"  "C:\Users\Mahdi\Proj\PFE\DesignFlow\venv\Scripts\pip.exe" install Pillow': The system cannot find the file specified.
-Btw I changed the directory folder name (project name) and git repository name few days ago, but im not sure if they are related to this issue.
+Suggest if Client Profitability Ranking && Scope Creep Index could be turned to charts.
+Replace designer utilisation KPI with pending feedback. add the utilisation bar under hours this week.
+Add unread messages KPI in client dashboard. Add Recent updates card.
+Update avatar in client project detail.
 
 
-CHECK SECOND DESIGN LATER.
+
 
 kanban
 designer time counter when begin task
@@ -12,7 +12,7 @@ log time pauses
 designer activity history
 remove time log edit
 remove log time
-
+ask if task should be to specific designer.
 
 
 OCR

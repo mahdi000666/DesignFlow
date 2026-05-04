@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../hooks/useAuth';
@@ -33,17 +32,6 @@ export default function ClientDashboard() {
   const pendingFeedback = allFeedback.filter(
     f => (f.status === 'Pending' || f.status === 'InProgress') && f.category !== 'Approval',
   ).length;
-
-  // Open feedback count per project (for badges on cards)
-  const openFeedbackByProject = useMemo(() => {
-    const map: Record<number, number> = {};
-    for (const f of allFeedback) {
-      if (f.status !== 'Resolved' && f.category !== 'Approval') {
-        map[f.project] = (map[f.project] ?? 0) + 1;
-      }
-    }
-    return map;
-  }, [allFeedback]);
 
   return (
     <AppShell title="Dashboard">
@@ -91,7 +79,6 @@ export default function ClientDashboard() {
               const pct = p.budget_hours && p.actual_hours != null
                 ? Math.min(100, Math.round((p.actual_hours / Number(p.budget_hours)) * 100))
                 : null;
-              const openCount = openFeedbackByProject[p.id] ?? 0;
 
               return (
                 <Link
@@ -110,12 +97,6 @@ export default function ClientDashboard() {
                         {statusLabel(p.status)}
                       </span>
                     </div>
-                    {openCount > 0 && (
-                      <span className="shrink-0 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200">
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
-                        {openCount} Open feedback{openCount !== 1 ? 's' : ''}
-                      </span>
-                    )}
                   </div>
 
                   {/* Meta */}

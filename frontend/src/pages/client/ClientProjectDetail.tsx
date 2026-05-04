@@ -244,25 +244,6 @@ export default function ClientProjectDetail() {
             </div>
           )}
 
-          {/* Task Completion */}
-          {totalTasks > 0 && (
-            <div className="card p-5">
-              <div className="flex items-center justify-between mb-3">
-                <p className="section-title mb-0">Task Completion</p>
-                <span className="font-mono text-sm font-bold text-slate-900">{taskPct}%</span>
-              </div>
-              <div className="flex items-center gap-3 mb-2">
-                <div className="flex-1 bg-slate-100 rounded-full h-2 overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-primary transition-[width]"
-                    style={{ width: `${taskPct}%` }}
-                  />
-                </div>
-              </div>
-              <p className="text-xs text-slate-400">{completedTasks} of {totalTasks} tasks completed</p>
-            </div>
-          )}
-
           {/* Assigned Designers — full width */}
           {project.assignments.length > 0 && (
             <div className="card p-5 col-span-2">
