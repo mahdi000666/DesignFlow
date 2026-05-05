@@ -8,6 +8,13 @@ export const getMessages = async (projectId: number): Promise<Message[]> => {
   return data;
 };
 
+export const getAllMessages = async (): Promise<Message[]> => {
+  const { data } = await apiClient.get<Message[]>('/messages/', {
+    params: { page_size: 100 },
+  });
+  return data;
+};
+
 export const getReplies = async (projectId: number): Promise<Message[]> => {
   const { data } = await apiClient.get<Message[]>('/messages/', {
     params: { project: projectId, replies: 1 },

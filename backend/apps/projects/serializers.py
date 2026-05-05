@@ -7,10 +7,18 @@ from apps.users.models import Designer
 class ProjectAssignmentReadSerializer(serializers.ModelSerializer):
     designer_id   = serializers.IntegerField(source='designer.id', read_only=True)
     designer_name = serializers.CharField(source='designer.user.full_name', read_only=True)
+    avatar_url    = serializers.SerializerMethodField()
 
     class Meta:
         model  = ProjectAssignment
-        fields = ['designer_id', 'designer_name', 'assigned_at']
+        fields = ['designer_id', 'designer_name', 'assigned_at', 'avatar_url']
+
+    def get_avatar_url(self, obj):
+        request = self.context.get('request')
+        user = obj.designer.user
+        if not hasattr(user, 'profile_picture') or not user.profile_picture:
+            return None
+        return request.build_absolute_uri(user.profile_picture.url) if request else user.profile_picture.url
 
 
 class ProjectReadSerializer(serializers.ModelSerializer):

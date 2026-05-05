@@ -254,7 +254,7 @@ export default function ClientProjectDetail() {
                     key={a.designer_id}
                     className="flex items-center gap-3 bg-slate-50 rounded-xl px-4 py-2.5 border border-slate-100"
                   >
-                    <Avatar name={a.designer_name} size="sm" />
+                    <Avatar name={a.designer_name} size="sm" src={a.avatar_url} />
                     <p className="text-sm font-medium text-slate-800">{a.designer_name}</p>
                   </div>
                 ))}

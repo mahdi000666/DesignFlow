@@ -107,15 +107,26 @@ interface AvatarProps {
   name: string;
   size?: 'sm' | 'md' | 'lg';
   className?: string;
+  src?: string | null;
 }
 
 const SIZES = { sm: 'w-7 h-7 text-[10px]', md: 'w-9 h-9 text-xs', lg: 'w-11 h-11 text-sm' };
 
-export function Avatar({ name, size = 'md', className = '' }: AvatarProps) {
+export function Avatar({ name, size = 'md', className = '', src }: AvatarProps) {
+  const sizeClass = SIZES[size];
+  if (src) {
+    return (
+      <span
+        className={`inline-flex items-center justify-center rounded-full flex-shrink-0 shadow-sm ring-2 ring-white overflow-hidden ${sizeClass} ${className}`}
+      >
+        <img src={src} alt={name} className="w-full h-full object-cover" />
+      </span>
+    );
+  }
   return (
     <span
       className={`inline-flex items-center justify-center rounded-full font-bold flex-shrink-0 shadow-sm ring-2 ring-white
-                  ${SIZES[size]} ${nameToColor(name)} ${className}`}
+                  ${sizeClass} ${nameToColor(name)} ${className}`}
     >
       {initials(name)}
     </span>
@@ -133,6 +144,7 @@ interface KpiCardProps {
   prefix?: string;
   suffix?: string;
   borderColor?: string;
+  footer?: React.ReactNode;
 }
 
 export function KpiCard({
@@ -144,6 +156,7 @@ export function KpiCard({
   prefix,
   suffix,
   borderColor,
+  footer,
 }: KpiCardProps) {
   const isPositive = (change ?? 0) >= 0;
   const isNeutral  = change === undefined || change === 0;
@@ -173,15 +186,15 @@ export function KpiCard({
 
       {change !== undefined && (
         <div className={`flex items-center gap-1 text-xs font-medium ${isNeutral ? 'text-slate-400' : isPositive ? 'text-green-600' : 'text-red-500'}`}>
-          {isNeutral ? (
-            <Minus size={12} />
-          ) : isPositive ? (
-            <TrendingUp size={12} />
-          ) : (
-            <TrendingDown size={12} />
-          )}
+          {isNeutral ? <Minus size={12} /> : isPositive ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
           <span>{isPositive && change > 0 ? '+' : ''}{change}%</span>
           <span className="text-slate-400 font-normal">{changeLabel}</span>
+        </div>
+      )}
+
+      {footer && (
+        <div className="mt-3 pt-2.5 border-t border-slate-50">
+          {footer}
         </div>
       )}
     </div>

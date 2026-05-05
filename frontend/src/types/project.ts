@@ -2,6 +2,7 @@ export interface ProjectAssignment {
   readonly designer_id:   number;
   readonly designer_name: string;
   readonly assigned_at:   string;
+  readonly avatar_url:     string | null;
 }
 
 export interface Project {

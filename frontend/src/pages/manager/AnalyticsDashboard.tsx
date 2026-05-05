@@ -1,5 +1,9 @@
 import { useState, useMemo } from 'react';
-import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import {
+  LineChart, Line, PieChart, Pie, Cell,
+  BarChart, Bar, LabelList,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+} from 'recharts';
 import { DollarSign, Activity, Clock, TrendingUp } from 'lucide-react';
 import AppShell from '../../components/AppShell';
 import { KpiCard } from '../../components/Ui';
@@ -25,7 +29,6 @@ const marginColor = (pct: number | null) => pct === null ? '#94a3b8' : pct < 0 ?
 type ChartFormatterValue = number | string | Array<number | string> | undefined;
 
 const getChartValue = (value: ChartFormatterValue) => Array.isArray(value) ? value[0] : value;
-const metricCountColor = (count: number) => count > 0 ? 'text-rose-600' : 'text-slate-400';
 
 const hBarHeight = (n: number) => Math.max(220, n * 44 + 28);
 
@@ -325,90 +328,106 @@ export default function AnalyticsDashboard() {
 
         {/* Client Profitability Ranking */}
         <div className="card p-5">
-          <p className="section-title mb-4">Client Profitability Ranking</p>
-          <table className="w-full table-fixed text-sm">
-            <colgroup>
-              <col className="w-10" />
-              <col />
-              <col className="w-28" />
-              <col className="w-20" />
-              <col className="w-24" />
-              <col className="w-16" />
-            </colgroup>
-            <thead>
-              <tr className="border-b border-slate-100">
-                <th className="pb-2 pr-3 text-left text-xs font-semibold text-slate-400">#</th>
-                <th className="pb-2 pr-4 text-left text-xs font-semibold text-slate-400">Client</th>
-                <th className="pb-2 text-right text-xs font-semibold text-slate-400">Revenue</th>
-                <th className="pb-2 text-right text-xs font-semibold text-slate-400">Hours</th>
-                <th className="pb-2 text-right text-xs font-semibold text-slate-400">EHR</th>
-                <th className="pb-2 text-right text-xs font-semibold text-slate-400">Rev.</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {profitability.map((row, i) => (
-                <tr key={row.client_id}>
-                  <td className="py-2.5 pr-3 font-mono text-xs text-slate-400">{i + 1}</td>
-                  <td className="py-2.5 pr-4 text-slate-700 font-medium truncate max-w-[110px]">{row.client_name}</td>
-                  <td className="py-2.5 text-right font-mono text-slate-900 text-xs">{formatTND(row.total_revenue)}</td>
-                  <td className="py-2.5 text-right font-mono text-slate-500 text-xs">{row.total_hours.toFixed(1)}</td>
-                  {/* Fix #5: Apply formatEHR */}
-                  <td className="py-2.5 text-right font-mono font-semibold text-primary text-xs">
-                    {row.ehr !== null ? formatEHR(row.ehr) : '—'}
-                  </td>
-                  <td className="py-2.5 text-right">
-                    <span className={`font-mono text-xs ${row.revision_count > 5 ? 'text-rose-600 font-semibold' : 'text-slate-500'}`}>
-                      {row.revision_count}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-              {profitability.length === 0 && (
-                <tr><td colSpan={6} className="py-6 text-center text-xs text-slate-400">No data</td></tr>
-              )}
-            </tbody>
-          </table>
+          <p className="section-title mb-1">Client Profitability Ranking</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-4">Revenue · hover for EHR & revisions</p>
+          {profitability.length === 0 ? (
+            <div className="h-44 flex items-center justify-center text-sm text-slate-400">No data</div>
+          ) : (
+            <ResponsiveContainer width="100%" height={Math.max(160, profitability.length * 52 + 32)}>
+              <BarChart
+                data={profitability}
+                layout="vertical"
+                margin={{ top: 4, right: 72, left: 4, bottom: 4 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
+                <XAxis
+                  type="number"
+                  tick={{ fontSize: 10, fill: '#94a3b8' }}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={v => formatTND(v)}
+                />
+                <YAxis
+                  type="category"
+                  dataKey="client_name"
+                  tick={{ fontSize: 11, fill: '#475569' }}
+                  tickLine={false}
+                  axisLine={false}
+                  width={95}
+                />
+                <Tooltip
+                  contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid #e2e8f0' }}
+                  formatter={(value: ChartFormatterValue) => [formatTND(Number(getChartValue(value) ?? 0)), 'Revenue']}
+                    labelFormatter={(label: unknown) => {
+                      const name = String(label ?? '');
+                      const row = profitability.find(r => r.client_name === name);
+                      if (!row) return name;
+                      return `${name}  ·  EHR: ${row.ehr !== null ? formatEHR(row.ehr) : '—'}  ·  Revisions: ${row.revision_count}`;
+                    }}
+                />
+                <Bar dataKey="total_revenue" fill="#6366f1" radius={[0, 6, 6, 0]} barSize={22}>
+                  <LabelList
+                    dataKey="total_revenue"
+                    position="right"
+                    formatter={(v: unknown) => formatTND(Number(v ?? 0))}
+                    style={{ fontSize: 10, fill: '#64748b', fontFamily: 'monospace' }}
+                  />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          )}
         </div>
 
-        {/* Scope Creep Index — progress bars */}
+        {/* Scope Creep Index */}
         <div className="card p-5">
-          <p className="section-title mb-4">Scope Creep Index</p>
+          <p className="section-title mb-1">Scope Creep Index</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-4">
+            Unplanned tasks as % of total · hover for breakdown
+          </p>
           {scopeCreep.length === 0 ? (
             <div className="h-44 flex items-center justify-center text-sm text-slate-400">No data</div>
           ) : (
-            <div className="space-y-4">
-              {scopeCreep.map(row => {
-                const idx = row.scope_creep_index;
-                const color = scopeColor(idx);
-                return (
-                  <div key={row.project_id}>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-sm text-slate-700 font-medium truncate max-w-[200px]">
-                        {row.project_name}
-                      </span>
-                      <span className="font-mono text-xs font-semibold" style={{ color }}>
-                        {idx}%
-                      </span>
-                    </div>
-                    <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-[width]"
-                        style={{ width: `${Math.min(idx, 100)}%`, backgroundColor: color }}
-                      />
-                    </div>
-                    <p className="text-[11px] text-slate-400 mt-1 font-mono">
-                      <span className={`font-semibold ${metricCountColor(row.unplanned_tasks)}`}>
-                        {row.unplanned_tasks}
-                      </span>{' '}
-                      <span className={`${metricCountColor(row.unplanned_tasks)}`}>Unplanned</span>
-                      <span className="text-slate-500"> / </span>
-                      <span className="font-semibold text-slate-700">{row.total_tasks}</span>{' '}
-                      <span className="font-semibold text-slate-700">Total</span>
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
+              <ResponsiveContainer width="100%" height={240}>
+                <BarChart
+                  data={scopeCreep}
+                  margin={{ top: 4, right: 4, left: -8, bottom: 4 }}
+                  barCategoryGap="24%"
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                  <XAxis
+                    dataKey="project_name"
+                    tick={{ fontSize: 10, fill: '#64748b' }}
+                    tickLine={false}
+                    axisLine={false}
+                    interval={0}
+                    height={40}
+                    tickFormatter={(v: string) => v.length > 10 ? `${v.slice(0, 10)}…` : v}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 10, fill: '#94a3b8' }}
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={(v: number) => `${v}%`}
+                    width={40}
+                  />
+                  <Tooltip
+                    contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid #e2e8f0' }}
+                    formatter={(value: ChartFormatterValue) => [`${getChartValue(value) ?? 0}%`, 'Scope Creep']}
+                    labelFormatter={(label: unknown) => {
+                      const name = String(label ?? '');
+                      const row = scopeCreep.find(r => r.project_name === name);
+                      return row
+                        ? `${name}  ·  ${row.unplanned_tasks} unplanned / ${row.total_tasks} total`
+                        : name;
+                    }}
+                  />
+                  <Bar dataKey="scope_creep_index" radius={[4, 4, 0, 0]} maxBarSize={36} animationDuration={800}>
+                    {scopeCreep.map((row, i) => (
+                      <Cell key={i} fill={scopeColor(row.scope_creep_index)} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
           )}
         </div>
       </div>

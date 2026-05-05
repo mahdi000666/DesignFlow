@@ -5,11 +5,12 @@ import { useAuth } from '../../hooks/useAuth';
 import { useProjects } from '../../hooks/useProjects';
 import { getAllTimeLogs } from '../../api/timelogs';
 import { getAllTasks } from '../../api/tasks';
+import { getAllFeedback } from '../../api/feedbacks';
 import AppShell from '../../components/AppShell';
 import apiClient from '../../api/clients';
 import { KpiCard } from '../../components/Ui';
 import { STATUS_BADGE, STATUS_DOT, barColor, statusLabel, categoryClass } from '../../utils/project';
-import { FolderOpen, Clock, Activity, ListTodo } from 'lucide-react';
+import { FolderOpen, Clock, MessageSquare, ListTodo } from 'lucide-react';
 
 export default function DesignerDashboard() {
   const { user } = useAuth();
@@ -49,6 +50,16 @@ export default function DesignerDashboard() {
     ? Math.round((hoursThisWeek / availableHoursPerWeek) * 100)
     : null;
 
+  const { data: allFeedback = [] } = useQuery({
+    queryKey: ['feedback-all'],
+    queryFn: getAllFeedback,
+  });
+
+  const pendingFeedback = useMemo(
+    () => allFeedback.filter(f => f.status === 'Pending' || f.status === 'InProgress').length,
+    [allFeedback],
+  );
+
   const openTasks = allTasks.filter(t => t.status !== 'Completed');
 
   const recentLogs = useMemo(
@@ -82,11 +93,37 @@ export default function DesignerDashboard() {
           value={`${hoursThisWeek.toFixed(1)} h`}
           icon={<Clock size={15} />}
           borderColor="#f59e0b"
+          footer={
+            utilisation !== null ? (
+              <div>
+                <div className="flex justify-between items-center mb-1.5">
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                    Utilisation
+                  </span>
+                  <span
+                    className="font-mono text-[10px] font-semibold"
+                    style={{ color: utilisation > 90 ? '#ef4444' : utilisation > 75 ? '#f59e0b' : '#6366f1' }}
+                  >
+                    {utilisation}%
+                  </span>
+                </div>
+                <div className="h-1 bg-slate-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-[width] duration-500"
+                    style={{
+                      width: `${Math.min(utilisation, 100)}%`,
+                      backgroundColor: utilisation > 90 ? '#ef4444' : utilisation > 75 ? '#f59e0b' : '#6366f1',
+                    }}
+                  />
+                </div>
+              </div>
+            ) : null
+          }
         />
         <KpiCard
-          label="Utilisation"
-          value={utilisation != null ? `${utilisation}%` : '—'}
-          icon={<Activity size={15} />}
+          label="Pending Feedback"
+          value={pendingFeedback}
+          icon={<MessageSquare size={15} />}
           borderColor="#3b82f6"
         />
       </div>
