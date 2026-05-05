@@ -5,7 +5,7 @@ import { useProject } from '../../hooks/useProjects';
 import { useTasks } from '../../hooks/useTasks';
 import { useCreateFeedback, useFeedback } from '../../hooks/useFeedback';
 import { useFiles } from '../../hooks/useFiles';
-import { useMessages, useReplies } from '../../hooks/useMessages';
+import { useMessages, useReplies, useMarkMessagesRead } from '../../hooks/useMessages';
 import { useUnreadCount } from '../../hooks/useUnreadCount';
 import { useAuth } from '../../hooks/useAuth';
 import AppShell from '../../components/AppShell';
@@ -41,8 +41,10 @@ export default function ClientProjectDetail() {
   const { data: files    = [] }      = useFiles(projectId);
   const { data: replies  = [] }      = useReplies(projectId);
 
-  const { count: unreadMessages, markRead: markMessagesRead } =
-    useUnreadCount(messages, projectId, 'messages', userId);
+  const markMessagesReadMutation = useMarkMessagesRead(projectId);
+  const unreadMessages = messages.filter(
+    m => !m.is_read && Number(m.sender) !== Number(userId),
+  ).length;
   const { count: unreadFeedback, markRead: markFeedbackRead } =
     useUnreadCount(feedback, projectId, 'feedback', userId);
   const { count: unreadReplies,  markRead: markRepliesRead } =
@@ -58,14 +60,16 @@ export default function ClientProjectDetail() {
   useEffect(() => {
     if (activeTab === 'feedback') { markFeedbackRead(); markRepliesRead(); }
   }, [feedback.length, replies.length, activeTab, markFeedbackRead, markRepliesRead]);
-  useEffect(() => { if (activeTab === 'messages') markMessagesRead(); }, [messages.length, activeTab, markMessagesRead]);
+  useEffect(() => {
+    if (activeTab === 'messages') markMessagesReadMutation.mutate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
   useEffect(() => { if (activeTab === 'files')    markFilesRead();    }, [files.length,    activeTab, markFilesRead]);
 
   const handleTabClick = (tab: Tab) => {
     setActiveTab(tab);
     if (tab === 'feedback') { markFeedbackRead(); markRepliesRead(); }
-    if (tab === 'messages') markMessagesRead();
-    if (tab === 'files')    markFilesRead();
+    if (tab === 'files') markFilesRead();
   };
 
   if (isLoading) {

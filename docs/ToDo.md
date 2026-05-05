@@ -3,25 +3,9 @@ Replace designer utilisation KPI with pending feedback. add the utilisation bar 
 Add unread messages KPI in client dashboard. Add Recent updates card.
 Update avatar in client project detail.
 
-
-1. Client dashboard error:
-Compilation Skipped: Existing memoization could not be preserved
-
-React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. This dependency may be mutated later, which could cause the value to change unexpectedly.
-
-C:\Users\Mahdi\Proj\PFE\DesignFlow\frontend\src\pages\client\ClientDashboard.tsx:137:51
-  135 |       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-  136 |       .slice(0, 8);
-> 137 |   }, [allMessages, allFiles, allFeedback, userId, projects]);
-      |                                                   ^^^^^^^^ This dependency may be modified later
-  138 |
-  139 |   return (
-  140 |     <AppShell title="Dashboard">
-
-2. Client Profitability Ranking: The progress bar is way too wide, slim it down.
-Scope Creep Index: The chart looks shrinked as you can see in the screenshot. I also want the project names to be under each bar in a straight line, unlike shown in the screenshot.
-3. The unread messages KPI is only showing total messages, not "unread" ones. I have went to the messages tab of the 2 projects and the KPI should be 0 (correct me if im wrong). Also when I type a messages as a client, the number in the KPI card increments. Doesnt seem like the right behavior.
-4. I will provide ProjectAssignment files and update it accordingly. 
+1. Should the changes be also applied to manager/designer project detail?
+2. Can you verify if designer and managers pending feedback kpi cards count "approval" as pending feedback and if its logical to do so?
+3. 
 
 
 kanban

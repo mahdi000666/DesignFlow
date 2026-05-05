@@ -26,3 +26,10 @@ export const sendMessage = async (payload: MessagePayload): Promise<Message> => 
   const { data } = await apiClient.post<Message>('/messages/', payload);
   return data;
 };
+
+export const markMessagesRead = async (projectId: number): Promise<{ marked: number }> => {
+  const { data } = await apiClient.post<{ marked: number }>('/messages/mark-read/', {
+    project: projectId,
+  });
+  return data;
+};

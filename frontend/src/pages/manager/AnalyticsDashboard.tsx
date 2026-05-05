@@ -358,14 +358,14 @@ export default function AnalyticsDashboard() {
                 <Tooltip
                   contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid #e2e8f0' }}
                   formatter={(value: ChartFormatterValue) => [formatTND(Number(getChartValue(value) ?? 0)), 'Revenue']}
-                    labelFormatter={(label: unknown) => {
-                      const name = String(label ?? '');
-                      const row = profitability.find(r => r.client_name === name);
-                      if (!row) return name;
-                      return `${name}  ·  EHR: ${row.ehr !== null ? formatEHR(row.ehr) : '—'}  ·  Revisions: ${row.revision_count}`;
-                    }}
+                  labelFormatter={(label: unknown) => {
+                    const name = String(label ?? '');
+                    const row = profitability.find(r => r.client_name === name);
+                    if (!row) return name;
+                    return `${name}  ·  EHR: ${row.ehr !== null ? formatEHR(row.ehr) : '—'}  ·  Revisions: ${row.revision_count}`;
+                  }}
                 />
-                <Bar dataKey="total_revenue" fill="#6366f1" radius={[0, 6, 6, 0]} barSize={22}>
+                <Bar dataKey="total_revenue" fill="#6366f1" radius={[0, 6, 6, 0]} barSize={14}>
                   <LabelList
                     dataKey="total_revenue"
                     position="right"
@@ -379,15 +379,16 @@ export default function AnalyticsDashboard() {
         </div>
 
         {/* Scope Creep Index */}
-        <div className="card p-5">
+        <div className="card p-5 flex flex-col">
           <p className="section-title mb-1">Scope Creep Index</p>
           <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-4">
             Unplanned tasks as % of total · hover for breakdown
           </p>
           {scopeCreep.length === 0 ? (
-            <div className="h-44 flex items-center justify-center text-sm text-slate-400">No data</div>
+            <div className="flex-1 flex items-center justify-center text-sm text-slate-400">No data</div>
           ) : (
-              <ResponsiveContainer width="100%" height={240}>
+            <div className="flex-1 min-h-[240px]">
+              <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={scopeCreep}
                   margin={{ top: 4, right: 4, left: -8, bottom: 4 }}
@@ -421,13 +422,14 @@ export default function AnalyticsDashboard() {
                         : name;
                     }}
                   />
-                  <Bar dataKey="scope_creep_index" radius={[4, 4, 0, 0]} maxBarSize={36} animationDuration={800}>
+                  <Bar dataKey="scope_creep_index" radius={[4, 4, 0, 0]} maxBarSize={20} animationDuration={800}>
                     {scopeCreep.map((row, i) => (
                       <Cell key={i} fill={scopeColor(row.scope_creep_index)} />
                     ))}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
+            </div>
           )}
         </div>
       </div>
