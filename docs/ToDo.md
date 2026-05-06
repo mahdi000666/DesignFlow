@@ -72,16 +72,6 @@ Directory structure:
     │       ├── urls.py
     │       └── wsgi.py
     └── frontend/
-        ├── README.md
-        ├── eslint.config.js
-        ├── index.html
-        ├── package.json
-        ├── postcss.config.js
-        ├── tailwind.config.js
-        ├── tsconfig.app.json
-        ├── tsconfig.json
-        ├── tsconfig.node.json
-        ├── vite.config.ts
         └── src/
             ├── App.tsx
             ├── index.css
@@ -112,8 +102,7 @@ Directory structure:
             │   ├── TaskRow.tsx
             │   ├── TimeLogForm.tsx
             │   ├── TimeLogList.tsx
-            │   ├── Ui.tsx
-            │   └── UnreadBadge.tsx
+            │   └── Ui.tsx
             ├── context/
             │   ├── authContext.ts
             │   └── AuthProvider.tsx

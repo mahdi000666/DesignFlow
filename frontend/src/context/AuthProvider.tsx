@@ -1,4 +1,6 @@
+// frontend/src/context/AuthProvider.tsx
 import { useState, useCallback, type ReactNode } from 'react';
+import { useQueryClient } from '@tanstack/react-query';   // ADD
 import { AuthContext } from './authContext';
 import type { AuthUser } from './authContext';
 
@@ -19,20 +21,23 @@ function initUser(): AuthUser | null {
 
 export default function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(initUser);
+  const queryClient = useQueryClient();                   // ADD
 
   const login = useCallback((access: string, refresh: string): AuthUser => {
-  localStorage.setItem('access_token', access);
-  localStorage.setItem('refresh_token', refresh);
-  const decoded = decodeJwt(access)!;
-  setUser(decoded);
-  return decoded;
-  }, []);
+    queryClient.clear();                                  // ADD — evict previous session's cache
+    localStorage.setItem('access_token', access);
+    localStorage.setItem('refresh_token', refresh);
+    const decoded = decodeJwt(access)!;
+    setUser(decoded);
+    return decoded;
+  }, [queryClient]);                                      // ADD queryClient to deps
 
   const logout = useCallback(() => {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     setUser(null);
-  }, []);
+    queryClient.clear();                                  // ADD — wipe cache on logout
+  }, [queryClient]);                                      // ADD queryClient to deps
 
   const updateUser = useCallback((patch: Partial<AuthUser>) => {
     setUser(prev => prev ? { ...prev, ...patch } : prev);
