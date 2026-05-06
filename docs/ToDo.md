@@ -1,6 +1,5 @@
-Manager messages tab problem.
 
-messages tab avatar.
+Securty issue logging not refreshing.
 
 kanban
 designer time counter when begin task

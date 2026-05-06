@@ -2,6 +2,7 @@ export interface Message {
   readonly id:          number;
   readonly sender:      number;    // User id — used to detect "own" messages
   readonly sender_name: string;
+  readonly sender_avatar_url: string | null;
   readonly is_read:     boolean;
   readonly created_at:  string;
   project:      number;

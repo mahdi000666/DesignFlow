@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useMessages, useCreateMessage } from '../hooks/useMessages';
 import { useAuth } from '../hooks/useAuth';
-import { Initials } from '../utils/format';
+import { Avatar } from './Ui';
 
 interface Props {
   projectId: number;
@@ -65,11 +65,12 @@ export default function MessageBoard({ projectId }: Props) {
               <div key={msg.id} className={`flex gap-3 ${isOwn ? 'flex-row-reverse' : ''}`}>
 
                 {/* Avatar */}
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 shadow-sm ring-2 ring-white ${
-                  isOwn ? 'bg-primary text-white' : 'bg-slate-200 text-slate-600'
-                }`}>
-                  {Initials(msg.sender_name)}
-                </div>
+                <Avatar
+                  name={msg.sender_name}
+                  src={msg.sender_avatar_url}
+                  size="sm"
+                  className={isOwn ? 'ring-primary-200' : ''}
+                />
 
                 {/* Bubble + meta */}
                 <div className={`flex flex-col gap-1 max-w-[75%] ${isOwn ? 'items-end' : 'items-start'}`}>

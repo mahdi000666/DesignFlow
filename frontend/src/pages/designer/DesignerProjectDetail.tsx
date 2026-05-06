@@ -16,12 +16,11 @@ import FeedbackList from '../../components/FeedbackList';
 import MessageBoard from '../../components/MessageBoard';
 import TaskRow from '../../components/TaskRow';
 import AppShell from '../../components/AppShell';
-import { KpiCard } from '../../components/Ui';
+import { KpiCard, UnreadBadge } from '../../components/Ui';
 import type { Task } from '../../types/task';
 import type { TimeLogPayload } from '../../types/timelog';
 import { formatEHR, formatTND } from '../../utils/format';
 import { STATUS_BADGE, STATUS_DOT, barColor, statusLabel, categoryClass } from '../../utils/project';
-import UnreadBadge from '../../components/UnreadBadge';
 import {
   Calendar, User, Tag, Clock, CheckCircle2, Activity, FolderOpen, ListTodo, BarChart3,
 } from 'lucide-react';

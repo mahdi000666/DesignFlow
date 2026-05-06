@@ -18,14 +18,13 @@ import FileUploadPanel from '../../components/FileUploadPanel';
 import FeedbackList from '../../components/FeedbackList';
 import MessageBoard from '../../components/MessageBoard';
 import AppShell from '../../components/AppShell';
-import { KpiCard } from '../../components/Ui';
+import { KpiCard, UnreadBadge } from '../../components/Ui';
 import ProjectForm from '../../components/ProjectForm';
 import type { TaskPayload, Task } from '../../types/task';
 import type { ProjectPayload } from '../../types/project';
 import { exportPDF } from '../../api/analytics';
 import type { ScopeCreepItem } from '../../types/analytic';
 import { STATUS_BADGE, STATUS_DOT, barColor, statusLabel, categoryClass } from '../../utils/project';
-import UnreadBadge from '../../components/UnreadBadge';
 import { formatEHR, formatTND } from '../../utils/format';
 import {
   BarChart3, DollarSign, AlertTriangle, MessageSquare,
@@ -157,7 +156,7 @@ export default function ProjectDetail() {
   const navigate  = useNavigate();
   const { user }  = useAuth();
   const isManager = user?.role === 'Manager';
-  const userId    = user?.user_id ?? 0;
+  const userId = Number(user?.user_id ?? 0);
 
   const { data: project, isLoading: loadingProject } = useProject(projectId);
   const { data: rawTasks = [], isLoading: loadingTasks } = useTasks(projectId);
@@ -172,7 +171,7 @@ export default function ProjectDetail() {
 
   const markMessagesReadMutation = useMarkMessagesRead(projectId);
   const unreadMessages = messages.filter(
-    m => !m.is_read && Number(m.sender) !== userId,
+    m => !m.is_read && Number(m.sender) !== Number(userId),
   ).length;
   const { count: unreadFeedback, markRead: markFeedbackRead } =
     useUnreadCount(feedback, projectId, 'feedback', userId);

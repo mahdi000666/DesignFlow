@@ -9,14 +9,13 @@ import { useMessages, useReplies, useMarkMessagesRead } from '../../hooks/useMes
 import { useUnreadCount } from '../../hooks/useUnreadCount';
 import { useAuth } from '../../hooks/useAuth';
 import AppShell from '../../components/AppShell';
-import { KpiCard, Avatar } from '../../components/Ui';
+import { KpiCard, Avatar, UnreadBadge } from '../../components/Ui';
 import FeedbackForm from '../../components/FeedbackForm';
 import FeedbackList from '../../components/FeedbackList';
 import FileUploadPanel from '../../components/FileUploadPanel';
 import MessageBoard from '../../components/MessageBoard';
 import type { FeedbackPayload } from '../../types/feedback';
 import { STATUS_BADGE, STATUS_DOT, barColor, statusLabel, categoryClass } from '../../utils/project';
-import UnreadBadge from '../../components/UnreadBadge';
 import { formatTND } from '../../utils/format';
 import {
   Calendar, Tag, DollarSign, BarChart3, MessageSquare,
@@ -31,7 +30,7 @@ export default function ClientProjectDetail() {
   const { id }    = useParams<{ id: string }>();
   const projectId = Number(id);
   const { user }  = useAuth();
-  const userId    = user?.user_id ?? 0;
+  const userId = Number(user?.user_id ?? 0);
 
   const { data: project, isLoading } = useProject(projectId);
   const { data: tasks = [] }         = useTasks(projectId);
