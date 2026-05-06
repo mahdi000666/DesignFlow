@@ -5,7 +5,7 @@ import { useProject, useUpdateProject, useDeleteProject } from '../../hooks/useP
 import { useTasks, useCreateTask } from '../../hooks/useTasks';
 import { useTimeLogs, useDeleteTimeLog, useUpdateTimeLog } from '../../hooks/useTimeLogs';
 import { useFiles } from '../../hooks/useFiles';
-import { useMessages } from '../../hooks/useMessages';
+import { useMessages, useMarkMessagesRead } from '../../hooks/useMessages';
 import { useFeedback } from '../../hooks/useFeedback';
 import { useUnreadCount } from '../../hooks/useUnreadCount';
 import { useAuth } from '../../hooks/useAuth';
@@ -170,8 +170,10 @@ export default function ProjectDetail() {
   const { data: scopeCreepData = [] } = useScopeCreep({ project: projectId });
   const scopeEntry = (scopeCreepData as ScopeCreepItem[])[0] as ScopeCreepItem | undefined;
 
-  const { count: unreadMessages, markRead: markMessagesRead } =
-    useUnreadCount(messages, projectId, 'messages', userId);
+  const markMessagesReadMutation = useMarkMessagesRead(projectId);
+  const unreadMessages = messages.filter(
+    m => !m.is_read && Number(m.sender) !== userId,
+  ).length;
   const { count: unreadFeedback, markRead: markFeedbackRead } =
     useUnreadCount(feedback, projectId, 'feedback', userId);
   const { count: unreadFiles, markRead: markFilesRead } =
@@ -212,13 +214,18 @@ export default function ProjectDetail() {
     }
   }, [statusOpen]);
 
-  useEffect(() => { if (activeTab === 'messages') markMessagesRead(); }, [messages.length, activeTab, markMessagesRead]);
+  useEffect(() => {
+    if (activeTab === 'messages' && unreadMessages > 0) {
+      markMessagesReadMutation.mutate();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages.length, activeTab]);
   useEffect(() => { if (activeTab === 'feedback') markFeedbackRead(); }, [feedback.length,      activeTab, markFeedbackRead]);
   useEffect(() => { if (activeTab === 'files')    markFilesRead();    }, [files.length,         activeTab, markFilesRead]);
 
   const handleTabClick = (tab: Tab) => {
     setActiveTab(tab);
-    if (tab === 'messages') markMessagesRead();
+    //if (tab === 'messages') markMessagesReadMutation.mutate();
     if (tab === 'feedback') markFeedbackRead();
     if (tab === 'files')    markFilesRead();
   };

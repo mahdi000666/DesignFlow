@@ -61,13 +61,16 @@ export default function ClientProjectDetail() {
     if (activeTab === 'feedback') { markFeedbackRead(); markRepliesRead(); }
   }, [feedback.length, replies.length, activeTab, markFeedbackRead, markRepliesRead]);
   useEffect(() => {
-    if (activeTab === 'messages') markMessagesReadMutation.mutate();
+    if (activeTab === 'messages' && unreadMessages > 0) {
+      markMessagesReadMutation.mutate();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab]);
+  }, [messages.length, activeTab]);
   useEffect(() => { if (activeTab === 'files')    markFilesRead();    }, [files.length,    activeTab, markFilesRead]);
 
   const handleTabClick = (tab: Tab) => {
     setActiveTab(tab);
+    //if (tab === 'messages') markMessagesReadMutation.mutate();
     if (tab === 'feedback') { markFeedbackRead(); markRepliesRead(); }
     if (tab === 'files') markFilesRead();
   };

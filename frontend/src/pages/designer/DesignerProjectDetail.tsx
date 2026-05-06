@@ -5,7 +5,7 @@ import { useProject } from '../../hooks/useProjects';
 import { useTasks } from '../../hooks/useTasks';
 import { useTimeLogs, useCreateTimeLog, useUpdateTimeLog } from '../../hooks/useTimeLogs';
 import { useFiles } from '../../hooks/useFiles';
-import { useMessages } from '../../hooks/useMessages';
+import { useMessages, useMarkMessagesRead } from '../../hooks/useMessages';
 import { useFeedback } from '../../hooks/useFeedback';
 import { useUnreadCount } from '../../hooks/useUnreadCount';
 import { useAuth } from '../../hooks/useAuth';
@@ -42,8 +42,10 @@ export default function DesignerProjectDetail() {
   const { data: messages = [] } = useMessages(projectId);
   const { data: feedback = [] } = useFeedback(projectId);
 
-  const { count: unreadMessages, markRead: markMessagesRead } =
-    useUnreadCount(messages, projectId, 'messages', userId);
+  const markMessagesReadMutation = useMarkMessagesRead(projectId);
+  const unreadMessages = messages.filter(
+    m => !m.is_read && Number(m.sender) !== Number(userId),
+  ).length;
   const { count: unreadFeedback, markRead: markFeedbackRead } =
     useUnreadCount(feedback, projectId, 'feedback', userId);
   const { count: unreadTasks, markRead: markTasksRead } =
@@ -72,14 +74,19 @@ export default function DesignerProjectDetail() {
     createTimeLog.mutate(payload, { onSuccess: () => setShowLogForm(false) });
   };
 
-  useEffect(() => { if (activeTab === 'messages') markMessagesRead(); }, [messages.length, activeTab, markMessagesRead]);
+  useEffect(() => {
+    if (activeTab === 'messages' && unreadMessages > 0) {
+      markMessagesReadMutation.mutate();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages.length, activeTab]);
   useEffect(() => { if (activeTab === 'feedback') markFeedbackRead(); }, [feedback.length,     activeTab, markFeedbackRead]);
   useEffect(() => { if (activeTab === 'tasks')    markTasksRead();    }, [tasks.length,         activeTab, markTasksRead]);
   useEffect(() => { if (activeTab === 'files')    markFilesRead();    }, [files.length,          activeTab, markFilesRead]);
 
   const handleTabClick = (tab: Tab) => {
     setActiveTab(tab);
-    if (tab === 'messages') markMessagesRead();
+    //if (tab === 'messages') markMessagesReadMutation.mutate();
     if (tab === 'feedback') markFeedbackRead();
     if (tab === 'tasks')    markTasksRead();
     if (tab === 'files')    markFilesRead();

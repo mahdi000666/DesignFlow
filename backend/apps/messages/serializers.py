@@ -4,6 +4,7 @@ from .models import Message
 
 class MessageSerializer(serializers.ModelSerializer):
     sender_name = serializers.CharField(source='sender.full_name', read_only=True)
+    is_read     = serializers.BooleanField(read_only=True)
 
     class Meta:
         model  = Message

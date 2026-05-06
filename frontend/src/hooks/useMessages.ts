@@ -36,13 +36,19 @@ export const useCreateMessage = (projectId: number) => {
 export const useMarkMessagesRead = (projectId: number) => {
   const qc = useQueryClient();
   return useMutation({
+    // Cancel any in-flight GET before POSTing — prevents a stale poll
+    // response arriving after onSuccess from overwriting is_read=true.
+    onMutate: async () => {
+      await qc.cancelQueries({ queryKey: ['messages', projectId] });
+    },
     mutationFn: () => api.markMessagesRead(projectId),
     onSuccess: () => {
-      // Flip is_read in the cached array directly — no refetch, no cascade.
+      // Optimistic update — immediate badge clear.
       qc.setQueryData<Message[]>(['messages', projectId], (old = []) =>
         old.map(m => ({ ...m, is_read: true })),
       );
-      // Only invalidate the dashboard KPI query.
+      // Invalidate both to get confirmed server state.
+      qc.invalidateQueries({ queryKey: ['messages', projectId] });
       qc.invalidateQueries({ queryKey: ['messages-all'] });
     },
   });

@@ -1,3 +1,4 @@
+from django.db.models import Exists, OuterRef
 from rest_framework import viewsets, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -8,7 +9,6 @@ from .serializers import MessageSerializer
 
 class MessageViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
-    # Messages are immutable once sent — no PATCH/PUT/DELETE.
     http_method_names  = ['get', 'post', 'head', 'options']
     serializer_class   = MessageSerializer
     pagination_class   = None
@@ -16,7 +16,6 @@ class MessageViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user       = self.request.user
         project_id = self.request.query_params.get('project')
-        # ?replies=1 returns reply messages; default returns chat messages only.
         is_replies = self.request.query_params.get('replies') == '1'
 
         if user.role == 'Manager':
@@ -37,11 +36,22 @@ class MessageViewSet(viewsets.ModelViewSet):
 
         qs = qs.filter(feedback__isnull=not is_replies)
 
+        # Annotate is_read per requesting user via the M2M junction table.
+        ReadThrough = Message.read_by.through
+        qs = qs.annotate(
+            is_read=Exists(
+                ReadThrough.objects.filter(
+                    message_id=OuterRef('pk'),
+                    user_id=user.id,
+                )
+            )
+        )
+
         return qs.distinct()
 
     def perform_create(self, serializer):
         project = serializer.validated_data['project']
-        user = self.request.user
+        user    = self.request.user
         if user.role == 'Designer':
             if not project.assignments.filter(designer__user=user).exists():
                 raise PermissionDenied('You are not assigned to this project.')
@@ -58,14 +68,12 @@ class MessageViewSet(viewsets.ModelViewSet):
 
         user = request.user
 
-        # Base filter: unread chat messages in this project not sent by the caller.
+        # Same row-level access as get_queryset, chat messages only.
         qs = Message.objects.filter(
             project_id=project_id,
             feedback__isnull=True,
-            is_read=False,
         ).exclude(sender=user)
 
-        # Enforce the same row-level access as get_queryset.
         if user.role == 'Designer':
             qs = qs.filter(project__assignments__designer__user=user)
         elif user.role == 'Client':
@@ -73,5 +81,12 @@ class MessageViewSet(viewsets.ModelViewSet):
         elif user.role != 'Manager':
             return Response({'marked': 0})
 
-        updated = qs.update(is_read=True)
-        return Response({'marked': updated})
+        # Bulk-insert into the junction table, silently skip already-read rows.
+        ReadThrough = Message.read_by.through
+        message_ids = list(qs.values_list('id', flat=True))
+        ReadThrough.objects.bulk_create(
+            [ReadThrough(message_id=mid, user_id=user.id) for mid in message_ids],
+            ignore_conflicts=True,
+        )
+
+        return Response({'marked': len(message_ids)})

@@ -7,9 +7,9 @@ class Message(models.Model):
     project      = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='messages')
     sender       = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')
     content_text = models.TextField()
-    is_read      = models.BooleanField(default=False)
+    # Replaced scalar is_read with per-user M2M tracking.
+    read_by      = models.ManyToManyField(User, blank=True, related_name='read_messages')
     created_at   = models.DateTimeField(auto_now_add=True)
-    # Null = chat message. Set = reply to that feedback item.
     feedback     = models.ForeignKey(
         'feedback.Feedback',
         on_delete=models.CASCADE,

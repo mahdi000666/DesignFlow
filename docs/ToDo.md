@@ -1,12 +1,6 @@
-Suggest if Client Profitability Ranking && Scope Creep Index could be turned to charts.
-Replace designer utilisation KPI with pending feedback. add the utilisation bar under hours this week.
-Add unread messages KPI in client dashboard. Add Recent updates card.
-Update avatar in client project detail.
+Manager messages tab problem.
 
-1. Should the changes be also applied to manager/designer project detail?
-2. Can you verify if designer and managers pending feedback kpi cards count "approval" as pending feedback and if its logical to do so?
-3. 
-
+messages tab avatar.
 
 kanban
 designer time counter when begin task

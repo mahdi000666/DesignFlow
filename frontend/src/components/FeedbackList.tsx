@@ -161,6 +161,15 @@ export default function FeedbackList({ projectId, canUpdate, canReply = false }:
                           Mark {next}
                         </button>
                       )}
+                      {canUpdate && item.category === 'Approval' && item.status === 'Pending' && (
+                        <button
+                          onClick={() => updateStatus.mutate({ id: item.id, status: 'Resolved' })}
+                          disabled={updateStatus.isPending}
+                          className="text-xs px-3 py-1.5 border border-emerald-200 text-emerald-700 rounded-lg hover:bg-emerald-50 disabled:opacity-50 transition-colors font-medium shadow-sm"
+                        >
+                          Acknowledge
+                        </button>
+                      )}
                       {canDelete && (
                         <button
                           onClick={() => handleDelete(item.id)}

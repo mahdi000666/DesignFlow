@@ -90,7 +90,10 @@ class KPISummaryView(APIView):
         total_revenue = float(projects.aggregate(total=Sum('budget_amount'))['total'] or 0)
         active_count = projects.filter(status='Active').count()
         pending_feedback = _apply_feedback_filters(
-            Feedback.objects.filter(status='Pending', project__in=projects),
+            Feedback.objects.filter(
+                status__in=['Pending', 'InProgress'],
+                project__in=projects,
+            ).exclude(category='Approval'),
             filters,
         ).count()
 
