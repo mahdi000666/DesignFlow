@@ -365,7 +365,7 @@ export default function AnalyticsDashboard() {
                     return `${name}  ·  EHR: ${row.ehr !== null ? formatEHR(row.ehr) : '—'}  ·  Revisions: ${row.revision_count}`;
                   }}
                 />
-                <Bar dataKey="total_revenue" fill="#6366f1" radius={[0, 6, 6, 0]} barSize={14}>
+                <Bar dataKey="total_revenue" fill="#6366f1" radius={[0, 2, 2, 0]} barSize={14}>
                   <LabelList
                     dataKey="total_revenue"
                     position="right"
@@ -422,7 +422,7 @@ export default function AnalyticsDashboard() {
                         : name;
                     }}
                   />
-                  <Bar dataKey="scope_creep_index" radius={[4, 4, 0, 0]} maxBarSize={20} animationDuration={800}>
+                  <Bar dataKey="scope_creep_index" radius={[2, 2, 2, 0]} maxBarSize={20} animationDuration={800}>
                     {scopeCreep.map((row, i) => (
                       <Cell key={i} fill={scopeColor(row.scope_creep_index)} />
                     ))}
