@@ -282,18 +282,18 @@ Tick items off as you complete them. Each item maps to a user story in the sprin
 **Goal:** Designers can log time, update task status, upload deliverables, and view client feedback. (US-10 – US-13, 13 days)
 
 - [ ] **US-10** TimeLog CRUD endpoints — Designer logs against a specific task with description
-- [ ] **US-10** React time log form (Designer) — select task, enter hours and description
+- [ ] **US-10** Designer timer UI — start/pause/resume/stop per task card; stop auto-creates TimeLog
 - [ ] **US-10** Manager can see all time logs across projects and designers
 - [ ] **US-10** React time log list on project detail (Manager view) — shows designer, task, hours, date
 - [ ] **US-11** Task status update endpoint (`PATCH /api/tasks/{id}/`) — Designer/Manager
-- [ ] **US-11** React task status toggle (Todo → InProgress → Completed) on task list
+- [ ] **US-11** Kanban board (drag-and-drop) replaces task table — dragging to InProgress starts timer, dragging to Completed stops it
 - [ ] **US-12** File upload endpoint (`POST /api/files/`) — multipart/form-data, stored in `MEDIA_ROOT`
 - [ ] **US-12** React file upload component (Designer uploads deliverables)
 - [ ] **US-12** React file list with download links
 - [ ] **US-13** Feedback list endpoint for a project — visible to Manager and Designer
 - [ ] **US-13** React feedback list (Manager/Designer) — shows category, content, status
-
-⚠️ **Risk:** Files stored in `MEDIA_ROOT` will be lost on Render redeploy (ephemeral disk). Decide on Cloudinary or S3 early — wiring it in later is painful. Keep the `is_unplanned` UI simple (a checkbox on the task form is enough for MVP).
+- [ ] TimerSession and ActivityLog models + migration
+- [ ] Manager can view designer activity history via modal on utilisation chart
 
 ---
 
@@ -318,7 +318,7 @@ Tick items off as you complete them. Each item maps to a user story in the sprin
 ---
 
 ### Sprint 5 — BI Dashboards & Reports (Weeks 9–12)
-**Goal:** Manager BI dashboards operational, report export working, and system deployed. (US-19, US-20, US-21, 18 days)
+**Goal:** Manager BI dashboards operational and report export working. (US-19, US-20, US-21, 18 days)
 
 - [ ] **DB indexes added first** — add all indexes from DATA_MODEL.md before writing any analytics queries
 - [ ] **US-19** Analytics endpoint: KPI summary (total revenue, avg EHR, active project count, pending feedback count)
@@ -345,9 +345,6 @@ Tick items off as you complete them. Each item maps to a user story in the sprin
 - [ ] Analytics endpoint: profit margin per project (EHR vs weighted avg designer hourly_rate)
 - [ ] React: profit margin displayed per project on manager dashboard
 - [ ] API tests: auth flow, project CRUD, time log, feedback (Django `TestCase`)
-- [ ] Backend deployed to Render Web Service
-- [ ] Frontend deployed to Render Static Site
-- [ ] Both connected to Render PostgreSQL — end-to-end flow verified on live URLs
 - [ ] README updated with screenshots and setup instructions
 
 ⚠️ **Risk:** PostgreSQL aggregate queries across multiple joined tables can be slow without indexes — add them before testing, not after.

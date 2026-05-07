@@ -30,7 +30,6 @@ A web-based **project management + BI system** for a graphic design agency. Trac
 | PDF export | ReportLab |
 | Excel export | openpyxl |
 | AI inference | Groq API (`llama-3.3-70b-versatile`) |
-| Deployment | Render (Web Service + Static Site + PostgreSQL) |
 
 ---
 
@@ -44,7 +43,7 @@ DesignFlow/
 │       ├── users/          # User, Designer, Client, InvitationToken
 │       ├── projects/       # Project, ProjectAssignment
 │       ├── tasks/          # Task
-│       ├── timelog/        # TimeLog
+│       ├── timelog/        # TimeLog, TimerSession, ActivityLog
 │       ├── feedback/       # Feedback
 │       ├── files/          # FileUpload
 │       ├── messages/       # Message
@@ -72,7 +71,7 @@ DesignFlow/
 | Assign designers to projects | ✅ | ❌ | ❌ |
 | View all projects | ✅ | ❌ | ❌ |
 | View assigned projects | ✅ | ✅ | ❌ |
-| Log time / update task status | ✅ | ✅ | ❌ |
+| Start/pause/stop task timer (auto-logs time) | ✅ | ✅ | ❌ |
 | Upload deliverables | ✅ | ✅ | ❌ |
 | View client feedback | ✅ | ✅ | ❌ |
 | View own projects | ✅ | ❌ | ✅ |
@@ -83,6 +82,7 @@ DesignFlow/
 | Create user accounts | ✅ | ❌ | ❌ |
 | AI task hour estimation | ✅ | ❌ | ❌ |
 | AI project health narrative | ✅ | ❌ | ❌ |
+| View designer activity history | ✅ | ❌ | ❌ |
 
 ---
 
@@ -131,10 +131,18 @@ PATCH  /api/tasks/{id}/
 DELETE /api/tasks/{id}/
 
 # Time Logs
-GET    /api/timelogs/?task={id}
-POST   /api/timelogs/                    Designer only
-PATCH  /api/timelogs/{id}/              Own logs only
-DELETE /api/timelogs/{id}/
+GET    /api/timelogs/?project={id}
+GET    /api/timelogs/?designer_user_id={id}   Manager only — activity filter
+PATCH  /api/timelogs/{id}/                    Manager only (designers no longer edit)
+DELETE /api/timelogs/{id}/                    Manager only
+
+# Timer — Designer only
+GET    /api/timelogs/timer/active/
+POST   /api/timelogs/timer/start/             body: { task_id }
+POST   /api/timelogs/timer/pause/             body: { task_id }
+POST   /api/timelogs/timer/resume/            body: { task_id }
+POST   /api/timelogs/timer/stop/              body: { task_id } — auto-creates TimeLog
+GET    /api/timelogs/activity/                ?designer_user_id={id} — Manager only
 
 # Feedback
 GET    /api/feedback/?project={id}
@@ -223,25 +231,6 @@ All computed server-side via PostgreSQL aggregations. No stored calculated field
 **What it does:**  
 When creating a task, the user can request an AI-suggested `estimated_hours` value. The backend queries the database for past time logs on similar tasks within the same project, then sends that historical context along with the new task's name and description to the LLM. The model returns a suggested hour estimate with a brief justification.
 
-**Why AI is justified here:**  
-A static lookup table (e.g. "logo = 6h") would produce generic estimates with no awareness of this agency's actual pace or project complexity. By passing real historical `TimeLog` records as context, the model performs retrieval-augmented reasoning over project-specific data — something a hardcoded rule cannot do. The estimate improves naturally as more time logs accumulate.
-
-**Request body:**
-```json
-{
-  "task_name": "Design homepage hero section",
-  "description": "Full-width banner with animation, mobile responsive"
-}
-```
-
-**Response:**
-```json
-{
-  "suggested_hours": 6.5,
-  "reasoning": "Based on 3 similar UI design tasks in this project averaging 6.2 hours, and accounting for the animation requirement, 6.5 hours is a reasonable estimate."
-}
-```
-
 **Context passed to LLM:**  
 Up to 10 most recent `TimeLog` records from the same project, filtered by keyword match on
 `task__task_name`. Each record includes `task_name`, `estimated_hours`, and `hours_spent`.
@@ -259,20 +248,6 @@ After the analytics engine computes all BI metrics for a project, those figures 
 LLM which synthesises them into a 3–4 sentence plain-English health summary. The summary flags
 risks and suggests one concrete action for the manager. It is displayed as a card on the manager's
 project detail page, alongside the existing charts.
-
-**Why AI is justified here:**  
-Synthesising multiple metrics (budget utilisation, EHR vs target, scope creep index,
-revision-to-approval ratio, days remaining) into a coherent narrative with contextual judgment
-is genuinely non-trivial for a rule-based system. A rules engine would require exhaustive
-branching logic and still produce rigid, template-like text. The LLM produces nuanced,
-context-aware prose that adapts to the specific combination of metric values.
-
-**Response:**
-```json
-{
-  "summary": "This project is consuming budget faster than planned, with utilisation at 87% while only 65% of tasks are complete. The scope creep index of 34% suggests significant unplanned work has been added since kickoff, which is likely driving the overrun. The revision-to-approval ratio of 3:1 indicates ongoing client friction that may further extend timelines. Recommend a scope review meeting with the client before logging additional unplanned tasks."
-}
-```
 
 **Metrics passed to LLM:**
 - Budget utilisation %
@@ -293,14 +268,13 @@ context-aware prose that adapts to the specific combination of metric values.
 | S2 | 3–4 | Project & Task Management: project/task CRUD, designer assignment, role-scoped views + AI Task Estimator | 19 |
 | S3 | 5–6 | Time Tracking & Deliverables: time logging, task status, file uploads, view client feedback | 13 |
 | S4 | 7–8 | Client Portal & Feedback: client portal, feedback submission & replies, resolution, messaging | 20 |
-| S5 | 9–12 | BI Dashboards, Reports & Deployment: KPI cards, budget vs actual, EHR, client profitability, scope creep, AI Health Narrative, report generation, PDF/Excel export, tests, Render deploy, README | 18 |
+| S5 | 9–12 | BI Dashboards & Reports: KPI cards, budget vs actual, EHR, client profitability, scope creep, AI Health Narrative, report generation, PDF/Excel export, tests, README | 18 |
 
 **Per-sprint risks:**
 - **S1:** Model mistakes cascade — validate every field against ERD before first migration; test Gmail SMTP on day 1
 - **S2:** RBAC queryset filtering must be correct before building client-facing views; implement AI estimator only after task CRUD is solid
-- **S3:** File upload storage — plan Cloudinary/S3 early; Render disk is ephemeral
 - **S4:** Keep messaging UI simple for MVP; scope creep risk is high for this sprint
-- **S5:** Add DB indexes before writing aggregate queries; AI health narrative depends on all analytics endpoints being complete first. ReportLab (PDF) is fiddly — prioritise it over Excel. Add GROQ_API_KEY to Render environment variables before deploying
+- **S5:** Add DB indexes before writing aggregate queries; AI health narrative depends on all analytics endpoints being complete first. ReportLab (PDF) is fiddly — prioritise it over Excel.
 
 ---
 
@@ -311,5 +285,6 @@ context-aware prose that adapts to the specific combination of metric values.
 - **Designer and Client are profile tables** — separate from User, 1:1 via `user_id UNIQUE`; all auth goes through User
 - **`analytics` app has no models** — only views running aggregate queries across other apps
 - **No public signup** — all users created by Manager via Django Admin; invitation email is the only entry point
-- **`budget_amount` stores the monetary amount** (e.g. `15000.00` for 15000 TND)
-- **Files stored in `MEDIA_ROOT/projects/{project_id}/`** — on Render, use Cloudinary or S3 since Render's disk is ephemeral
+- **`budget_amount` stores the monetary amount** (e.g. `15000,00` for 15000 TND)
+- **Timer-based time logging** — Designers start/pause/stop a timer per task; stopping auto-creates a TimeLog. Manual log creation is no longer exposed in the UI. TimerSession persists server-side so it survives page refreshes.
+- **Kanban board replaces task table** — Tasks are displayed in three droppable columns (Todo / InProgress / Completed). Dragging to InProgress auto-starts the designer's timer; dragging to Completed auto-stops it and logs the time.
