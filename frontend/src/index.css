@@ -65,14 +65,29 @@ layer(base);
   --color-sidebar-border: #1e293b;
   --color-sidebar-ring: #6366f1;
 
+  --color-success-50: #f0fdf4;
+  --color-success-100: #dcfce7;
+  --color-success-200: #bbf7d0;
   --color-success: #22c55e;
-  --color-success-light: #dcfce7;
+  --color-success-700: #15803d;
 
+  --color-warning-50: #fffbeb;
+  --color-warning-100: #fef3c7;
+  --color-warning-200: #fde68a;
   --color-warning: #f59e0b;
-  --color-warning-light: #fef3c7;
+  --color-warning-700: #b45309;
 
+  --color-info-50: #eff6ff;
+  --color-info-100: #dbeafe;
+  --color-info-200: #bfdbfe;
   --color-info: #3b82f6;
-  --color-info-light: #dbeafe;
+  --color-info-700: #1d4ed8;
+
+  --color-danger-50: #fff1f2;
+  --color-danger-100: #ffe4e6;
+  --color-danger-200: #fecdd3;
+  --color-danger: #f43f5e;
+  --color-danger-700: #be123c;
 
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
@@ -160,19 +175,23 @@ layer(base);
 }
 
 @utility badge-success {
-  @apply badge bg-green-100 text-green-700;
+  @apply badge bg-success-50 text-success-700 ring-1 ring-inset ring-success-200;
 }
 
 @utility badge-warning {
-  @apply badge bg-amber-100 text-amber-700;
+  @apply badge bg-warning-50 text-warning-700 ring-1 ring-inset ring-warning-200;
 }
 
 @utility badge-info {
-  @apply badge bg-blue-100 text-blue-700;
+  @apply badge bg-info-50 text-info-700 ring-1 ring-inset ring-info-200;
 }
 
 @utility badge-secondary {
-  @apply badge bg-slate-100 text-slate-700;
+  @apply badge bg-slate-50 text-slate-600 ring-1 ring-inset ring-slate-200;
+}
+
+@utility badge-danger {
+  @apply badge bg-danger-50 text-danger-700 ring-1 ring-inset ring-danger-200;
 }
 
 @utility badge-active {
@@ -181,11 +200,11 @@ layer(base);
 }
 
 @utility badge-done {
-  @apply badge bg-green-50 text-green-700 ring-1 ring-inset ring-green-200;
+  @apply badge bg-success-50 text-success-700 ring-1 ring-inset ring-success-200;
 }
 
 @utility badge-hold {
-  @apply badge bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200;
+  @apply badge bg-warning-50 text-warning-700 ring-1 ring-inset ring-warning-200;
 }
 
 @utility badge-pending {
@@ -193,15 +212,15 @@ layer(base);
 }
 
 @utility badge-revision {
-  @apply badge bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-200;
+  @apply badge bg-danger-50 text-danger-700 ring-1 ring-inset ring-danger-200;
 }
 
 @utility badge-high {
-  @apply badge bg-red-50 text-red-700 ring-1 ring-inset ring-red-200;
+  @apply badge bg-danger-50 text-danger-700 ring-1 ring-inset ring-danger-200;
 }
 
 @utility badge-medium {
-  @apply badge bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200;
+  @apply badge bg-warning-50 text-warning-700 ring-1 ring-inset ring-warning-200;
 }
 
 @utility badge-low {
