@@ -346,15 +346,16 @@ export default function AnalyticsDashboard() {
                   tickLine={false}
                   axisLine={false}
                   tickFormatter={v => formatTND(v)}
+                  height={15}
                 />
-                <YAxis
-                  type="category"
-                  dataKey="client_name"
-                  tick={{ fontSize: 11, fill: '#475569' }}
-                  tickLine={false}
-                  axisLine={false}
-                  width={95}
-                />
+                  <YAxis
+                    type="category"
+                    dataKey="client_name"
+                    tick={{ fontSize: 11, fill: '#475569' }}
+                    tickLine={false}
+                    axisLine={false}
+                    width={60}
+                  />
                 <Tooltip
                   contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid #e2e8f0' }}
                   formatter={(value: ChartFormatterValue) => [formatTND(Number(getChartValue(value) ?? 0)), 'Revenue']}
@@ -395,15 +396,15 @@ export default function AnalyticsDashboard() {
                   barCategoryGap="24%"
                 >
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                  <XAxis
-                    dataKey="project_name"
-                    tick={{ fontSize: 10, fill: '#64748b' }}
-                    tickLine={false}
-                    axisLine={false}
-                    interval={0}
-                    height={40}
-                    tickFormatter={(v: string) => v.length > 10 ? `${v.slice(0, 10)}…` : v}
-                  />
+                    <XAxis
+                      dataKey="project_name"
+                      tick={{ fontSize: 10, fill: '#64748b' }}
+                      tickLine={false}
+                      axisLine={false}
+                      interval={0}
+                      height={20}
+                      tickFormatter={(v: string) => v.length > 10 ? `${v.slice(0, 10)}…` : v}
+                    />
                   <YAxis
                     tick={{ fontSize: 10, fill: '#94a3b8' }}
                     tickLine={false}

@@ -225,10 +225,10 @@ export default function ManagerDashboard() {
       </div>
 
       {/* ── Row 2: Budget vs Actual + Recent Activity ──────────────────────── */}
-      <div className="grid grid-cols-3 gap-3.5 mb-3.5">
+      <div className="grid grid-cols-[4fr_2fr] gap-3.5 mb-3.5">
 
         {/* Budget vs Actual chart */}
-        <div className="col-span-2 card p-4">
+        <div className="card p-4">
           <p className="section-title mb-4">Budget vs Actual Hours</p>
           {budgetData.length === 0 ? (
             <div className="h-48 flex items-center justify-center text-sm text-slate-400">No data</div>
@@ -260,7 +260,7 @@ export default function ManagerDashboard() {
                     tickLine={false}
                     axisLine={false}
                     interval={budgetData.length > 8 ? 'preserveStartEnd' : 0}
-                    height={40}
+                    height={15}
                     tickFormatter={(value) =>
                       value.length > 10 ? `${value.substring(0, 10)}…` : value
                     }
@@ -272,7 +272,7 @@ export default function ManagerDashboard() {
                     tickFormatter={(v) => `${v}h`}
                     domain={[0, budgetTickStep * 4]}
                     ticks={budgetTicks}
-                    width={52}
+                    width={35}
                     allowDecimals={false}
                     interval={0}
                     tickMargin={8}
