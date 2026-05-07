@@ -30,7 +30,7 @@ interface Props {
 }
 
 const inputCls = 'input-field';
-const textareaCls = 'w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-colors resize-y';
+const textareaCls = 'w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 outline-hidden focus:border-primary focus:ring-2 focus:ring-primary/10 transition-colors resize-y';
 const labelCls = 'block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider';
 
 export default function TaskForm({ projectId, onSubmit, isLoading, defaults, parentTaskOptions }: Props) {
@@ -134,7 +134,7 @@ export default function TaskForm({ projectId, onSubmit, isLoading, defaults, par
               type="button"
               onClick={handleEstimate}
               disabled={estimating}
-              className="px-3 py-2 rounded-lg bg-primary-50 border border-primary-200 text-xs font-bold text-primary-700 hover:bg-primary-100 disabled:opacity-50 transition-colors whitespace-nowrap shadow-sm inline-flex items-center gap-1.5"
+              className="px-3 py-2 rounded-lg bg-primary-50 border border-primary-200 text-xs font-bold text-primary-700 hover:bg-primary-100 disabled:opacity-50 transition-colors whitespace-nowrap shadow-xs inline-flex items-center gap-1.5"
             >
               <span>{estimating ? 'Estimating…' : '✦ AI Suggest'}</span>
             </button>
@@ -185,7 +185,7 @@ export default function TaskForm({ projectId, onSubmit, isLoading, defaults, par
         <button
           type="submit"
           disabled={isLoading}
-          className="btn-primary w-full shadow-sm"
+          className="btn-primary w-full shadow-xs"
         >
           {isLoading ? 'Saving…' : isEdit ? 'Save changes' : 'Save task'}
         </button>

@@ -123,13 +123,13 @@ export default function ClientProjectDetail() {
         </span>
 
         {project.category && (
-          <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border shadow-sm ${categoryClass(project.category)}`}>
+          <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border shadow-xs ${categoryClass(project.category)}`}>
             <Tag size={12} className="opacity-70" />
             {project.category}
           </span>
         )}
         {project.budget_amount != null && (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-50 border border-emerald-100 text-emerald-700 shadow-sm">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-50 border border-emerald-100 text-emerald-700 shadow-xs">
             <DollarSign size={12} />
             {formatTND(Number(project.budget_amount))}
           </span>

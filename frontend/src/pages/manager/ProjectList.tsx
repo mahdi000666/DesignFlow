@@ -93,7 +93,7 @@ export default function ProjectList() {
   };
 
   const selectCls =
-    'px-3 py-2 border border-slate-200 rounded-lg bg-white text-sm text-slate-600 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 cursor-pointer transition-colors hover:bg-slate-50';
+    'px-3 py-2 border border-slate-200 rounded-lg bg-white text-sm text-slate-600 outline-hidden focus:border-primary focus:ring-2 focus:ring-primary/10 cursor-pointer transition-colors hover:bg-slate-50';
 
   return (
     <AppShell
@@ -130,7 +130,7 @@ export default function ProjectList() {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search projects…"
-            className="pl-9 pr-4 py-2 border border-slate-200 rounded-lg bg-white text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-colors placeholder:text-slate-400 w-52"
+            className="pl-9 pr-4 py-2 border border-slate-200 rounded-lg bg-white text-sm text-slate-900 outline-hidden focus:border-primary focus:ring-2 focus:ring-primary/10 transition-colors placeholder:text-slate-400 w-52"
           />
         </div>
         <select value={statusFilter} onChange={e => setStatusFilter(e.target.value as typeof statusFilter)} className={selectCls}>

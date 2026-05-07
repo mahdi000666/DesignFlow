@@ -113,11 +113,11 @@ export default function LoginPage() {
       </div>
 
       {/* ── Right: Illustration ── */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-indigo-800 via-indigo-600 to-indigo-400 items-center justify-center relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 bg-linear-to-br from-indigo-800 via-indigo-600 to-indigo-400 items-center justify-center relative overflow-hidden">
         {/* Decorative circles */}
-        <div className="absolute -top-28 -right-20 w-96 h-96 rounded-full bg-white/[0.06]" />
-        <div className="absolute -bottom-14 -left-14 w-64 h-64 rounded-full bg-white/[0.06]" />
-        <div className="absolute bottom-28 right-20 w-40 h-40 rounded-full bg-white/[0.06]" />
+        <div className="absolute -top-28 -right-20 w-96 h-96 rounded-full bg-white/6" />
+        <div className="absolute -bottom-14 -left-14 w-64 h-64 rounded-full bg-white/6" />
+        <div className="absolute bottom-28 right-20 w-40 h-40 rounded-full bg-white/6" />
 
         <div className="relative z-10 flex flex-col items-center px-10 max-w-md">
           <LoginIllustration />

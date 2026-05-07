@@ -44,7 +44,7 @@ export default function FeedbackForm({ projectId, onSubmit, isLoading }: Props) 
             onClick={() => setCategory(value)}
             className={`flex items-center gap-2 px-3.5 py-2 rounded-lg border text-sm font-medium transition-all select-none ${
               category === value
-                ? 'border-primary bg-primary-50 text-primary-700 shadow-sm'
+                ? 'border-primary bg-primary-50 text-primary-700 shadow-xs'
                 : 'border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50'
             }`}
           >
@@ -59,7 +59,7 @@ export default function FeedbackForm({ projectId, onSubmit, isLoading }: Props) 
         onChange={e => setContent(e.target.value)}
         placeholder={`Describe your ${activeCat.label.toLowerCase()}…`}
         rows={3}
-        className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-colors"
+        className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 outline-hidden focus:border-primary focus:ring-2 focus:ring-primary/10 transition-colors"
       />
 
       <div className="flex items-center justify-end">

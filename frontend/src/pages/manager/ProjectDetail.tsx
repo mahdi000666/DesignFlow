@@ -406,7 +406,7 @@ export default function ProjectDetail() {
 
         {/* Category */}
         {project.category && (
-          <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border shadow-sm ${categoryClass(project.category)}`}>
+          <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border shadow-xs ${categoryClass(project.category)}`}>
             <Tag size={12} className="opacity-70" />
             {project.category}
           </span>
@@ -614,7 +614,7 @@ export default function ProjectDetail() {
               )}
 
               {taskTotalEstimated > 0 && (
-                <div className="inline-flex items-center gap-1.5 bg-white border border-slate-200 rounded-lg px-3 py-1.5 shadow-sm">
+                <div className="inline-flex items-center gap-1.5 bg-white border border-slate-200 rounded-lg px-3 py-1.5 shadow-xs">
                   <Clock size={14} className="text-slate-400" />
                   <span className="text-xs text-slate-500">Est.</span>
                   <span className="text-xs font-mono font-semibold text-slate-700">{taskTotalEstimated} h</span>
@@ -639,7 +639,7 @@ export default function ProjectDetail() {
               <select
                 value={statusFilter}
                 onChange={e => setStatusFilter(e.target.value as typeof statusFilter)}
-                className="px-3 py-2 border border-slate-200 rounded-lg bg-white text-sm text-slate-600 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 cursor-pointer transition-colors hover:bg-slate-50"
+                className="px-3 py-2 border border-slate-200 rounded-lg bg-white text-sm text-slate-600 outline-hidden focus:border-primary focus:ring-2 focus:ring-primary/10 cursor-pointer transition-colors hover:bg-slate-50"
               >
                 <option value="All">All statuses</option>
                 <option value="Todo">Todo</option>

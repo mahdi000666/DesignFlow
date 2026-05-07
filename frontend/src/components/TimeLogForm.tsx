@@ -70,7 +70,7 @@ const TimeLogForm = ({ tasks, isLoading, onSubmit }: Props) => {
           onChange={e => setDescription(e.target.value)}
           rows={2}
           placeholder="What did you work on?"
-          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-colors resize-y"
+          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 outline-hidden focus:border-primary focus:ring-2 focus:ring-primary/10 transition-colors resize-y"
         />
       </div>
 
@@ -78,7 +78,7 @@ const TimeLogForm = ({ tasks, isLoading, onSubmit }: Props) => {
         <button
           type="submit"
           disabled={isLoading}
-          className="btn-primary shadow-sm"
+          className="btn-primary shadow-xs"
         >
           {isLoading ? 'Saving…' : 'Log time'}
         </button>

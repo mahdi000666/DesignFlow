@@ -40,7 +40,7 @@ function FilterBar({ filters, onChange, projects, clients }: {
   projects: { id: number; project_name: string }[];
   clients:  { id: number; name: string }[];
 }) {
-  const sel = 'px-3 py-2 border border-slate-200 rounded-lg bg-white text-sm text-slate-600 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 cursor-pointer transition-colors hover:bg-slate-50';
+  const sel = 'px-3 py-2 border border-slate-200 rounded-lg bg-white text-sm text-slate-600 outline-hidden focus:border-primary focus:ring-2 focus:ring-primary/10 cursor-pointer transition-colors hover:bg-slate-50';
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-4 mb-5 flex flex-wrap items-end gap-3">
       {(['date_from', 'date_to'] as const).map(key => (

@@ -68,7 +68,7 @@ export default function AppShell({ title, breadcrumb, actions, children }: AppSh
 const linkCls = (path: string) =>
   `flex items-center gap-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 ${
     isActive(path)
-      ? 'bg-primary text-white shadow-sm'
+      ? 'bg-primary text-white shadow-xs'
       : 'text-slate-400 hover:text-white hover:bg-slate-800/60 px-2.5'
   } ${isActive(path) ? 'px-2.5' : ''}`;
 
@@ -79,7 +79,7 @@ const linkCls = (path: string) =>
 
       {/* ── Sidebar ─────────────────────────────────────────────────────────── */}
       {/* Sidebar shell */}
-<aside className="w-56 bg-sidebar flex flex-col shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.08)]">
+<aside className="w-56 bg-sidebar flex flex-col shrink-0 shadow-sidebar">
 
         {/* Logo */}
         <div className="flex h-14 items-center gap-2 border-b border-sidebar-border px-4">
@@ -130,7 +130,7 @@ const linkCls = (path: string) =>
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
 
         {/* Topbar */}
-        <header className="bg-white border-b border-slate-200 px-8 py-4 flex items-center justify-between shrink-0 shadow-sm">
+        <header className="bg-white border-b border-slate-200 px-8 py-4 flex items-center justify-between shrink-0 shadow-xs">
           {/* Left: Title + Breadcrumb stacked */}
           <div className="flex flex-col min-w-0">
             <h1 className="text-xl font-semibold text-slate-900">{title}</h1>

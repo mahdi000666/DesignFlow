@@ -99,7 +99,7 @@ export default function FileUploadPanel({ projectId, role, isManager }: Props) {
             <button
               type="button"
               onClick={() => setTypeOpen(v => !v)}
-              className="flex items-center gap-2 pl-3 pr-3 py-2 rounded-full border border-slate-200 bg-white text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-sm h-9"
+              className="flex items-center gap-2 pl-3 pr-3 py-2 rounded-full border border-slate-200 bg-white text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-xs h-9"
             >
               <span className={`w-2 h-2 rounded-full ${TYPE_BADGE[fileType].dot}`} />
               <span className="text-xs">{TYPE_BADGE[fileType].label}</span>
@@ -127,7 +127,7 @@ export default function FileUploadPanel({ projectId, role, isManager }: Props) {
           </div>
 
           {/* Upload button */}
-          <label className="inline-flex items-center justify-center cursor-pointer bg-primary text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-primary-600 transition-colors shadow-sm whitespace-nowrap h-9">
+          <label className="inline-flex items-center justify-center cursor-pointer bg-primary text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-primary-600 transition-colors shadow-xs whitespace-nowrap h-9">
             {uploadFile.isPending ? 'Uploading…' : '+ Upload file'}
             <input
               ref={inputRef}

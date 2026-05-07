@@ -23,7 +23,7 @@ const ROLE_BADGE: Record<string, string> = {
 };
 
 const inputCls =
-  'w-full px-3 py-2.5 border border-slate-200 rounded-lg bg-white text-sm text-slate-800 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-colors placeholder:text-slate-400';
+  'w-full px-3 py-2.5 border border-slate-200 rounded-lg bg-white text-sm text-slate-800 outline-hidden focus:border-primary focus:ring-2 focus:ring-primary/10 transition-colors placeholder:text-slate-400';
 
 // ─── Invite modal ─────────────────────────────────────────────────────────────
 

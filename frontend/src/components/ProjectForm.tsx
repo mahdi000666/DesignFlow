@@ -30,7 +30,7 @@ interface ClientOption {
 }
 
 const inputCls =
-  'w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-colors placeholder:text-slate-400 bg-white';
+  'w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-900 outline-hidden focus:border-primary focus:ring-2 focus:ring-primary/10 transition-colors placeholder:text-slate-400 bg-white';
 
 const labelCls =
   'block text-xs font-semibold text-slate-500 mb-1.5';

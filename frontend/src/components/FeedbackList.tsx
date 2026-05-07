@@ -109,7 +109,7 @@ export default function FeedbackList({ projectId, canUpdate, canReply = false }:
               onClick={() => setFilter(f.value)}
               className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 ${
                 filter === f.value
-                  ? 'bg-slate-900 text-white shadow-sm'
+                  ? 'bg-slate-900 text-white shadow-xs'
                   : 'bg-white text-slate-600 border border-slate-200 hover:border-slate-300 hover:bg-slate-50'
               }`}
             >
@@ -156,7 +156,7 @@ export default function FeedbackList({ projectId, canUpdate, canReply = false }:
                         <button
                           onClick={() => updateStatus.mutate({ id: item.id, status: next })}
                           disabled={updateStatus.isPending}
-                          className="text-xs px-3 py-1.5 border border-slate-200 rounded-lg hover:bg-slate-50 hover:border-slate-300 disabled:opacity-50 transition-colors font-medium text-slate-700 shadow-sm"
+                          className="text-xs px-3 py-1.5 border border-slate-200 rounded-lg hover:bg-slate-50 hover:border-slate-300 disabled:opacity-50 transition-colors font-medium text-slate-700 shadow-xs"
                         >
                           Mark {next}
                         </button>
@@ -165,7 +165,7 @@ export default function FeedbackList({ projectId, canUpdate, canReply = false }:
                         <button
                           onClick={() => updateStatus.mutate({ id: item.id, status: 'Resolved' })}
                           disabled={updateStatus.isPending}
-                          className="text-xs px-3 py-1.5 border border-emerald-200 text-emerald-700 rounded-lg hover:bg-emerald-50 disabled:opacity-50 transition-colors font-medium shadow-sm"
+                          className="text-xs px-3 py-1.5 border border-emerald-200 text-emerald-700 rounded-lg hover:bg-emerald-50 disabled:opacity-50 transition-colors font-medium shadow-xs"
                         >
                           Acknowledge
                         </button>
@@ -174,7 +174,7 @@ export default function FeedbackList({ projectId, canUpdate, canReply = false }:
                         <button
                           onClick={() => handleDelete(item.id)}
                           disabled={deleteFeedback.isPending}
-                          className="text-xs px-3 py-1.5 border border-rose-200 text-rose-600 rounded-lg hover:bg-rose-50 disabled:opacity-50 transition-colors font-medium shadow-sm"
+                          className="text-xs px-3 py-1.5 border border-rose-200 text-rose-600 rounded-lg hover:bg-rose-50 disabled:opacity-50 transition-colors font-medium shadow-xs"
                         >
                           Delete
                         </button>
@@ -190,7 +190,7 @@ export default function FeedbackList({ projectId, canUpdate, canReply = false }:
                         <ul className="space-y-3 thread-line">
                           {itemReplies.map(reply => (
                             <li key={reply.id} className="flex gap-3 relative">
-                              <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500 shrink-0 mt-0.5 shadow-sm ring-2 ring-white">
+                              <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500 shrink-0 mt-0.5 shadow-xs ring-2 ring-white">
                                 {(reply.sender_name ?? '?')[0].toUpperCase()}
                               </div>
                               <div className="flex-1 min-w-0">
@@ -223,7 +223,7 @@ export default function FeedbackList({ projectId, canUpdate, canReply = false }:
                               <button
                                 onClick={() => handleReply(item.id)}
                                 disabled={!replyText.trim() || createMessage.isPending}
-                                className="text-xs px-3 py-1.5 bg-primary text-white rounded-lg font-semibold hover:bg-primary-600 disabled:opacity-50 transition-colors shadow-sm"
+                                className="text-xs px-3 py-1.5 bg-primary text-white rounded-lg font-semibold hover:bg-primary-600 disabled:opacity-50 transition-colors shadow-xs"
                               >
                                 Send
                               </button>

@@ -49,7 +49,7 @@ export function AuthInput({
           onChange={e => onChange(e.target.value)}
           placeholder={placeholder}
           onKeyDown={onKeyDown}
-          className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-colors"
+          className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary transition-colors"
         />
         {showToggle && (
           <button type="button" onClick={onToggle} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
@@ -92,7 +92,7 @@ export function AuthButton({ children, onClick, loading }: AuthButtonProps) {
     <button
       onClick={onClick}
       disabled={loading}
-      className="w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 transition-colors"
+      className="w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-primary-600 focus:outline-hidden focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 transition-colors"
     >
       {loading ? 'Loading…' : children}
     </button>
@@ -128,10 +128,10 @@ interface AuthCardProps {
 export function AuthCard({ children, accent = 'primary' }: AuthCardProps) {
   const bar =
     accent === 'error'
-      ? 'bg-gradient-to-r from-red-400 to-rose-400'
-      : 'bg-gradient-to-r from-primary to-indigo-400';
+      ? 'bg-linear-to-r from-red-400 to-rose-400'
+      : 'bg-linear-to-r from-primary to-indigo-400';
   return (
-    <div className="w-full max-w-[420px] bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+    <div className="w-full max-w-[420px] bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
       <div className={`h-[3px] ${bar}`} />
       <div className="px-10 py-9">{children}</div>
     </div>

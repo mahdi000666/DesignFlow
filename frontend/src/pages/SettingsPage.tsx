@@ -9,7 +9,7 @@ import { Initials } from '../utils/format';
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 const inputCls =
-  'w-full px-3 py-2.5 border border-slate-200 rounded-lg bg-white text-sm text-slate-800 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-colors placeholder:text-slate-400';
+  'w-full px-3 py-2.5 border border-slate-200 rounded-lg bg-white text-sm text-slate-800 outline-hidden focus:border-primary focus:ring-2 focus:ring-primary/10 transition-colors placeholder:text-slate-400';
 
 const readonlyCls =
   'w-full px-3 py-2.5 border border-slate-100 rounded-lg bg-slate-50 text-sm text-slate-400 cursor-not-allowed select-none';
@@ -184,7 +184,7 @@ export default function SettingsPage() {
 
       {/* ── Avatar strip — lives outside both cards ────────────────────── */}
       {me && (
-        <div className="flex items-center gap-4 bg-white border border-slate-100 rounded-xl px-5 py-4 shadow-sm mb-5">
+        <div className="flex items-center gap-4 bg-white border border-slate-100 rounded-xl px-5 py-4 shadow-xs mb-5">
           <label className="relative w-12 h-12 rounded-full cursor-pointer group shrink-0">
             {me.avatar_url ? (
               <img src={me.avatar_url} alt={me.full_name} className="w-12 h-12 rounded-full object-cover" />

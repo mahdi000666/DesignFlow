@@ -13,7 +13,7 @@ const fmt = (iso: string) =>
   new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 
 const inputCls =
-  'px-2 py-1 border border-slate-200 rounded text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-colors bg-white w-full';
+  'px-2 py-1 border border-slate-200 rounded text-sm text-slate-900 outline-hidden focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-colors bg-white w-full';
 
 export default function TimeLogList({ logs, isManager, currentUserId, onDelete, onUpdate }: Props) {
   const [editingId,    setEditingId]    = useState<number | null>(null);

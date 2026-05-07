@@ -51,7 +51,7 @@ export default function MessageBoard({ projectId }: Props) {
           <p className="text-sm text-slate-400 text-center pt-10 font-medium">Loading messages…</p>
         ) : messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-slate-400">
-            <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center mb-3 shadow-sm">
+            <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center mb-3 shadow-xs">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
               </svg>
@@ -80,7 +80,7 @@ export default function MessageBoard({ projectId }: Props) {
                     )}
                     <span className="text-[11px] text-slate-400 font-medium">{fmt(msg.created_at)}</span>
                   </div>
-                  <div className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap shadow-sm ${
+                  <div className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap shadow-xs ${
                     isOwn
                       ? 'bg-primary text-white rounded-tr-sm'
                       : 'bg-slate-100 text-slate-800 rounded-tl-sm'

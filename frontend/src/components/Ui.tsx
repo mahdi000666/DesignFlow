@@ -126,7 +126,7 @@ export function Avatar({ name, size = 'md', className = '', src }: AvatarProps) 
   if (src) {
     return (
       <span
-        className={`inline-flex items-center justify-center rounded-full flex-shrink-0 shadow-sm ring-2 ring-white overflow-hidden ${sizeClass} ${className}`}
+        className={`inline-flex items-center justify-center rounded-full shrink-0 shadow-xs ring-2 ring-white overflow-hidden ${sizeClass} ${className}`}
       >
         <img src={src} alt={name} className="w-full h-full object-cover" />
       </span>
@@ -134,7 +134,7 @@ export function Avatar({ name, size = 'md', className = '', src }: AvatarProps) 
   }
   return (
     <span
-      className={`inline-flex items-center justify-center rounded-full font-bold flex-shrink-0 shadow-sm ring-2 ring-white
+      className={`inline-flex items-center justify-center rounded-full font-bold shrink-0 shadow-xs ring-2 ring-white
                   ${sizeClass} ${nameToColor(name)} ${className}`}
     >
       {initials(name)}
@@ -183,7 +183,7 @@ export function KpiCard({
           {label}
         </span>
         {icon && (
-          <span className="w-8 h-8 rounded-lg bg-primary-50 flex items-center justify-center text-primary shadow-sm">
+          <span className="w-8 h-8 rounded-lg bg-primary-50 flex items-center justify-center text-primary shadow-xs">
             {icon}
           </span>
         )}
@@ -244,7 +244,7 @@ export function EmptyState({ icon, message, action }: {
   return (
     <div className="card flex flex-col items-center justify-center py-12 px-6 text-center">
       {icon && (
-        <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 mb-4 shadow-sm">
+        <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 mb-4 shadow-xs">
           {icon}
         </div>
       )}
@@ -258,7 +258,7 @@ export function EmptyState({ icon, message, action }: {
 
 export function DataTable({ children }: { children: React.ReactNode }) {
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 shadow-sm">
+    <div className="overflow-hidden rounded-xl border border-slate-200 shadow-xs">
       <table className="data-table">{children}</table>
     </div>
   );

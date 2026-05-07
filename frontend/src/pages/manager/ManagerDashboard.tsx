@@ -73,7 +73,7 @@ function BudgetTooltip({ active, payload, label }: {
 }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-xs shadow-sm">
+    <div className="bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-xs shadow-xs">
       <p className="font-semibold text-slate-800 mb-1.5 max-w-[160px] truncate">{label}</p>
       {payload.map(p => (
         <div key={p.name} className="flex items-center gap-2">

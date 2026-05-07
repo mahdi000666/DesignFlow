@@ -30,7 +30,7 @@ export default function DesignerProjects() {
               <Link
                 key={p.id}
                 to={`/designer/projects/${p.id}`}
-                className="bg-white rounded-xl border border-slate-200 p-5 hover:border-primary-300 hover:shadow-sm transition-all block group"
+                className="bg-white rounded-xl border border-slate-200 p-5 hover:border-primary-300 hover:shadow-xs transition-all block group"
               >
                 <div className="flex items-start justify-between gap-4 mb-2">
                   <div>

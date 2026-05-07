@@ -214,7 +214,7 @@ export default function ActivatePage() {
                     if (v === '' || /^\d+$/.test(v)) setHoursPerWk(v);
                   }}
                   placeholder="e.g. 40"
-                  className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-colors"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary transition-colors"
                 />
               </div>
             </>
@@ -234,7 +234,7 @@ export default function ActivatePage() {
                     if (v === '' || /^[0-9+ ]*$/.test(v)) setPhone(v);
                   }}
                   placeholder="e.g. 98 123 456 or +216 98 123 456"
-                  className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-colors"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary transition-colors"
                 />
               </div>
               <AuthInput
