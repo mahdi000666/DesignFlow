@@ -2,28 +2,27 @@ import { useParams } from 'react-router-dom';
 import { useState, useMemo, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { useProject } from '../../hooks/useProjects';
-import { useTasks } from '../../hooks/useTasks';
-import { useTimeLogs, useCreateTimeLog, useUpdateTimeLog } from '../../hooks/useTimeLogs';
+import { useTasks, useUpdateTask } from '../../hooks/useTasks';
+import { useTimeLogs, useUpdateTimeLog, useActiveTimers, useTimerMutations } from '../../hooks/useTimeLogs';
 import { useFiles } from '../../hooks/useFiles';
 import { useMessages, useMarkMessagesRead } from '../../hooks/useMessages';
 import { useFeedback } from '../../hooks/useFeedback';
 import { useUnreadCount } from '../../hooks/useUnreadCount';
 import { useAuth } from '../../hooks/useAuth';
-import TimeLogForm from '../../components/TimeLogForm';
 import TimeLogList from '../../components/TimeLogList';
 import FileUploadPanel from '../../components/FileUploadPanel';
 import FeedbackList from '../../components/FeedbackList';
 import MessageBoard from '../../components/MessageBoard';
-import TaskRow from '../../components/TaskRow';
 import AppShell from '../../components/AppShell';
+import KanbanBoard from '../../components/KanbanBoard';
+import KanbanTaskCard from '../../components/KanbanTaskCard';
 import { KpiCard, UnreadBadge } from '../../components/Ui';
-import type { Task } from '../../types/task';
-import type { TimeLogPayload } from '../../types/timelog';
 import { formatEHR, formatTND } from '../../utils/format';
 import { STATUS_BADGE, STATUS_DOT, barColor, statusLabel, categoryClass } from '../../utils/project';
 import {
-  Calendar, User, Tag, Clock, CheckCircle2, Activity, FolderOpen, ListTodo, BarChart3,
+  Calendar, User, Tag, Clock, CheckCircle2, FolderOpen, BarChart3,
 } from 'lucide-react';
+import type { Task } from '../../types/task';
 
 type Tab = 'tasks' | 'log' | 'files' | 'feedback' | 'messages';
 
@@ -31,11 +30,18 @@ export default function DesignerProjectDetail() {
   const { id }    = useParams<{ id: string }>();
   const projectId = Number(id);
   const { user }  = useAuth();
+  const { data: activeSessions = [] } = useActiveTimers();
+  const timerMutations = useTimerMutations(projectId);
+  const sessionByTask = useMemo(
+    () => Object.fromEntries(activeSessions.map(s => [s.task, s])),
+    [activeSessions],
+  );
   const userId = Number(user?.user_id ?? 0);
 
   const { data: project, isLoading: loadingProject } = useProject(projectId);
   const { data: rawTasks = [], isLoading: loadingTasks } = useTasks(projectId);
   const tasks = useMemo(() => [...rawTasks].sort((a, b) => a.id - b.id), [rawTasks]);
+  const updateTask = useUpdateTask(projectId);
   const { data: logs     = [] } = useTimeLogs(projectId);
   const { data: files    = [] } = useFiles(projectId);
   const { data: messages = [] } = useMessages(projectId);
@@ -52,12 +58,9 @@ export default function DesignerProjectDetail() {
   const { count: unreadFiles, markRead: markFilesRead } =
     useUnreadCount(files, projectId, 'files', userId);
 
-  const createTimeLog = useCreateTimeLog(projectId);
   const updateTimeLog = useUpdateTimeLog(projectId);
 
   const [activeTab,    setActiveTab]    = useState<Tab>('tasks');
-  const [showLogForm,  setShowLogForm]  = useState(false);
-  const [statusFilter, setStatusFilter] = useState<Task['status'] | 'All'>('All');
 
   const taskLogMap = useMemo<Record<number, number>>(() => {
     const map: Record<number, number> = {};
@@ -66,12 +69,6 @@ export default function DesignerProjectDetail() {
     }
     return map;
   }, [logs]);
-
-  const allTasks = tasks.flatMap(t => [t, ...t.subtasks]);
-
-  const handleLogTime = (payload: TimeLogPayload) => {
-    createTimeLog.mutate(payload, { onSuccess: () => setShowLogForm(false) });
-  };
 
   useEffect(() => {
     if (activeTab === 'messages' && unreadMessages > 0) {
@@ -91,9 +88,14 @@ export default function DesignerProjectDetail() {
     if (tab === 'files')    markFilesRead();
   };
 
-  const filteredTasks = statusFilter === 'All'
-    ? tasks
-    : tasks.filter(t => t.status === statusFilter);
+  const handleTaskMoved = (taskId: number, newStatus: Task['status']) => {
+    if (newStatus === 'InProgress') {
+      timerMutations.start.mutate(taskId);
+    } else if (newStatus === 'Completed') {
+      const session = sessionByTask[taskId];
+      if (session) timerMutations.stop.mutate(taskId);
+    }
+  };
 
   const budgetPct = project?.budget_hours && project?.actual_hours != null
     ? Math.min(100, (project.actual_hours / Number(project.budget_hours)) * 100)
@@ -116,9 +118,6 @@ export default function DesignerProjectDetail() {
   const myHours       = myLogs.reduce((sum, l) => sum + Number(l.hours_spent), 0);
 
   const taskDoneCount = tasks.filter(t => t.status === 'Completed').length;
-  const taskOpenCount = tasks.length - taskDoneCount;
-  const taskTodoCount = tasks.filter(t => t.status === 'Todo').length;
-  const taskInProgressCount = tasks.filter(t => t.status === 'InProgress').length;
 
   if (loadingProject) {
     return <AppShell title="Project"><p className="text-sm text-slate-400">Loading…</p></AppShell>;
@@ -284,115 +283,37 @@ export default function DesignerProjectDetail() {
       {/* ── Tab: Tasks ───────────────────────────────────────────────────── */}
       {activeTab === 'tasks' && (
         <div>
-          <div className="flex items-center justify-between gap-3 mb-4">
-            <div className="flex items-center gap-2 flex-wrap">
-
-              {taskTodoCount > 0 && (
-                <div className="inline-flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5">
-                  <ListTodo size={14} className="text-slate-500" />
-                  <span className="text-xs font-medium text-slate-600">{taskTodoCount} Todo</span>
-                </div>
-              )}
-
-              {taskDoneCount > 0 && (
-                <div className="inline-flex items-center gap-1.5 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-1.5">
-                  <CheckCircle2 size={14} className="text-emerald-600" />
-                  <span className="text-xs font-medium text-emerald-700">{taskDoneCount} Done</span>
-                </div>
-              )}
-
-              {taskInProgressCount > 0 && (
-                <div className="inline-flex items-center gap-1.5 bg-primary-50 border border-primary-100 rounded-lg px-3 py-1.5">
-                  <Activity size={14} className="text-primary" />
-                  <span className="text-xs font-medium text-primary-700">{taskInProgressCount} In Progress</span>
-                </div>
-              )}
-
-              <div className="inline-flex items-center gap-1.5 bg-white border border-slate-200 rounded-lg px-3 py-1.5 shadow-xs">
-                <Clock size={14} className="text-slate-400" />
-                <span className="text-xs text-slate-500">Open</span>
-                <span className="text-xs font-mono font-semibold text-slate-700">{taskOpenCount}</span>
-              </div>
-            </div>
-
-            <select
-              value={statusFilter}
-              onChange={e => setStatusFilter(e.target.value as typeof statusFilter)}
-              className="px-3 py-2 border border-slate-200 rounded-lg bg-white text-sm text-slate-600 outline-hidden focus:border-primary focus:ring-2 focus:ring-primary/10 cursor-pointer transition-colors hover:bg-slate-50"
-            >
-              <option value="All">All statuses</option>
-              <option value="Todo">Todo</option>
-              <option value="InProgress">In Progress</option>
-              <option value="Completed">Completed</option>
-            </select>
-          </div>
-
-          {loadingTasks ? (
-            <p className="text-sm text-slate-400">Loading tasks…</p>
-          ) : filteredTasks.length === 0 ? (
-            <div className="bg-white rounded-xl border border-slate-200 px-4 py-10 text-center">
-              <p className="text-sm text-slate-400">
-                {statusFilter !== 'All' ? 'No tasks match this status.' : 'No tasks yet.'}
-              </p>
-            </div>
-          ) : (
-            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200">
-                    <th className="px-7 py-3 text-left   text-xs font-semibold uppercase tracking-wide text-slate-400">Task</th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-400 w-36">Type</th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-400 w-28">Estimated</th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-400 w-24">Logged</th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-400 w-32">Status</th>
-                    <th className="w-36" />
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {filteredTasks.map(task => (
-                    <TaskRow
-                      key={task.id}
-                      task={task}
-                      projectId={projectId}
-                      isManager={false}
-                      loggedHours={taskLogMap[task.id] ?? 0}
-                      taskLogMap={taskLogMap}
-                    />
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+          <KanbanBoard
+            tasks={tasks}
+            onStatusChange={(id, status) =>
+              updateTask.mutate({ id, payload: { status } })
+            }
+            isLoading={loadingTasks}
+            onTaskMoved={handleTaskMoved}
+            renderCard={task => (
+              <KanbanTaskCard
+                task={task}
+                isManager={false}
+                loggedHours={taskLogMap[task.id] ?? 0}
+                session={sessionByTask[task.id]}
+                onPause={() => timerMutations.pause.mutate(task.id)}
+                onResume={() => timerMutations.resume.mutate(task.id)}
+                onStop={() => timerMutations.stop.mutate(task.id)}
+                isPending={timerMutations.isPending}
+              />
+            )}
+          />
         </div>
       )}
 
       {/* ── Tab: Log Time ────────────────────────────────────────────────── */}
       {activeTab === 'log' && (
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <button
-              onClick={() => setShowLogForm(v => !v)}
-              className={
-                showLogForm
-                  ? 'border border-slate-200 text-slate-600 px-3.5 py-2 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors'
-                  : 'bg-primary text-white px-3.5 py-2 rounded-lg text-sm font-semibold hover:bg-primary-600 transition-colors'
-              }
-            >
-              {showLogForm ? 'Cancel' : '+ Log time'}
-            </button>
-          </div>
-          {showLogForm && (
-            <div className="bg-white rounded-xl border border-slate-200 p-5 mb-4">
-              <TimeLogForm tasks={allTasks} isLoading={createTimeLog.isPending} onSubmit={handleLogTime} />
-            </div>
-          )}
-          <TimeLogList
-            logs={logs}
-            isManager={false}
-            currentUserId={Number(user?.user_id)}
-            onUpdate={(id, payload) => updateTimeLog.mutate({ id, payload })}
-          />
-        </div>
+        <TimeLogList
+          logs={logs}
+          isManager={false}
+          currentUserId={Number(user?.user_id)}
+          onUpdate={(id, payload) => updateTimeLog.mutate({ id, payload })}
+        />
       )}
 
       {/* ── Tab: Files ───────────────────────────────────────────────────── */}

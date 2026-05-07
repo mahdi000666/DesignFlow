@@ -18,6 +18,14 @@ export const formatTND = (value: number): string =>
 export const formatEHR = (value: number): string =>
   `${value.toLocaleString('fr-TN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TND/h`;
 
+// ─── Time ────────────────────────────────────────────────────────────────
+
+export const formatHours = (value: number | string): string => {
+  const n = Number(value);
+  if (n < 0.1) return `${Math.round(n * 60)}m`;
+  return `${n.toFixed(1)}h`;
+};
+
 // ─── Strings ─────────────────────────────────────────────────────────────────
 
 /**

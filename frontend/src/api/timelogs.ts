@@ -1,6 +1,6 @@
 import apiClient from './clients';
 import { getPaginatedResults } from './pagination';
-import type { TimeLog, TimeLogPayload } from '../types/timelog';
+import type { ActivityLog, TimeLog, TimeLogPayload, TimerSession } from '../types/timelog';
 
 export const getTimeLogs = async (projectId: number): Promise<TimeLog[]> => {
   return getPaginatedResults<TimeLog>('/timelogs/', { project: projectId });
@@ -26,4 +26,36 @@ export const updateTimeLog = async (
 
 export const deleteTimeLog = async (id: number): Promise<void> => {
   await apiClient.delete(`/timelogs/${id}/`);
+};
+
+export const getActiveTimers = async (): Promise<TimerSession[]> => {
+  const { data } = await apiClient.get<TimerSession[]>('/timelogs/timer/active/');
+  return data;
+};
+ 
+export const startTimer = async (taskId: number): Promise<TimerSession> => {
+  const { data } = await apiClient.post<TimerSession>('/timelogs/timer/start/', { task_id: taskId });
+  return data;
+};
+ 
+export const pauseTimer = async (taskId: number): Promise<TimerSession> => {
+  const { data } = await apiClient.post<TimerSession>('/timelogs/timer/pause/', { task_id: taskId });
+  return data;
+};
+ 
+export const resumeTimer = async (taskId: number): Promise<TimerSession> => {
+  const { data } = await apiClient.post<TimerSession>('/timelogs/timer/resume/', { task_id: taskId });
+  return data;
+};
+ 
+export const stopTimer = async (taskId: number): Promise<TimeLog> => {
+  const { data } = await apiClient.post<TimeLog>('/timelogs/timer/stop/', { task_id: taskId });
+  return data;
+};
+ 
+export const getActivityLogs = async (designerUserId: number): Promise<ActivityLog[]> => {
+  const { data } = await apiClient.get<ActivityLog[]>('/timelogs/activity/', {
+    params: { designer_user_id: designerUserId },
+  });
+  return data;
 };

@@ -285,6 +285,7 @@ class DesignerUtilizationView(APIView):
 
             data.append({
                 'designer_id': designer.id,
+                'designer_user_id': designer.user.id,
                 'designer_name': designer.user.full_name,
                 'logged_hours': logged_hours,
                 'available_hours_per_week': available,

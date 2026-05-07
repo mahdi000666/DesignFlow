@@ -2,7 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useMemo, useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { useProject, useUpdateProject, useDeleteProject } from '../../hooks/useProjects';
-import { useTasks, useCreateTask } from '../../hooks/useTasks';
+import { useTasks, useCreateTask, useUpdateTask } from '../../hooks/useTasks';
 import { useTimeLogs, useDeleteTimeLog, useUpdateTimeLog } from '../../hooks/useTimeLogs';
 import { useFiles } from '../../hooks/useFiles';
 import { useMessages, useMarkMessagesRead } from '../../hooks/useMessages';
@@ -11,16 +11,17 @@ import { useUnreadCount } from '../../hooks/useUnreadCount';
 import { useAuth } from '../../hooks/useAuth';
 import { useAISummary, useScopeCreep } from '../../hooks/useAnalytics';
 import TaskForm from '../../components/TaskForm';
-import TaskRow from '../../components/TaskRow';
 import AssignDesignerPanel from '../../components/AssignDesignerPanel';
 import TimeLogList from '../../components/TimeLogList';
 import FileUploadPanel from '../../components/FileUploadPanel';
 import FeedbackList from '../../components/FeedbackList';
 import MessageBoard from '../../components/MessageBoard';
+import KanbanBoard from '../../components/KanbanBoard';
+import KanbanTaskCard from '../../components/KanbanTaskCard';
 import AppShell from '../../components/AppShell';
 import { KpiCard, UnreadBadge } from '../../components/Ui';
 import ProjectForm from '../../components/ProjectForm';
-import type { TaskPayload, Task } from '../../types/task';
+import type { TaskPayload } from '../../types/task';
 import type { ProjectPayload } from '../../types/project';
 import { exportPDF } from '../../api/analytics';
 import type { ScopeCreepItem } from '../../types/analytic';
@@ -28,8 +29,8 @@ import { STATUS_BADGE, STATUS_DOT, barColor, statusLabel, categoryClass } from '
 import { formatEHR, formatTND } from '../../utils/format';
 import {
   BarChart3, DollarSign, AlertTriangle, MessageSquare,
-  Calendar, User, Tag, Users, Clock, CheckCircle2, Activity,
-  AlertCircle, ChevronDown, ListTodo, X,
+  Calendar, User, Tag, Users, Clock,
+  AlertCircle, ChevronDown, X,
 } from 'lucide-react';
 
 type Tab = 'tasks' | 'logs' | 'files' | 'feedback' | 'messages';
@@ -179,6 +180,7 @@ export default function ProjectDetail() {
     useUnreadCount(files, projectId, 'files', userId);
 
   const createTask    = useCreateTask(projectId);
+  const updateTask    = useUpdateTask(projectId);
   const updateProject = useUpdateProject(projectId);
   const deleteProject = useDeleteProject();
   const deleteTimeLog = useDeleteTimeLog(projectId);
@@ -188,7 +190,6 @@ export default function ProjectDetail() {
   const [showTaskForm,    setShowTaskForm]     = useState(false);
   const [showAssignPanel, setShowAssignPanel]  = useState(false);
   const [showEditForm,    setShowEditForm]     = useState(false);
-  const [statusFilter,    setStatusFilter]     = useState<Task['status'] | 'All'>('All');
   const [statusOpen,      setStatusOpen]       = useState(false);
   const statusRef = useRef<HTMLDivElement>(null);
 
@@ -279,15 +280,8 @@ export default function ProjectDetail() {
 
   const parentTaskOptions = tasks.map(t => ({ id: t.id, task_name: t.task_name }));
 
-  const filteredTasks = statusFilter === 'All'
-    ? tasks
-    : tasks.filter(t => t.status === statusFilter);
-
   // ── Task tab stats ─────────────────────────────────────────────────────────
-  const taskCompletedCount  = tasks.filter(t => t.status === 'Completed').length;
-  const taskInProgressCount = tasks.filter(t => t.status === 'InProgress').length;
   const taskUnplannedCount  = tasks.filter(t => t.is_unplanned).length;
-  const taskTodoCount       = tasks.filter(t => t.status === 'Todo').length;
   const taskTotalEstimated  = tasks.reduce(
     (sum, t) => sum + (t.estimated_hours != null ? Number(t.estimated_hours) : 0), 0,
   );
@@ -581,38 +575,15 @@ export default function ProjectDetail() {
       {/* ── Tab: Tasks ───────────────────────────────────────────────────── */}
       {activeTab === 'tasks' && (
         <div>
+          {/* ── Stats + controls bar ─────────────────────────────────────── */}
           <div className="flex items-center justify-between gap-3 mb-4">
-            {/* Stats — left side */}
             <div className="flex items-center gap-2 flex-wrap">
-
-              {taskTodoCount > 0 && (
-                <div className="inline-flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5">
-                  <ListTodo size={14} className="text-slate-500" />
-                  <span className="text-xs font-medium text-slate-600">{taskTodoCount} Todo</span>
-                </div>
-              )}
-
-              {taskCompletedCount > 0 && (
-                <div className="inline-flex items-center gap-1.5 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-1.5">
-                  <CheckCircle2 size={14} className="text-emerald-600" />
-                  <span className="text-xs font-medium text-emerald-700">{taskCompletedCount} Done</span>
-                </div>
-              )}
-
-              {taskInProgressCount > 0 && (
-                <div className="inline-flex items-center gap-1.5 bg-primary-50 border border-primary-100 rounded-lg px-3 py-1.5">
-                  <Activity size={14} className="text-primary" />
-                  <span className="text-xs font-medium text-primary-700">{taskInProgressCount} In Progress</span>
-                </div>
-              )}
-
               {taskUnplannedCount > 0 && (
                 <div className="inline-flex items-center gap-1.5 bg-rose-50 border border-rose-100 rounded-lg px-3 py-1.5">
                   <AlertCircle size={14} className="text-rose-600" />
                   <span className="text-xs font-medium text-rose-700">{taskUnplannedCount} Unplanned</span>
                 </div>
               )}
-
               {taskTotalEstimated > 0 && (
                 <div className="inline-flex items-center gap-1.5 bg-white border border-slate-200 rounded-lg px-3 py-1.5 shadow-xs">
                   <Clock size={14} className="text-slate-400" />
@@ -622,33 +593,21 @@ export default function ProjectDetail() {
               )}
             </div>
 
-            {/* Controls — right side */}
-            <div className="flex items-center gap-3 shrink-0">
-              {isManager && (
-                <button
-                  onClick={() => setShowTaskForm(v => !v)}
-                  className={
-                    showTaskForm
-                      ? 'border border-slate-200 text-slate-600 px-3.5 py-2 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors'
-                      : 'bg-primary text-white px-3.5 py-1.5 rounded-lg text-sm font-semibold hover:bg-primary-600 transition-colors'
-                  }
-                >
-                  {showTaskForm ? 'Cancel' : '+ Add Task'}
-                </button>
-              )}
-              <select
-                value={statusFilter}
-                onChange={e => setStatusFilter(e.target.value as typeof statusFilter)}
-                className="px-3 py-2 border border-slate-200 rounded-lg bg-white text-sm text-slate-600 outline-hidden focus:border-primary focus:ring-2 focus:ring-primary/10 cursor-pointer transition-colors hover:bg-slate-50"
+            {isManager && (
+              <button
+                onClick={() => setShowTaskForm(v => !v)}
+                className={
+                  showTaskForm
+                    ? 'border border-slate-200 text-slate-600 px-3.5 py-2 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors'
+                    : 'bg-primary text-white px-3.5 py-1.5 rounded-lg text-sm font-semibold hover:bg-primary-600 transition-colors'
+                }
               >
-                <option value="All">All statuses</option>
-                <option value="Todo">Todo</option>
-                <option value="InProgress">In Progress</option>
-                <option value="Completed">Completed</option>
-              </select>
-            </div>
+                {showTaskForm ? 'Cancel' : '+ Add Task'}
+              </button>
+            )}
           </div>
 
+          {/* ── Inline task form ─────────────────────────────────────────── */}
           {showTaskForm && isManager && (
             <div className="bg-white rounded-xl border border-slate-200 p-5 mb-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-3">New task</p>
@@ -661,42 +620,21 @@ export default function ProjectDetail() {
             </div>
           )}
 
-          {loadingTasks ? (
-            <p className="text-sm text-slate-400">Loading tasks…</p>
-          ) : filteredTasks.length === 0 ? (
-            <div className="bg-white rounded-xl border border-slate-200 px-4 py-10 text-center">
-              <p className="text-sm text-slate-400">
-                {statusFilter !== 'All' ? 'No tasks match this status.' : 'No tasks yet.'}
-              </p>
-            </div>
-          ) : (
-            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200">
-                    <th className="px-7 py-3 text-left   text-xs font-semibold uppercase tracking-wide text-slate-400">Task</th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-400 w-32">Status</th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-400 w-28">Estimated</th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-400 w-24">Logged</th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-400 w-28">Variance</th>
-                    <th className="w-36" />
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {filteredTasks.map(task => (
-                    <TaskRow
-                      key={task.id}
-                      task={task}
-                      projectId={projectId}
-                      isManager={isManager}
-                      loggedHours={taskLogMap[task.id] ?? 0}
-                      taskLogMap={taskLogMap}
-                    />
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+          {/* ── Kanban board ─────────────────────────────────────────────── */}
+          <KanbanBoard
+            tasks={tasks}
+            onStatusChange={(id, status) =>
+              updateTask.mutate({ id, payload: { status } })
+            }
+            isLoading={loadingTasks}
+            renderCard={task => (
+              <KanbanTaskCard
+                task={task}
+                isManager={true}
+                loggedHours={taskLogMap[task.id] ?? 0}
+              />
+            )}
+          />
         </div>
       )}
 

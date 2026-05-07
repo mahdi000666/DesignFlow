@@ -6,6 +6,8 @@ export const useTasks = (projectId: number) =>
   useQuery({
     queryKey: ['tasks', projectId],
     queryFn:  () => tasksApi.getTasks(projectId),
+    refetchInterval: 15_000,
+    refetchIntervalInBackground: false,
   });
 
 export const useCreateTask = (projectId: number) => {

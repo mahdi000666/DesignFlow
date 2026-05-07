@@ -1,30 +1,9 @@
-After finishing all the sprints, I decided to showcase my project to my professional supervisor. He said its good overall. But he had a few remarks on designer time logging. Currently designer manually logs time after finishing a task. He also has the ability to edit the timelog of each logged task of his.
-So my supervisor suggested that a time counter starts running when a designer begins a task, he can also pause it (in case there are breaks). And when hes done he can simply stop the timer and his time on task will be logged automatically. These actions should be logged so the manager can see the designer's activity history (The manager has a designer utilisation chart in manager dashboard, my idea was to click on each designer name on that chart and it would display their activity history, but if u got a better idea let me know).
-I guess time log and edit buttons should no longerr be needed and can be removed now.
-
-For tasks, he suggested that I make it trello style and drag each task from todo to in progress to completed. he mentioned something about kanban.
-Im also wondering whether we should let the manager assign tasks specific to designers or should be free for all.
-Begin planning, ask me for the required files.
-
-
-
-
-Analtics page zoom out/compact.
-
-
-
-kanban
-designer time counter when begin task
-log time pauses
-designer activity history
-remove time log edit
-remove log time
-ask if task should be to specific designer.
 
 
 OCR
 REFERENCEES RAPPORT
-
+RENDER
+TIME LOG CHANGE.
 
 
 

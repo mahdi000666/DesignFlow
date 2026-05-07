@@ -7,7 +7,7 @@ import {
 } from 'recharts';
 import {
   DollarSign, Activity, FolderOpen, MessageSquare,
-  CheckCircle2, Clock, FileText, ChevronDown, ChevronUp,
+  CheckCircle2, Clock, FileText, ChevronDown, ChevronUp, X, 
 } from 'lucide-react';
 import AppShell from '../../components/AppShell';
 import { KpiCard } from '../../components/Ui';
@@ -15,6 +15,8 @@ import { useKPISummary, useBudgetVariance, useDesignerUtilization } from '../../
 import { useProjects } from '../../hooks/useProjects';
 import { getAllFeedback } from '../../api/feedbacks';
 import { getAllTimeLogs } from '../../api/timelogs';
+import { useActivityLogs } from '../../hooks/useTimeLogs';
+import type { ActivityLog } from '../../types/timelog';
 import { getAllFiles } from '../../api/files';
 import { getAllCompletedTasks, getAllTasks } from '../../api/tasks';
 import { formatTND, formatEHR } from '../../utils/format';
@@ -88,6 +90,92 @@ function BudgetTooltip({ active, payload, label }: {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
+// ─── Activity Modal ───────────────────────────────────────────────────────────
+
+const ACTION_STYLE: Record<ActivityLog['action'], { bg: string; text: string; label: string }> = {
+  start:  { bg: 'bg-primary-50',   text: 'text-primary-700',  label: 'Started'  },
+  pause:  { bg: 'bg-amber-50',     text: 'text-amber-700',    label: 'Paused'   },
+  resume: { bg: 'bg-blue-50',      text: 'text-blue-700',     label: 'Resumed'  },
+  stop:   { bg: 'bg-emerald-50',   text: 'text-emerald-700',  label: 'Stopped'  },
+};
+
+const fmtTs = (iso: string) =>
+  new Date(iso).toLocaleString('en-GB', {
+    day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
+  });
+
+function ActivityModal({
+  designerUserId,
+  designerName,
+  onClose,
+}: {
+  designerUserId: number;
+  designerName:   string;
+  onClose:        () => void;
+}) {
+  const { data: logs = [], isLoading } = useActivityLogs(designerUserId);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[80vh] flex flex-col overflow-hidden mx-4"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+          <div>
+            <p className="text-sm font-semibold text-slate-900">Activity History</p>
+            <p className="text-xs text-slate-400 mt-0.5">{designerName}</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-slate-700 transition-colors"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="overflow-y-auto flex-1 px-5 py-4">
+          {isLoading && <p className="text-sm text-slate-400 text-center py-8">Loading…</p>}
+          {!isLoading && logs.length === 0 && (
+            <p className="text-sm text-slate-400 text-center py-8">No activity recorded yet.</p>
+          )}
+          {!isLoading && logs.length > 0 && (
+            <ul className="space-y-2.5">
+              {logs.map(log => {
+                const s = ACTION_STYLE[log.action];
+                return (
+                  <li key={log.id} className="flex items-start gap-3">
+                    <span className={`mt-0.5 shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${s.bg} ${s.text}`}>
+                      {s.label}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-slate-800 font-medium truncate">{log.task_name}</p>
+                      <p className="text-xs text-slate-400 truncate">{log.project_name}</p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-xs text-slate-500 whitespace-nowrap">{fmtTs(log.timestamp)}</p>
+                      {log.hours_logged && (
+                        <p className="font-mono text-xs font-semibold text-emerald-700 mt-0.5">
+                          +{Number(log.hours_logged).toFixed(2)}h logged
+                        </p>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ManagerDashboard() {
   const { data: kpi }               = useKPISummary();
   const { data: projects = [] }     = useProjects();
@@ -100,6 +188,7 @@ export default function ManagerDashboard() {
   const { data: completedTasks = [] }  = useQuery({ queryKey: ['tasks-completed'], queryFn: getAllCompletedTasks });
   const { data: allTasks = [] }        = useQuery({ queryKey: ['tasks-all'],       queryFn: getAllTasks });
 
+  const [selectedDesigner, setSelectedDesigner] = useState<{ id: number; name: string } | null>(null);
   const [nowMs]             = useState(() => Date.now());
   const [activityExpanded, setActivityExpanded] = useState(false);
 
@@ -347,9 +436,12 @@ export default function ManagerDashboard() {
                 return (
                   <div key={d.designer_id}>
                     <div className="flex justify-between items-center mb-1.5">
-                      <span className="text-sm text-slate-700 font-medium truncate max-w-[130px]">
+                      <button
+                        onClick={() => setSelectedDesigner({ id: d.designer_user_id, name: d.designer_name })}
+                        className="text-sm text-slate-700 font-medium truncate max-w-[130px] hover:text-primary transition-colors text-left"
+                      >
                         {d.designer_name}
-                      </span>
+                      </button>
                       <span className="font-mono text-xs font-semibold text-primary">
                         {pct.toFixed(0)}%
                       </span>
@@ -577,6 +669,13 @@ export default function ManagerDashboard() {
         )}
       </div>
 
+      {selectedDesigner && (
+        <ActivityModal
+          designerUserId={selectedDesigner.id}
+          designerName={selectedDesigner.name}
+          onClose={() => setSelectedDesigner(null)}
+        />
+      )}
     </AppShell>
   );
 }

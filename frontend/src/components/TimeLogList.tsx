@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { TimeLog, TimeLogPayload } from '../types/timelog';
+import { formatHours } from '../utils/format';
 
 interface Props {
   logs:       TimeLog[];
@@ -15,7 +16,7 @@ const fmt = (iso: string) =>
 const inputCls =
   'px-2 py-1 border border-slate-200 rounded text-sm text-slate-900 outline-hidden focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-colors bg-white w-full';
 
-export default function TimeLogList({ logs, isManager, currentUserId, onDelete, onUpdate }: Props) {
+export default function TimeLogList({ logs, isManager, onDelete, onUpdate }: Props) {
   const [editingId,    setEditingId]    = useState<number | null>(null);
   const [editHours,    setEditHours]    = useState('');
   const [editDesc,     setEditDesc]     = useState('');
@@ -93,7 +94,7 @@ export default function TimeLogList({ logs, isManager, currentUserId, onDelete, 
                     />
                   ) : (
                     <span className="font-mono text-sm text-slate-900 whitespace-nowrap">
-                      {Number(log.hours_spent).toFixed(1)}h
+                      {formatHours(log.hours_spent)}
                     </span>
                   )}
                 </td>
@@ -134,7 +135,7 @@ export default function TimeLogList({ logs, isManager, currentUserId, onDelete, 
                     </div>
                   ) : (
                     <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        {(isManager || log.designer_user_id === currentUserId) && (
+                        {isManager && (
                           <button
                             onClick={() => startEdit(log)}
                             className="text-xs font-medium text-slate-400 hover:text-slate-700 transition-colors"

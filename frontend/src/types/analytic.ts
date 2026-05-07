@@ -41,6 +41,7 @@ export interface ScopeCreepItem {
 
 export interface DesignerUtilizationItem {
   designer_id:              number;
+  designer_user_id:              number;
   designer_name:            string;
   logged_hours:             number;
   available_hours_per_week: number | null;
