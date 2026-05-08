@@ -21,6 +21,8 @@ def on_user_created(sender, instance, created, **kwargs):
     # created is false so we exit, we need true (new user created).
     if not created:
         return
+    if instance.is_staff or instance.is_superuser:
+        return
     
     # Create profile
     if instance.role == 'Designer':

@@ -37,4 +37,6 @@ class FeedbackStatusSerializer(serializers.ModelSerializer):
         if new_status == 'Resolved' and instance.status != 'Resolved':
             # Set resolved_at on first transition to Resolved only.
             validated_data['resolved_at'] = timezone.now()
+        elif new_status != 'Resolved':
+            validated_data['resolved_at'] = None
         return super().update(instance, validated_data)

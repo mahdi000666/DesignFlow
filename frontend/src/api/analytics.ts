@@ -1,4 +1,4 @@
-import apiClient from './clients';
+import apiClient, { API_BASE_URL } from './clients';
 import type {
   KPISummary,
   BudgetVarianceItem,
@@ -82,7 +82,7 @@ export const getAISummary = async (projectId: number): Promise<AISummaryResponse
 
 async function downloadBlob(url: string, filename: string) {
   const token = localStorage.getItem('access_token');
-  const resp  = await fetch(`${import.meta.env.VITE_API_BASE_URL}${url}`, {
+  const resp  = await fetch(`${API_BASE_URL}${url}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!resp.ok) throw new Error('Export failed');
@@ -96,9 +96,9 @@ async function downloadBlob(url: string, filename: string) {
 }
 
 export const exportPDF = (projectId: number) =>
-  downloadBlob(`/reports/export/?export_format=pdf&project=${projectId}`, `project_${projectId}_report.pdf`);
+  downloadBlob(`/reports/export/?format=pdf&project=${projectId}`, `project_${projectId}_report.pdf`);
 
 export const exportExcel = (projectId?: number) => {
-  const qs = projectId ? `?export_format=excel&project=${projectId}` : '?export_format=excel';
+  const qs = projectId ? `?format=excel&project=${projectId}` : '?format=excel';
   return downloadBlob(`/reports/export/${qs}`, 'profitability_report.xlsx');
 };

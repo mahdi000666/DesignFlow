@@ -26,6 +26,11 @@ class ActivateAccountSerializer(serializers.Serializer):
     phone    = serializers.CharField(required=False, allow_blank=True, default='')
     industry = serializers.CharField(required=False, allow_blank=True, default='')
 
+    def validate_password(self, value):
+        user = getattr(self, '_invitation', None)
+        validate_password(value, user=user.user if user else None)
+        return value
+
     def validate_token(self, value):
         try:
             self._invitation = InvitationToken.objects.select_related('user').get(token=value)

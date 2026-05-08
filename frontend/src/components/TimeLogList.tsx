@@ -5,7 +5,6 @@ import { formatHours } from '../utils/format';
 interface Props {
   logs:       TimeLog[];
   isManager:  boolean;
-  currentUserId?: number;
   onDelete?:  (id: number) => void;
   onUpdate?:  (id: number, payload: Partial<TimeLogPayload>) => void;
 }

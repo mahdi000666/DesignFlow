@@ -5,6 +5,8 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.views import TokenObtainPairView
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.utils import timezone
 from datetime import timedelta
 from django.db.models import Sum
@@ -131,9 +133,11 @@ def change_password(request):
             {'detail': 'Current password is incorrect.'},
             status=status.HTTP_400_BAD_REQUEST,
         )
-    if len(new_pwd) < 8:
+    try:
+        validate_password(new_pwd, user=request.user)
+    except DjangoValidationError as exc:
         return Response(
-            {'detail': 'New password must be at least 8 characters.'},
+            {'detail': ' '.join(exc.messages)},
             status=status.HTTP_400_BAD_REQUEST,
         )
 

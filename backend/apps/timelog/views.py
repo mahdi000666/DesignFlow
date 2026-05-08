@@ -5,7 +5,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from apps.tasks.models import Task
-from apps.users.permissions import IsDesigner, IsManagerOrDesigner
+from apps.users.permissions import IsDesigner, IsManager
 from .models import TimeLog, TimerSession, ActivityLog
 from .serializers import (
     TimeLogReadSerializer, TimeLogWriteSerializer,
@@ -55,7 +55,7 @@ class TimeLogViewSet(viewsets.ModelViewSet):
             # Only designers log time; managers track via reports.
             return [IsDesigner()]
         if self.action in ('partial_update', 'destroy'):
-            return [IsManagerOrDesigner()]
+            return [IsManager()]
         return [permissions.IsAuthenticated()]
 
     def perform_create(self, serializer):
@@ -66,16 +66,9 @@ class TimeLogViewSet(viewsets.ModelViewSet):
         serializer.save(designer=designer)
 
     def perform_update(self, serializer):
-        # serializer.instance is the already-fetched object — no second DB hit.
-        if (self.request.user.role != 'Manager'
-                and serializer.instance.designer.user != self.request.user):
-            raise PermissionDenied('You may only edit your own time logs.')
         serializer.save()
 
     def perform_destroy(self, instance):
-        if (self.request.user.role != 'Manager'
-                and instance.designer.user != self.request.user):
-            raise PermissionDenied('You may only delete your own time logs.')
         instance.delete()
 
 # ─── Timer endpoints ──────────────────────────────────────────────────────────

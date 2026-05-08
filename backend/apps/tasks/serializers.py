@@ -35,6 +35,18 @@ class TaskWriteSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {'parent_task': 'Parent task must belong to the same project.'}
             )
+        if parent and self.instance:
+            if parent.pk == self.instance.pk:
+                raise serializers.ValidationError(
+                    {'parent_task': 'A task cannot be its own parent.'}
+                )
+            ancestor = parent.parent_task
+            while ancestor is not None:
+                if ancestor.pk == self.instance.pk:
+                    raise serializers.ValidationError(
+                        {'parent_task': 'Parent task cannot be one of this task\'s subtasks.'}
+                    )
+                ancestor = ancestor.parent_task
         return attrs
 
     def update(self, instance, validated_data):

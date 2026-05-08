@@ -17,14 +17,6 @@ function invalidateTimelogs(qc: ReturnType<typeof useQueryClient>, projectId: nu
   qc.invalidateQueries({ queryKey: ['projects'], exact: true });
 }
 
-export const useCreateTimeLog = (projectId: number) => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: api.createTimeLog,
-    onSuccess: () => invalidateTimelogs(qc, projectId),
-  });
-};
-
 export const useDeleteTimeLog = (projectId: number) => {
   const qc = useQueryClient();
   return useMutation({

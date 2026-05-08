@@ -376,15 +376,22 @@ class ProfitMarginView(APIView):
             ehr = float(project.budget_amount) / actual_hours
 
             weighted_total = 0.0
+            rated_hours = 0.0
             for row in log_qs.values('designer__hourly_rate').annotate(
                 logged_hours=Sum('hours_spent')
             ):
                 hourly_rate = row['designer__hourly_rate']
+                logged_hours = float(row['logged_hours'] or 0)
                 if hourly_rate is None:
                     continue
-                weighted_total += float(hourly_rate) * float(row['logged_hours'])
+                weighted_total += float(hourly_rate) * logged_hours
+                rated_hours += logged_hours
 
-            weighted_rate = weighted_total / actual_hours if actual_hours > 0 else None
+            weighted_rate = (
+                weighted_total / actual_hours
+                if actual_hours > 0 and rated_hours >= actual_hours
+                else None
+            )
             margin = (
                 (ehr - weighted_rate) / ehr * 100
                 if weighted_rate is not None else None

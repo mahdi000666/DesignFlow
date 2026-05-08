@@ -25,7 +25,7 @@ def generate_project_pdf(project_id: int) -> io.BytesIO:
     from reportlab.platypus import (
         BaseDocTemplate, PageTemplate, Frame,
         Table, TableStyle, Paragraph, Spacer,
-        HRFlowable, KeepTogether,
+        HRFlowable,
     )
     from reportlab.lib.styles import ParagraphStyle
     from reportlab.lib.enums import TA_LEFT, TA_RIGHT
@@ -167,8 +167,6 @@ def generate_project_pdf(project_id: int) -> io.BytesIO:
     S_H2      = ps('h2',     size=10, bold=True, color=C_SLATE_700, space_before=4, space_after=6)
     S_TBL_LBL = ps('tlbl',  size=9,  color=C_SLATE_600)
     S_TBL_VAL = ps('tval',  size=9,  bold=True, color=C_SLATE_900)
-    S_KPI_LBL = ps('klbl',  size=7,  color=C_SLATE_400, space_after=3)
-
     elements: list = []
     elements.append(Spacer(1, 8))
 
@@ -273,8 +271,7 @@ def generate_project_pdf(project_id: int) -> io.BytesIO:
 
 def generate_excel(project_id: int | None = None) -> io.BytesIO:
     import openpyxl
-    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side, GradientFill
-    from openpyxl.utils import get_column_letter
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 
     wb = openpyxl.Workbook()
 

@@ -17,11 +17,19 @@ class UserManager(BaseUserManager):
         return user
 
     def create_superuser(self, email, full_name, password, role='Manager'):
-        user = self.create_user(email, full_name, role, password)
-        user.is_active = True
-        user.is_staff = True
-        user.is_superuser = True
-        # Save to default database.
+        if not email:
+            raise ValueError('Email is required')
+        if role != 'Manager':
+            raise ValueError('Superusers must use the Manager role')
+        user = self.model(
+            email=self.normalize_email(email),
+            full_name=full_name,
+            role=role,
+            is_active=True,
+            is_staff=True,
+            is_superuser=True,
+        )
+        user.set_password(password)
         user.save(using=self._db)
         return user
 

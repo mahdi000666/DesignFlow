@@ -691,7 +691,7 @@ Built with Django + React/TypeScript.
 
 ## Tech Stack
 - **Backend:** Python 3.12, Django 5, Django REST Framework, PostgreSQL 16
-- **Frontend:** React 18, TypeScript, Vite, Tailwind CSS, Recharts
+- **Frontend:** React 19, TypeScript, Vite, Tailwind CSS, Recharts
 - **Auth:** JWT (djangorestframework-simplejwt) + invitation token onboarding
 
 ## Features
@@ -703,10 +703,10 @@ Built with Django + React/TypeScript.
 - Role-based access control (Manager / Designer / Client)
 
 ## Local Setup
-See `docs/SETUP.md` for full setup instructions.
+See `docs/context/SETUP.md` for full setup instructions.
 
 ## Architecture & API
-See `docs/PROJECT_CONTEXT.md` and `docs/DATA_MODEL.md`.
+See `docs/context/PROJECT_CONTEXT.md` and `docs/context/DATA_MODEL.md`.
 ```
 
 ---

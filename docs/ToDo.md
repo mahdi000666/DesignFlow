@@ -86,12 +86,12 @@ Directory structure:
             │   ├── FeedbackList.tsx
             │   ├── FileUploadPanel.tsx
             │   ├── Icons.tsx
+            │   ├── KanbanBoard.tsx
+            │   ├── KanbanTaskCard.tsx
             │   ├── MessageBoard.tsx
             │   ├── ProjectForm.tsx
             │   ├── ProtectedRoute.tsx
             │   ├── TaskForm.tsx
-            │   ├── TaskRow.tsx
-            │   ├── TimeLogForm.tsx
             │   ├── TimeLogList.tsx
             │   └── Ui.tsx
             ├── context/

@@ -3,7 +3,7 @@ import { useState, useMemo, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { useProject } from '../../hooks/useProjects';
 import { useTasks, useUpdateTask } from '../../hooks/useTasks';
-import { useTimeLogs, useUpdateTimeLog, useActiveTimers, useTimerMutations } from '../../hooks/useTimeLogs';
+import { useTimeLogs, useActiveTimers, useTimerMutations } from '../../hooks/useTimeLogs';
 import { useFiles } from '../../hooks/useFiles';
 import { useMessages, useMarkMessagesRead } from '../../hooks/useMessages';
 import { useFeedback } from '../../hooks/useFeedback';
@@ -57,8 +57,6 @@ export default function DesignerProjectDetail() {
     useUnreadCount(tasks, projectId, 'tasks', userId);
   const { count: unreadFiles, markRead: markFilesRead } =
     useUnreadCount(files, projectId, 'files', userId);
-
-  const updateTimeLog = useUpdateTimeLog(projectId);
 
   const [activeTab,    setActiveTab]    = useState<Tab>('tasks');
 
@@ -311,8 +309,6 @@ export default function DesignerProjectDetail() {
         <TimeLogList
           logs={logs}
           isManager={false}
-          currentUserId={Number(user?.user_id)}
-          onUpdate={(id, payload) => updateTimeLog.mutate({ id, payload })}
         />
       )}
 

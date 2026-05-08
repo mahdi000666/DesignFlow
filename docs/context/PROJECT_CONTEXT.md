@@ -20,7 +20,7 @@ A web-based **project management + BI system** for a graphic design agency. Trac
 | Backend | Python 3.12, Django 5, Django REST Framework 3.15 |
 | Auth | JWT via `djangorestframework-simplejwt` + custom invitation tokens |
 | Database | PostgreSQL 16 |
-| Frontend | React 18, TypeScript, Vite |
+| Frontend | React 19, TypeScript, Vite |
 | Data fetching | TanStack React Query |
 | HTTP client | Axios |
 | Styling | Tailwind CSS |

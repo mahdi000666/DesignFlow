@@ -1,6 +1,7 @@
 import os
 from rest_framework import serializers
 from django.conf import settings
+from django.utils.text import get_valid_filename
 from .models import FileUpload
 
 
@@ -54,7 +55,7 @@ class FileUploadWriteSerializer(serializers.ModelSerializer):
         absolute_dir.mkdir(parents=True, exist_ok=True)
 
         # Avoid silent overwrite — append a counter suffix on collision.
-        base_name = file.name
+        base_name = get_valid_filename(os.path.basename(file.name)) or 'upload'
         dest_path = absolute_dir / base_name
         stem, ext = os.path.splitext(base_name)
         counter   = 1

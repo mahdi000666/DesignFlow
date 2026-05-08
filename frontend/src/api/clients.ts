@@ -1,9 +1,11 @@
 import axios from 'axios';
 
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+
 // All API requests go through this instance.
 // baseURL comes from .env so it works in both dev (:8000) and production.
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000',
+  baseURL: API_BASE_URL,
   headers: { 'Content-Type': 'application/json' },
 });
 
@@ -20,13 +22,14 @@ apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const original = error.config;
+    const refresh = localStorage.getItem('refresh_token');
+    const isRefreshRequest = original?.url?.includes('/auth/token/refresh/');
 
     // _retry flag prevents an infinite loop if the refresh call itself returns 401
-    if (error.response?.status === 401 && !original._retry) {
+    if (error.response?.status === 401 && original && !original._retry && !isRefreshRequest && refresh) {
       original._retry = true;
 
       try {
-        const refresh = localStorage.getItem('refresh_token');
         const { data } = await apiClient.post('/auth/token/refresh/', { refresh });
         localStorage.setItem('access_token', data.access);
         original.headers.Authorization = `Bearer ${data.access}`;
@@ -36,6 +39,10 @@ apiClient.interceptors.response.use(
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
       }
+    }
+    if (error.response?.status === 401 && (!refresh || isRefreshRequest)) {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
     }
 
     return Promise.reject(error);

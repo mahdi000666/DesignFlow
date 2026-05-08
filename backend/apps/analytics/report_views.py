@@ -9,7 +9,7 @@ from .reports import generate_project_pdf, generate_excel
 class ExportView(APIView):
     permission_classes = [IsManager]
     def get(self, request):
-        fmt = request.query_params.get('export_format', 'pdf')
+        fmt = request.query_params.get('format') or request.query_params.get('export_format', 'pdf')
         project_id = request.query_params.get('project')
 
         if fmt == 'pdf':

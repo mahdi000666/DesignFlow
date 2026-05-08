@@ -57,8 +57,11 @@ class FileUploadViewSet(viewsets.ModelViewSet):
         if user.role != 'Manager' and instance.uploaded_by != user:
             raise PermissionDenied('You can only delete files you uploaded.')
 
-        # Remove the physical file from disk.
-        full_path = settings.MEDIA_ROOT / instance.file_path
+        # Remove only files that resolve inside MEDIA_ROOT.
+        media_root = settings.MEDIA_ROOT.resolve()
+        full_path = (settings.MEDIA_ROOT / instance.file_path).resolve()
+        if media_root not in full_path.parents:
+            raise PermissionDenied('Invalid file path.')
         if full_path.exists():
             full_path.unlink()
 

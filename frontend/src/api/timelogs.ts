@@ -11,11 +11,6 @@ export const getAllTimeLogs = async (): Promise<TimeLog[]> => {
   return getPaginatedResults<TimeLog>('/timelogs/', { page_size: 100 });
 };
 
-export const createTimeLog = async (payload: TimeLogPayload): Promise<TimeLog> => {
-  const { data } = await apiClient.post<TimeLog>('/timelogs/', payload);
-  return data;
-};
-
 export const updateTimeLog = async (
   id: number,
   payload: Partial<TimeLogPayload>,
