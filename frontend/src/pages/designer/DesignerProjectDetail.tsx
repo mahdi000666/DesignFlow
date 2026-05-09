@@ -288,9 +288,10 @@ export default function DesignerProjectDetail() {
             }
             isLoading={loadingTasks}
             onTaskMoved={handleTaskMoved}
-            renderCard={task => (
+            renderCard={(task, columnColor) => (
               <KanbanTaskCard
                 task={task}
+                columnColor={columnColor}
                 isManager={false}
                 loggedHours={taskLogMap[task.id] ?? 0}
                 session={sessionByTask[task.id]}

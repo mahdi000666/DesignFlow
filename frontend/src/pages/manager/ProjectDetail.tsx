@@ -285,9 +285,11 @@ export default function ProjectDetail() {
 
   // ── Task tab stats ─────────────────────────────────────────────────────────
   const taskUnplannedCount  = tasks.filter(t => t.is_unplanned).length;
-  const taskTotalEstimated  = tasks.reduce(
-    (sum, t) => sum + (t.estimated_hours != null ? Number(t.estimated_hours) : 0), 0,
-  );
+  const taskTotalEstimated = tasks.reduce((sum, t) => {
+    const parent = t.estimated_hours != null ? Number(t.estimated_hours) : 0;
+    const subs = t.subtasks.reduce((s, sub) => s + (sub.estimated_hours != null ? Number(sub.estimated_hours) : 0), 0);
+    return sum + parent + subs;
+  }, 0);
 
   const tabContent = (tab: Tab): ReactNode => {
     switch (tab) {
@@ -590,7 +592,7 @@ export default function ProjectDetail() {
               {taskTotalEstimated > 0 && (
                 <div className="inline-flex items-center gap-1.5 bg-white border border-slate-200 rounded-lg px-3 py-1.5 shadow-xs">
                   <Clock size={14} className="text-slate-400" />
-                  <span className="text-xs text-slate-500">Est.</span>
+                  <span className="text-xs text-slate-500">Total Est.</span>
                   <span className="text-xs font-mono font-semibold text-slate-700">{taskTotalEstimated} h</span>
                 </div>
               )}
@@ -630,9 +632,10 @@ export default function ProjectDetail() {
               updateTask.mutate({ id, payload: { status } })
             }
             isLoading={loadingTasks}
-            renderCard={task => (
+            renderCard={(task, columnColor) => (
               <KanbanTaskCard
                 task={task}
+                columnColor={columnColor}
                 isManager={true}
                 loggedHours={taskLogMap[task.id] ?? 0}
                 onEdit={() => setEditingTask(task)}
