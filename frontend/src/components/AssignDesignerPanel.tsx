@@ -95,7 +95,7 @@ export default function AssignDesignerPanel({ project, onClose }: Props) {
             const subtitleParts: string[] = [];
             if (d.specialization) subtitleParts.push(d.specialization);
             if (d.hourly_rate != null) subtitleParts.push(formatEHR(d.hourly_rate));
-            if (d.utilization != null) subtitleParts.push(`${d.utilization}% utilised`);
+            if (d.utilization != null) subtitleParts.push(`${d.utilization}% Utilised`);
 
             return (
               <li key={d.id} className={`flex items-center gap-4 px-2 py-4 rounded-xl ${d.isAssigned ? 'bg-slate-50' : ''}`}>

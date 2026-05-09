@@ -198,7 +198,7 @@ def generate_project_pdf(project_id: int) -> io.BytesIO:
         [[
             kpi_cell('BUDGET UTILISATION', f'{budget_util:.0f}%',    util_col),
             kpi_cell('ACTUAL HOURS',       f'{actual_hours:.1f} h',  C_SLATE_900),
-            kpi_cell('EFF. HOURLY RATE',   f'TND {ehr:.2f}' if ehr else '—', ehr_col),
+            kpi_cell('EFF. HOURLY RATE',   f'{ehr:.2f} TND' if ehr else '—', ehr_col),
             kpi_cell('SCOPE CREEP',        f'{scope_creep:.0f}%',    scope_col),
         ]],
         colWidths=[kpi_col_w] * 4,
@@ -224,7 +224,7 @@ def generate_project_pdf(project_id: int) -> io.BytesIO:
         ('Budget Hours',          f'{budget_hours:.1f} h'     if budget_hours  else '—'),
         ('Actual Hours Logged',   f'{actual_hours:.1f} h'),
         ('Estimated Hours',       f'{estimated_h:.1f} h'      if estimated_h   else '—'),
-        ('Effective Hourly Rate', f'TND {ehr:.2f}'            if ehr           else '—'),
+        ('Effective Hourly Rate', f'{ehr:.2f} TND'            if ehr           else '—'),
         ('Budget Utilisation',    f'{budget_util:.1f}%'),
         ('Scope Creep Index',     f'{scope_creep:.1f}%'),
         ('Revisions',             str(revisions)),

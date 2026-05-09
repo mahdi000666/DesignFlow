@@ -10,6 +10,7 @@ import AppShell from '../../components/AppShell';
 import { KpiCard } from '../../components/Ui';
 import { STATUS_BADGE, STATUS_DOT, barColor, statusLabel, categoryClass } from '../../utils/project';
 import { FolderOpen, Clock, MessageSquare, ListTodo } from 'lucide-react';
+import { formatHours } from '../../utils/format';
 
 export default function DesignerDashboard() {
   const { user } = useAuth();
@@ -202,7 +203,7 @@ export default function DesignerDashboard() {
 
                   {/* Hours — right side, no plain icon */}
                   <span className="font-mono text-sm font-semibold text-slate-700 shrink-0">
-                    {Number(log.hours_spent).toFixed(1)} h
+                    {formatHours(log.hours_spent)}
                   </span>
                 </li>
               ))}

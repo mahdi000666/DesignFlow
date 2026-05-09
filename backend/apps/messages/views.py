@@ -34,7 +34,13 @@ class MessageViewSet(viewsets.ModelViewSet):
         if project_id:
             qs = qs.filter(project_id=project_id)
 
-        qs = qs.filter(feedback__isnull=not is_replies)
+        if project_id:
+            # Project board: ?replies=1 → replies only, default → chat only
+            qs = qs.filter(feedback__isnull=not is_replies)
+        elif is_replies:
+            # Explicit global replies fetch
+            qs = qs.filter(feedback__isnull=False)
+        # else: global dashboard fetch (no project, no replies flag) — return all
 
         # Annotate is_read per requesting user via the M2M junction table.
         ReadThrough = Message.read_by.through

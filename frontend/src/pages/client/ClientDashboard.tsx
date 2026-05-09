@@ -16,7 +16,7 @@ import {
 
 // ─── Recent update item type ──────────────────────────────────────────────────
 
-type UpdateKind = 'message' | 'file' | 'feedback_resolved' | 'feedback_update';
+type UpdateKind = 'message' | 'file' | 'feedback_resolved' | 'feedback_update' | 'feedback_reply';
 
 interface UpdateItem {
   kind:      UpdateKind;
@@ -31,6 +31,7 @@ const UPDATE_META: Record<UpdateKind, { icon: React.ReactNode; color: string; bg
   file:              { icon: <FileText      size={13} />, color: '#0891b2', bg: '#e0f2fe' },
   feedback_resolved: { icon: <CheckCircle2  size={13} />, color: '#16a34a', bg: '#dcfce7' },
   feedback_update:   { icon: <Bell          size={13} />, color: '#d97706', bg: '#fef3c7' },
+  feedback_reply:    { icon: <MessageSquare size={13} />, color: '#7c3aed', bg: '#f5f3ff' },
 };
 
 function timeAgo(dateStr: string): string {
@@ -87,7 +88,7 @@ export default function ClientDashboard() {
     const items: UpdateItem[] = [];
 
     allMessages
-      .filter(m => Number(m.sender) !== Number(userId))
+      .filter(m => m.feedback === null && Number(m.sender) !== Number(userId))
       .forEach(m => items.push({
         kind:        'message',
         title:       `Message from ${m.sender_name}`,
@@ -124,6 +125,16 @@ export default function ClientDashboard() {
         subtitle:    f.content_text.length > 72 ? f.content_text.slice(0, 72) + '…' : f.content_text,
         date:        f.submitted_at,
         projectName: projectMap.get(f.project) ?? 'Project',
+      }));
+
+      allMessages
+      .filter(m => m.feedback !== null && Number(m.sender) !== Number(userId))
+      .forEach(m => items.push({
+        kind:        'feedback_reply',
+        title:       `Reply from ${m.sender_name}`,
+        subtitle:    m.content_text.length > 72 ? m.content_text.slice(0, 72) + '…' : m.content_text,
+        date:        m.created_at,
+        projectName: projectMap.get(m.project) ?? 'Project',
       }));
 
     return items

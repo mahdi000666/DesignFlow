@@ -15,7 +15,9 @@ import { useKPISummary, useBudgetVariance, useDesignerUtilization } from '../../
 import { useProjects } from '../../hooks/useProjects';
 import { getAllFeedback } from '../../api/feedbacks';
 import { getAllTimeLogs } from '../../api/timelogs';
+import { getAllMessages } from '../../api/messages';
 import { useActivityLogs } from '../../hooks/useTimeLogs';
+import { useAuth } from '../../hooks/useAuth';
 import type { ActivityLog } from '../../types/timelog';
 import { getAllFiles } from '../../api/files';
 import { getAllCompletedTasks, getAllTasks } from '../../api/tasks';
@@ -45,9 +47,13 @@ const timeAgo = (d: string): string => {
 
 // ─── Activity icon config ─────────────────────────────────────────────────────
 
-type ActivityType = 'log' | 'file' | 'task' | 'feedback';
+type ActivityType = 'log' | 'file' | 'task' | 'feedback' | 'message';
 
 const ACTIVITY_CFG: Record<ActivityType, { bg: string; fg: string; icon: React.ReactNode }> = {
+  message: {
+    bg: '#eff6ff', fg: '#1d4ed8',
+    icon: <MessageSquare size={13} />,
+  },
   feedback: {
     bg: '#fff7ed', fg: '#c2410c',
     icon: <MessageSquare size={13} />,
@@ -177,6 +183,8 @@ function ActivityModal({
 }
 
 export default function ManagerDashboard() {
+  const { user }                    = useAuth();
+  const userId                      = Number(user?.user_id ?? 0);
   const { data: kpi }               = useKPISummary();
   const { data: projects = [] }     = useProjects();
   const { data: budgetData = [] }   = useBudgetVariance({});
@@ -187,6 +195,7 @@ export default function ManagerDashboard() {
   const { data: allFiles = [] }        = useQuery({ queryKey: ['files-all'],       queryFn: getAllFiles });
   const { data: completedTasks = [] }  = useQuery({ queryKey: ['tasks-completed'], queryFn: getAllCompletedTasks });
   const { data: allTasks = [] }        = useQuery({ queryKey: ['tasks-all'],       queryFn: getAllTasks });
+  const { data: allMessages = [] }     = useQuery({ queryKey: ['messages-all'],    queryFn: getAllMessages });
 
   const [selectedDesigner, setSelectedDesigner] = useState<{ id: number; name: string } | null>(null);
   const [nowMs]             = useState(() => Date.now());
@@ -256,11 +265,18 @@ export default function ManagerDashboard() {
         label: `${l.designer_name} logged ${Number(l.hours_spent)}h — ${l.task_name}`,
         sub: l.project_name, date: l.created_at,
       })),
-      ...allFiles.map(f => ({
-        id: `file-${f.id}`, type: 'file' as ActivityType,
-        label: `${f.uploaded_by_name} uploaded ${f.file_name}`,
-        sub: projectNameById[f.project] ?? '—', date: f.uploaded_at,
-      })),
+      ...allFiles.map(f => {
+        const typeLabel = ({
+          deliverable:    'a deliverable',
+          reference:      'a reference file',
+          brand_guideline: 'brand guidelines',
+        } as Record<string, string>)[f.file_type] ?? f.file_type;
+        return {
+          id: `file-${f.id}`, type: 'file' as ActivityType,
+          label: `${f.uploaded_by_name} uploaded ${typeLabel}`,
+          sub: projectNameById[f.project] ?? '—', date: f.uploaded_at,
+        };
+      }),
       ...completedTasks
         .filter(t => t.completed_at !== null)
         .map(t => ({
@@ -268,10 +284,17 @@ export default function ManagerDashboard() {
           label: `Task "${t.task_name}" completed`,
           sub: t.project_name, date: t.completed_at!,
         })),
+      ...allMessages
+        .filter(m => Number(m.sender) !== userId)
+        .map(m => ({
+          id: `msg-${m.id}`, type: 'message' as ActivityType,
+          label: `Message from ${m.sender_name}`,
+          sub: projectNameById[m.project] ?? '—', date: m.created_at,
+        })),
     ]
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
       .slice(0, 20),
-  [allFeedback, allLogs, allFiles, completedTasks, projectNameById]);
+  [allFeedback, allLogs, allFiles, completedTasks, allMessages, userId, projectNameById]);
 
   const visibleActivity = activityExpanded ? activity : activity.slice(0, ACTIVITY_LIMIT);
   const hasMoreActivity = activity.length > ACTIVITY_LIMIT;

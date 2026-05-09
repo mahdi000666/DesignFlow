@@ -2,7 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useMemo, useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { useProject, useUpdateProject, useDeleteProject } from '../../hooks/useProjects';
-import { useTasks, useCreateTask, useUpdateTask } from '../../hooks/useTasks';
+import { useTasks, useCreateTask, useUpdateTask, useDeleteTask } from '../../hooks/useTasks';
 import { useTimeLogs, useDeleteTimeLog, useUpdateTimeLog } from '../../hooks/useTimeLogs';
 import { useFiles } from '../../hooks/useFiles';
 import { useMessages, useMarkMessagesRead } from '../../hooks/useMessages';
@@ -181,6 +181,7 @@ export default function ProjectDetail() {
 
   const createTask    = useCreateTask(projectId);
   const updateTask    = useUpdateTask(projectId);
+  const deleteTask    = useDeleteTask(projectId);
   const updateProject = useUpdateProject(projectId);
   const deleteProject = useDeleteProject();
   const deleteTimeLog = useDeleteTimeLog(projectId);
@@ -191,6 +192,8 @@ export default function ProjectDetail() {
   const [showAssignPanel, setShowAssignPanel]  = useState(false);
   const [showEditForm,    setShowEditForm]     = useState(false);
   const [statusOpen,      setStatusOpen]       = useState(false);
+  const [editingTask,     setEditingTask]      = useState<import('../../types/task').Task | null>(null);
+
   const statusRef = useRef<HTMLDivElement>(null);
 
   const taskLogMap = useMemo<Record<number, number>>(() => {
@@ -632,6 +635,12 @@ export default function ProjectDetail() {
                 task={task}
                 isManager={true}
                 loggedHours={taskLogMap[task.id] ?? 0}
+                onEdit={() => setEditingTask(task)}
+                onDelete={() => {
+                  if (confirm(`Delete "${task.task_name}"? This cannot be undone.`)) {
+                    deleteTask.mutate(task.id);
+                  }
+                }}
               />
             )}
           />
@@ -665,10 +674,49 @@ export default function ProjectDetail() {
         <FeedbackList projectId={projectId} canUpdate={true} canReply={true} />
          </div>
       )}
-
+      
       {/* ── Tab: Messages ────────────────────────────────────────────────── */}
       {activeTab === 'messages' && (
         <MessageBoard projectId={projectId} />
+      )}
+          {/* ── Edit Task modal ──────────────────────────────────────────────── */}
+      {editingTask && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+          onClick={() => setEditingTask(null)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto mx-4"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+              <div>
+                <p className="text-sm font-semibold text-slate-900">Edit Task</p>
+                <p className="text-xs text-slate-400 mt-0.5 truncate max-w-xs">{editingTask.task_name}</p>
+              </div>
+              <button
+                onClick={() => setEditingTask(null)}
+                className="text-slate-400 hover:text-slate-700 transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="p-5">
+              <TaskForm
+                projectId={projectId}
+                onSubmit={payload =>
+                  updateTask.mutate(
+                    { id: editingTask.id, payload },
+                    { onSuccess: () => setEditingTask(null) },
+                  )
+                }
+                isLoading={updateTask.isPending}
+                defaults={editingTask}
+                parentTaskOptions={parentTaskOptions}
+              />
+            </div>
+          </div>
+        </div>
       )}
     </AppShell>
   );
