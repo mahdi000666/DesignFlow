@@ -5,15 +5,16 @@ MISSING ACRONYMS OR REFERENCES
 
 
 
+Conclusion
+chapter 2
+Team chart.
+
+Ask about 6.1   Physical Architecture
+
+4.1   System Architecture Pattern
 
 
-
-
-
-
-
-
-
+CHECK TIMELOG DESCRIPTION
 
 In order to save tokens, you may only generate the document for S3 chapter.
 
