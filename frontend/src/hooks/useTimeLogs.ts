@@ -55,7 +55,11 @@ export const useTimerMutations = (projectId: number) => {
   const start  = useMutation({ mutationFn: api.startTimer,  onSuccess: invalidate });
   const pause  = useMutation({ mutationFn: api.pauseTimer,  onSuccess: invalidate });
   const resume = useMutation({ mutationFn: api.resumeTimer, onSuccess: invalidate });
-  const stop   = useMutation({ mutationFn: api.stopTimer,   onSettled: invalidate });
+  const stop = useMutation({
+    mutationFn: ({ taskId, description }: { taskId: number; description: string }) =>
+      api.stopTimer(taskId, description),
+    onSettled: invalidate,
+  });
  
   const isPending = start.isPending || pause.isPending || resume.isPending || stop.isPending;
  

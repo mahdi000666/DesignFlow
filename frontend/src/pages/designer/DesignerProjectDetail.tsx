@@ -59,6 +59,8 @@ export default function DesignerProjectDetail() {
     useUnreadCount(files, projectId, 'files', userId);
 
   const [activeTab,    setActiveTab]    = useState<Tab>('tasks');
+  const [pendingStopTaskId,  setPendingStopTaskId]  = useState<number | null>(null);
+  const [stopDescription,    setStopDescription]    = useState('');
 
   const taskLogMap = useMemo<Record<number, number>>(() => {
     const map: Record<number, number> = {};
@@ -86,12 +88,24 @@ export default function DesignerProjectDetail() {
     if (tab === 'files')    markFilesRead();
   };
 
+  const handleStop = (taskId: number) => {
+    setPendingStopTaskId(taskId);
+    setStopDescription('');
+  };
+
+  const confirmStop = () => {
+    if (pendingStopTaskId == null) return;
+    timerMutations.stop.mutate({ taskId: pendingStopTaskId, description: stopDescription });
+    setPendingStopTaskId(null);
+    setStopDescription('');
+  };
+
   const handleTaskMoved = (taskId: number, newStatus: Task['status']) => {
     if (newStatus === 'InProgress') {
       timerMutations.start.mutate(taskId);
     } else if (newStatus === 'Completed') {
       const session = sessionByTask[taskId];
-      if (session) timerMutations.stop.mutate(taskId);
+      if (session) handleStop(taskId);
     }
   };
 
@@ -297,7 +311,7 @@ export default function DesignerProjectDetail() {
                 session={sessionByTask[task.id]}
                 onPause={() => timerMutations.pause.mutate(task.id)}
                 onResume={() => timerMutations.resume.mutate(task.id)}
-                onStop={() => timerMutations.stop.mutate(task.id)}
+                onStop={() => handleStop(task.id)}
                 isPending={timerMutations.isPending}
               />
             )}
@@ -332,6 +346,41 @@ export default function DesignerProjectDetail() {
       {/* ── Tab: Messages ────────────────────────────────────────────────── */}
       {activeTab === 'messages' && (
         <MessageBoard projectId={projectId} />
+      )}
+      {/* ── Stop & Log description modal ─────────────────────────────── */}
+      {pendingStopTaskId != null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6">
+            <h3 className="text-sm font-semibold text-slate-900 mb-1">What did you work on?</h3>
+            <p className="text-xs text-slate-400 mb-4">
+              Add a short note describing what you completed. You can leave it blank.
+            </p>
+            <textarea
+              autoFocus
+              rows={3}
+              className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-800 resize-none placeholder:text-slate-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-colors"
+              placeholder="e.g. Finished hero section layout adjustments…"
+              value={stopDescription}
+              onChange={e => setStopDescription(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) confirmStop(); }}
+            />
+            <div className="flex gap-2 mt-4">
+              <button
+                onClick={() => setPendingStopTaskId(null)}
+                className="flex-1 px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmStop}
+                disabled={timerMutations.isPending}
+                className="flex-1 px-4 py-2 text-sm font-semibold text-white bg-primary hover:bg-primary-600 rounded-lg transition-colors disabled:opacity-50"
+              >
+                Stop & Log
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </AppShell>
   );

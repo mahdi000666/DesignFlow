@@ -222,7 +222,7 @@ All computed server-side via PostgreSQL aggregations. No stored calculated field
 
 ---
 
-### Option A — AI Task Hour Estimator
+### Feature — AI Task Hour Estimator
 
 **Implemented:** Sprint 2  
 **Endpoint:** `POST /api/tasks/estimate-hours/`  
@@ -237,7 +237,7 @@ Up to 10 most recent `TimeLog` records from the same project, filtered by keywor
 
 ---
 
-### Option B — AI Project Health Narrative
+### Feature — AI Project Health Narrative
 
 **Implemented:** Sprint 5  
 **Endpoint:** `GET /api/analytics/ai-summary/?project={id}`  

@@ -43,8 +43,8 @@ export const resumeTimer = async (taskId: number): Promise<TimerSession> => {
   return data;
 };
  
-export const stopTimer = async (taskId: number): Promise<TimeLog> => {
-  const { data } = await apiClient.post<TimeLog>('/timelogs/timer/stop/', { task_id: taskId });
+export const stopTimer = async (taskId: number, description = ''): Promise<TimeLog> => {
+  const { data } = await apiClient.post<TimeLog>('/timelogs/timer/stop/', { task_id: taskId, description });
   return data;
 };
  

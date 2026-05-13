@@ -72,6 +72,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_active  = models.BooleanField(default=False)   # False until invitation accepted
     is_staff   = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+    profile_picture = models.ImageField(upload_to='avatars/', null=True, blank=True)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['full_name']
@@ -200,6 +201,7 @@ class Task(models.Model):
     status          = models.CharField(max_length=10, choices=STATUS_CHOICES, default='Todo')
     is_unplanned    = models.BooleanField(default=False)   # True = scope creep task
     created_at      = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True, db_index=True)
 
     class Meta:
         indexes = [
@@ -351,8 +353,15 @@ class Message(models.Model):
     project         = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='messages')
     sender          = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')
     content_text    = models.TextField()
-    is_read         = models.BooleanField(default=False)
+    read_by         = models.ManyToManyField(User, blank=True, related_name='read_messages')
     created_at      = models.DateTimeField(auto_now_add=True)
+    feedback        = models.ForeignKey(
+        'feedback.Feedback',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='replies',
+    )
 
     class Meta:
         indexes = [models.Index(fields=['project', 'created_at'])]

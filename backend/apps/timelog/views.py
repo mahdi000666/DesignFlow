@@ -210,7 +210,7 @@ def timer_stop(request):
         task=session.task,
         designer=designer,
         hours_spent=hours,
-        description='',
+        description=request.data.get('description', ''),
     )
     ActivityLog.objects.create(designer=designer, task=session.task, action='stop', hours_logged=hours)
     session.delete()
