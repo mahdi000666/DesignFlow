@@ -3,18 +3,11 @@
 OCR
 MISSING ACRONYMS OR REFERENCES
 
-
-
-Conclusion
-chapter 2
-Team chart.
-
-Ask about 6.1   Physical Architecture
-
-4.1   System Architecture Pattern
-
-
+BURN DOWN SCRUM BOARD
 CHECK TIMELOG DESCRIPTION
+
+I don't see "Manage Feedback Status" in my global diagram. My idea was Reply to feedback already implies updating the feedback status.
+So lets go with this. Continue.
 
 In order to save tokens, you may only generate the document for S3 chapter.
 
@@ -23,10 +16,10 @@ In order to save tokens, you may only generate the document for S3 chapter.
 A4 portrait, Times New Roman body text at 12 pt, justified, 1.5 line spacing, with about 6 pt paragraph spacing before and after.
 Main chapter titles must be centered, bold, 16 pt, dark navy blue (#1F3864).
 Section headings are left-aligned, bold, 14 pt, medium blue (#2E5496).
-Subsections are left-aligned, bold, 12 pt, same blue as sections. Sub-subsections are the same except (#2E74B5) and not bold.
+Subsections are left-aligned, bold, 12 pt, same blue as sections. Sub-subsections are the same except except 11 pt.
 Captions for figures and tables are centered, italic, 9 pt, dark navy (#0E2841), written as “Figure X: …” (Figure captions are under) or “Table X: …” (Table captions are above).
 Tables must have full grid borders, dark blue header rows (#1F3864) with white bold centered text, 10 pt for column, row and body text.
-Table rows must follow the following pattern: first row (#000000), second row (#F2F7FB) then repeat.
+Table rows must follow the following pattern: first row white, second row (#F2F7FB) then repeat.
 ```
 2. Preserve the textual use case table structure.
 3. Keep spacing clean, avoid cramped layouts, and preserve the report’s formal academic look.
