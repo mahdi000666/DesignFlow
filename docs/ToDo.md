@@ -1,13 +1,22 @@
 
 
 OCR
+
 MISSING ACRONYMS OR REFERENCES
-
+REFERENCE LINKS
 BURN DOWN SCRUM BOARD
-CHECK TIMELOG DESCRIPTION
+CHECK TIMELOG DESCRIPTION IN APP
+UPLOAD FILE USE CASE MIX
 
-I don't see "Manage Feedback Status" in my global diagram. My idea was Reply to feedback already implies updating the feedback status.
-So lets go with this. Continue.
+
+
+FINAL CHECK ON SEQUENCES
+
+
+
+
+
+
 
 In order to save tokens, you may only generate the document for S3 chapter.
 
