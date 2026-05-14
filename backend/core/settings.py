@@ -23,6 +23,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'corsheaders',
     'django_filters',
+    "core",
     'apps.users',
     'apps.projects',
     'apps.tasks',
