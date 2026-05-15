@@ -36,9 +36,9 @@ def generate_project_pdf(project_id: int) -> io.BytesIO:
     task_agg = Task.objects.filter(project=project).aggregate(
         estimated=Sum('estimated_hours'),
         actual=Sum('time_logs__hours_spent'),
-        total=Count('id'),
-        completed=Count('id', filter=Q(status='Completed')),
-        unplanned=Count('id', filter=Q(is_unplanned=True)),
+        total=Count('id', distinct=True),
+        completed=Count('id', filter=Q(status='Completed'), distinct=True),
+        unplanned=Count('id', filter=Q(is_unplanned=True), distinct=True),
     )
 
     actual_hours    = float(task_agg['actual']    or 0)
@@ -220,7 +220,7 @@ def generate_project_pdf(project_id: int) -> io.BytesIO:
     elements.append(Paragraph('Metrics', S_H2))
 
     metrics = [
-        ('Budget Amount',         f'TND {budget_amount:,.2f}' if budget_amount else '—'),
+        ('Budget Amount',         f'{budget_amount:,.2f} TND' if budget_amount else '—'),
         ('Budget Hours',          f'{budget_hours:.1f} h'     if budget_hours  else '—'),
         ('Actual Hours Logged',   f'{actual_hours:.1f} h'),
         ('Estimated Hours',       f'{estimated_h:.1f} h'      if estimated_h   else '—'),
