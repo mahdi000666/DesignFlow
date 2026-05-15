@@ -1,19 +1,14 @@
-
-
 OCR
-
 REFERENCE LINKS
-BURN DOWN SCRUM BOARD
-
-new seed_data
 
 
-Final review before submissiong of this report to the Institue.
+Final review before the submission this report to the Institue. Maximum reasoning effort and careful review required.
 1. Verify if nothing is missing/lacking and everything is intact.
-2. Check for typos, repetitiveness or inconsistencies.
+2. Check for typos, bloat, repetitiveness or inconsistencies.
 3. Check for missing acronyms or references.
-4. Cross check the report with the context files.
-5. Cross check the report with the writing guide pdf and standard academic reports, verify if it respects it's constraints writing wise.
-6. Finally, write the general conclusion.
+4. Check for technical identifiers in prose.
+5. Cross check the report with the context files.
+6. Cross check the report with the writing guide pdf and standard academic reports, verify if it respects it's constraints writing wise.
+7. Finally, write the general conclusion.
 
 Generate a markdown file containing your findings.
