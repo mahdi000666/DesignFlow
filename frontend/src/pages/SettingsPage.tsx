@@ -205,10 +205,6 @@ export default function SettingsPage() {
               />
             </label>
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-slate-900 truncate">{me.full_name}</p>
-            <p className="text-xs text-slate-600 mt-0.5 truncate">{me.email}</p>
-          </div>
           <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold shrink-0 ${ROLE_CHIP[me.role] ?? 'bg-slate-100 text-slate-600'}`}>
             {me.role}
           </span>

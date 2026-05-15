@@ -22,7 +22,16 @@ import { formatTND, formatEHR } from '../../utils/format';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const PIE_COLORS = ['#1e40af', '#6366f1', '#60a5fa', '#93c5fd', '#bfdbfe', '#dbeafe'];
+const PIE_COLORS = [
+  '#6366f1', // indigo
+  '#f59e0b', // amber
+  '#10b981', // emerald
+  '#ef4444', // red
+  '#8b5cf6', // violet
+  '#06b6d4', // cyan
+  '#ec4899', // pink
+  '#84cc16', // lime
+];
 
 const scopeColor  = (idx: number)          => idx > 30 ? '#ef4444' : idx > 15 ? '#f59e0b' : '#6366f1';
 const marginColor = (pct: number | null) => pct === null ? '#94a3b8' : pct < 0 ? '#ef4444' : pct < 20 ? '#f59e0b' : '#6366f1';
@@ -134,6 +143,18 @@ export default function AnalyticsDashboard() {
       .map(([id, name]) => ({ id, name })),
     [projects],
   );
+
+  const avgEhr = useMemo(() => {
+  const valid = profitability.filter(r => r.ehr !== null).map(r => r.ehr!);
+  return valid.length ? valid.reduce((s, v) => s + v, 0) / valid.length : null;
+}, [profitability]);
+
+  const ehrBarColor = (ehr: number | null): string => {
+    if (ehr === null || avgEhr === null) return '#94a3b8';
+    if (ehr >= avgEhr * 1.1) return '#6366f1';  // green  — well above average
+    if (ehr >= avgEhr * 0.9) return '#f59e0b';  // amber  — near average
+    return '#ef4444';                            // red    — below average
+  };
 
   const hasProject = !!filters.project;
 
@@ -329,7 +350,7 @@ export default function AnalyticsDashboard() {
         {/* Client Profitability Ranking */}
         <div className="card p-5">
           <p className="section-title mb-1">Client Profitability Ranking</p>
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-4">Revenue · hover for EHR & revisions</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-4">Effective hourly rate · hover for revenue & revisions</p>
           {profitability.length === 0 ? (
             <div className="h-44 flex items-center justify-center text-sm text-slate-400">No data</div>
           ) : (
@@ -340,14 +361,14 @@ export default function AnalyticsDashboard() {
                 margin={{ top: 4, right: 72, left: 4, bottom: 4 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
-                <XAxis
-                  type="number"
-                  tick={{ fontSize: 10, fill: '#94a3b8' }}
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={v => formatTND(v)}
-                  height={15}
-                />
+                  <XAxis
+                    type="number"
+                    tick={{ fontSize: 10, fill: '#94a3b8' }}
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={v => formatEHR(v)}   // was formatTND
+                    height={15}
+                  />
                   <YAxis
                     type="category"
                     dataKey="client_name"
@@ -358,80 +379,97 @@ export default function AnalyticsDashboard() {
                   />
                 <Tooltip
                   contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid #e2e8f0' }}
-                  formatter={(value: ChartFormatterValue) => [formatTND(Number(getChartValue(value) ?? 0)), 'Revenue']}
-                  labelFormatter={(label: unknown) => {
-                    const name = String(label ?? '');
-                    const row = profitability.find(r => r.client_name === name);
-                    if (!row) return name;
-                    return `${name}  ·  EHR: ${row.ehr !== null ? formatEHR(row.ehr) : '—'}  ·  Revisions: ${row.revision_count}`;
-                  }}
+                    formatter={(value: ChartFormatterValue) => [formatEHR(Number(getChartValue(value) ?? 0)), 'EHR']}
+                    labelFormatter={(label: unknown) => {
+                      const name = String(label ?? '');
+                      const row = profitability.find(r => r.client_name === name);
+                      if (!row) return name;
+                      return `${name}  ·  Revenue: ${formatTND(row.total_revenue)}  ·  Revisions: ${row.revision_count}`;
+                    }}
                 />
-                <Bar dataKey="total_revenue" fill="#6366f1" radius={[0, 2, 2, 0]} barSize={14}>
-                  <LabelList
-                    dataKey="total_revenue"
-                    position="right"
-                    formatter={(v: unknown) => formatTND(Number(v ?? 0))}
-                    style={{ fontSize: 10, fill: '#64748b', fontFamily: 'monospace' }}
-                  />
-                </Bar>
+                  <Bar dataKey="ehr" radius={[0, 2, 2, 0]} barSize={14}>
+                    {profitability.map((row, i) => (
+                      <Cell key={i} fill={ehrBarColor(row.ehr)} />
+                    ))}
+                    <LabelList
+                      dataKey="ehr"
+                      position="right"
+                      formatter={(v: unknown) => formatEHR(Number(v ?? 0))}
+                      style={{ fontSize: 10, fill: '#64748b', fontFamily: 'monospace' }}
+                    />
+                  </Bar>
               </BarChart>
             </ResponsiveContainer>
           )}
         </div>
 
         {/* Scope Creep Index */}
-        <div className="card p-5 flex flex-col">
+        <div className="card p-5 flex flex-col" style={{ minHeight: `${hBarHeight(6)}px` }}>
           <p className="section-title mb-1">Scope Creep Index</p>
           <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-4">
             Unplanned tasks as % of total · hover for breakdown
           </p>
-          {scopeCreep.length === 0 ? (
-            <div className="flex-1 flex items-center justify-center text-sm text-slate-400">No data</div>
-          ) : (
-            <div className="flex-1 min-h-[240px]">
+          {(() => {
+            const filtered = scopeCreep.filter(r => r.scope_creep_index > 0);
+            if (filtered.length === 0) {
+              return (
+                <div className="flex-1 flex items-center justify-center text-sm text-slate-400">
+                  {scopeCreep.length > 0 ? 'No scope creep detected across projects 🎉' : 'No data'}
+                </div>
+              );
+            }
+            const sorted = [...filtered].sort((a, b) => b.scope_creep_index - a.scope_creep_index);
+            return (
+              <div className="flex-1 relative" style={{ minHeight: hBarHeight(sorted.length) }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
-                  data={scopeCreep}
-                  margin={{ top: 4, right: 4, left: -8, bottom: 4 }}
-                  barCategoryGap="24%"
+                  data={sorted}
+                  layout="vertical"
+                  margin={{ top: 4, right: 52, left: 4, bottom: 4 }}
                 >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                    <XAxis
-                      dataKey="project_name"
-                      tick={{ fontSize: 10, fill: '#64748b' }}
-                      tickLine={false}
-                      axisLine={false}
-                      interval={0}
-                      height={20}
-                      tickFormatter={(v: string) => v.length > 10 ? `${v.slice(0, 10)}…` : v}
-                    />
-                  <YAxis
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
+                  <XAxis
+                    type="number"
                     tick={{ fontSize: 10, fill: '#94a3b8' }}
                     tickLine={false}
                     axisLine={false}
                     tickFormatter={(v: number) => `${v}%`}
-                    width={40}
+                  />
+                  <YAxis
+                    type="category"
+                    dataKey="project_name"
+                    tick={{ fontSize: 11, fill: '#475569' }}
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={(v: string) => v.length > 14 ? `${v.slice(0, 14)}…` : v}
                   />
                   <Tooltip
                     contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid #e2e8f0' }}
                     formatter={(value: ChartFormatterValue) => [`${getChartValue(value) ?? 0}%`, 'Scope Creep']}
                     labelFormatter={(label: unknown) => {
                       const name = String(label ?? '');
-                      const row = scopeCreep.find(r => r.project_name === name);
+                      const row = sorted.find(r => r.project_name === name);
                       return row
                         ? `${name}  ·  ${row.unplanned_tasks} unplanned / ${row.total_tasks} total`
                         : name;
                     }}
                   />
-                  <Bar dataKey="scope_creep_index" radius={[2, 2, 2, 0]} maxBarSize={20} animationDuration={800}>
-                    {scopeCreep.map((row, i) => (
+                  <Bar dataKey="scope_creep_index" radius={[0, 2, 2, 0]} barSize={14} animationDuration={800}>
+                    {sorted.map((row, i) => (
                       <Cell key={i} fill={scopeColor(row.scope_creep_index)} />
                     ))}
+                    <LabelList
+                      dataKey="scope_creep_index"
+                      position="right"
+                      formatter={(v: unknown) => `${Number(v ?? 0).toFixed(1)}%`}
+                      style={{ fontSize: 10, fill: '#64748b' }}
+                    />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
-            </div>
-          )}
+              </div>
+            );
+          })()}
         </div>
       </div>
 
