@@ -64,6 +64,7 @@ export interface ProfitMarginItem {
   ehr:                number;
   avg_designer_rate:  number | null;
   profit_margin_pct:  number | null;
+  actual_hours:       number;
 }
 
 export interface AISummaryResponse {

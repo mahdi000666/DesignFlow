@@ -1,15 +1,15 @@
 import { useState, useMemo } from 'react';
 import {
   LineChart, Line, PieChart, Pie, Cell,
-  BarChart, Bar, LabelList,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  BarChart, Bar, LabelList, ReferenceLine,
+  XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer,
 } from 'recharts';
-import { DollarSign, Activity, Clock, TrendingUp } from 'lucide-react';
+import { DollarSign, TrendingUp, Activity, Clock } from 'lucide-react';
 import AppShell from '../../components/AppShell';
 import { KpiCard } from '../../components/Ui';
 import {
   useKPISummary,
-  useClientProfitability,
   useScopeCreep,
   useCumulativeHours,
   useRevenueByClient,
@@ -20,28 +20,57 @@ import { exportPDF, exportExcel } from '../../api/analytics';
 import type { AnalyticsFilters } from '../../types/analytic';
 import { formatTND, formatEHR } from '../../utils/format';
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// ─── Colour helpers ────────────────────────────────────────────────────────────
 
-const PIE_COLORS = [
-  '#6366f1', // indigo
-  '#f59e0b', // amber
-  '#10b981', // emerald
-  '#ef4444', // red
-  '#8b5cf6', // violet
-  '#06b6d4', // cyan
-  '#ec4899', // pink
-  '#84cc16', // lime
-];
+const PIE_COLORS = ['#6366f1','#f59e0b','#10b981','#ef4444','#8b5cf6','#06b6d4','#ec4899','#84cc16'];
 
-const scopeColor  = (idx: number)          => idx > 30 ? '#ef4444' : idx > 15 ? '#f59e0b' : '#6366f1';
-const marginColor = (pct: number | null) => pct === null ? '#94a3b8' : pct < 0 ? '#ef4444' : pct < 20 ? '#f59e0b' : '#6366f1';
+const scopeColor = (idx: number) =>
+  idx > 30 ? '#ef4444' : idx > 15 ? '#f59e0b' : '#6366f1';
+
+// < 0% → red (loss), 0–15% → amber (thin), 15–40% → indigo (healthy), ≥ 40% → emerald (excellent)
+const marginColor = (pct: number | null): string => {
+  if (pct === null) return '#94a3b8';
+  if (pct < 0)  return '#ef4444';
+  if (pct < 15) return '#f59e0b';
+  if (pct < 40) return '#6366f1';
+  return '#10b981';
+};
+
 type ChartFormatterValue = number | string | Array<number | string> | undefined;
+const getChartValue = (v: ChartFormatterValue) => Array.isArray(v) ? v[0] : v;
+const hBarHeight = (n: number) => Math.max(200, n * 44 + 28);
 
-const getChartValue = (value: ChartFormatterValue) => Array.isArray(value) ? value[0] : value;
+// ─── Shared section header ─────────────────────────────────────────────────────
 
-const hBarHeight = (n: number) => Math.max(220, n * 44 + 28);
+function SectionHeader({ title, sub, aside }: {
+  title: string;
+  sub?: string;
+  aside?: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-start justify-between mb-4">
+      <div>
+        <p className="section-title">{title}</p>
+        {sub && (
+          <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+            {sub}
+          </p>
+        )}
+      </div>
+      {aside}
+    </div>
+  );
+}
 
-// ─── Filter bar ───────────────────────────────────────────────────────────────
+function Empty({ h = 160, message = 'No data' }: { h?: number; message?: string }) {
+  return (
+    <div className="flex items-center justify-center text-sm text-slate-400" style={{ height: h }}>
+      {message}
+    </div>
+  );
+}
+
+// ─── Filter bar ────────────────────────────────────────────────────────────────
 
 function FilterBar({ filters, onChange, projects, clients }: {
   filters:  AnalyticsFilters;
@@ -97,7 +126,7 @@ function FilterBar({ filters, onChange, projects, clients }: {
   );
 }
 
-// ─── Export button ────────────────────────────────────────────────────────────
+// ─── Export button ─────────────────────────────────────────────────────────────
 
 function ExportBtn({ label, loading, disabled, title, onClick }: {
   label: string; loading: boolean; disabled?: boolean; title?: string; onClick: () => void;
@@ -109,7 +138,10 @@ function ExportBtn({ label, loading, disabled, title, onClick }: {
       title={title}
       className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-colors
         disabled:opacity-50 disabled:cursor-not-allowed border
-        ${disabled ? 'border-slate-200 text-slate-400 bg-white' : 'border-slate-200 text-slate-700 bg-white hover:bg-slate-50'}`}
+        ${disabled
+          ? 'border-slate-200 text-slate-400 bg-white'
+          : 'border-slate-200 text-slate-700 bg-white hover:bg-slate-50'
+        }`}
     >
       <svg width="13" height="13" viewBox="0 0 15 15" fill="none">
         <path d="M3.5 1.5h5l3 3v9a1 1 0 01-1 1h-7a1 1 0 01-1-1v-11a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.3"/>
@@ -120,7 +152,28 @@ function ExportBtn({ label, loading, disabled, title, onClick }: {
   );
 }
 
-// ─── Main page ────────────────────────────────────────────────────────────────
+// ─── Margin colour legend ──────────────────────────────────────────────────────
+
+function MarginLegend() {
+  return (
+    <div className="flex items-center gap-4 mt-3 pt-3 border-t border-slate-100">
+      <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Margin scale</span>
+      {[
+        { color: '#10b981', label: '≥ 40% excellent' },
+        { color: '#6366f1', label: '15–40% healthy'  },
+        { color: '#f59e0b', label: '0–15% thin'       },
+        { color: '#ef4444', label: '< 0% loss'        },
+      ].map(({ color, label }) => (
+        <span key={label} className="flex items-center gap-1.5 text-[10px] text-slate-500">
+          <span className="w-2 h-2 rounded-sm shrink-0" style={{ backgroundColor: color }} />
+          {label}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+// ─── Main page ─────────────────────────────────────────────────────────────────
 
 type ExportState = 'idle' | 'loading' | 'error';
 
@@ -130,76 +183,109 @@ export default function AnalyticsDashboard() {
   const [xlsState,  setXlsState]  = useState<ExportState>('idle');
   const [exportErr, setExportErr] = useState('');
 
-  const { data: projects = [] }      = useProjects();
-  const { data: kpi }                = useKPISummary(filters);
-  const { data: revenueData = [] }   = useRevenueByClient(filters);
-  const { data: profitability = [] } = useClientProfitability(filters);
-  const { data: scopeCreep = [] }    = useScopeCreep(filters);
-  const { data: profitMargin = [] }  = useProfitMargin(filters);
+  const { data: projects = [] }     = useProjects();
+  const { data: kpi }               = useKPISummary(filters);
+  const { data: revenueData = [] }  = useRevenueByClient(filters);
+  const { data: scopeCreep = [] }   = useScopeCreep(filters);
+  const { data: profitMargin = [] } = useProfitMargin(filters);
   const { data: cumulativeHours, isLoading: loadingCumulative } = useCumulativeHours(filters);
-
-  const clients = useMemo(
-    () => Array.from(new Map(projects.map(p => [p.client, p.client_name])).entries())
-      .map(([id, name]) => ({ id, name })),
-    [projects],
-  );
-
-  const avgEhr = useMemo(() => {
-  const valid = profitability.filter(r => r.ehr !== null).map(r => r.ehr!);
-  return valid.length ? valid.reduce((s, v) => s + v, 0) / valid.length : null;
-}, [profitability]);
-
-  const ehrBarColor = (ehr: number | null): string => {
-    if (ehr === null || avgEhr === null) return '#94a3b8';
-    if (ehr >= avgEhr * 1.1) return '#6366f1';  // green  — well above average
-    if (ehr >= avgEhr * 0.9) return '#f59e0b';  // amber  — near average
-    return '#ef4444';                            // red    — below average
-  };
 
   const hasProject = !!filters.project;
 
-  // Total hours — sum across profitability rows
-  const totalHours = profitability.reduce((s, r) => s + r.total_hours, 0);
+  // ── Client list for filter bar ───────────────────────────────────────────────
+  const clients = useMemo(
+    () =>
+      Array.from(new Map(projects.map(p => [p.client, p.client_name])).entries()).map(
+        ([id, name]) => ({ id, name }),
+      ),
+    [projects],
+  );
 
-  // Average profit margin — plain derivation, no useMemo needed
-  const validMargins = profitMargin.filter(r => r.profit_margin_pct !== null);
-  const avgMargin = validMargins.length
-    ? validMargins.reduce((s, r) => s + r.profit_margin_pct!, 0) / validMargins.length
-    : null;
-  const profitMarginExtent = validMargins.length
-    ? Math.max(...validMargins.map((row) => Math.abs(row.profit_margin_pct!)), 10)
-    : 10;
-  const sortedMargins = [...validMargins].sort((a, b) => (b.profit_margin_pct ?? 0) - (a.profit_margin_pct ?? 0));
+  // ── Profit margin derivations ────────────────────────────────────────────────
+  const validMargins = useMemo(
+    () => profitMargin.filter(r => r.profit_margin_pct !== null),
+    [profitMargin],
+  );
+  const sortedMargins = useMemo(
+    () => [...validMargins].sort((a, b) => (b.profit_margin_pct ?? 0) - (a.profit_margin_pct ?? 0)),
+    [validMargins],
+  );
+  const avgMargin = useMemo(
+    () =>
+      validMargins.length
+        ? validMargins.reduce((s, r) => s + r.profit_margin_pct!, 0) / validMargins.length
+        : null,
+    [validMargins],
+  );
 
-  // Fix #3: KPI cards with icons matching the screenshot
+  // Fixed ±100% scale — bar widths read as absolute percentages, not relative to peer max.
+  const MARGIN_EXTENT = 100;
+
+  // ── Client-level margin ──────────────────────────────────────────────────────
+  // Derived by joining project margins with the projects list — no new backend endpoint needed.
+  // Uses a simple average across each client's projects.
+  // Projects excluded from validMargins (no designer rate) are also excluded here.
+  const totalHours = useMemo(
+    () => profitMargin.reduce((s, r) => s + r.actual_hours, 0),
+    [profitMargin],
+  );
+
+  const clientMargins = useMemo(() => {
+    const projectClientMap = new Map(
+      projects.map(p => [p.id, { name: p.client_name, clientId: p.client }]),
+    );
+    const clientMap = new Map<number, { name: string; margins: number[] }>();
+
+    for (const pm of validMargins) {
+      const info = projectClientMap.get(pm.project_id);
+      if (!info) continue;
+      const existing = clientMap.get(info.clientId) ?? { name: info.name, margins: [] };
+      existing.margins.push(pm.profit_margin_pct!);
+      clientMap.set(info.clientId, existing);
+    }
+
+    return Array.from(clientMap.values())
+      .map(({ name, margins }) => ({
+        client_name:   name,
+        avg_margin:    Math.round((margins.reduce((s, v) => s + v, 0) / margins.length) * 10) / 10,
+        project_count: margins.length,
+      }))
+      .sort((a, b) => b.avg_margin - a.avg_margin);
+  }, [validMargins, projects]);
+
+  // ── KPI cards ────────────────────────────────────────────────────────────────
+  // Active Projects and Pending Feedback also appear on the Dashboard KPI row —
+  // they're repeated here because they respond to the date/client filters above,
+  // giving the analytics charts headline context when filters are applied.
   const KPI_CARDS = [
     {
       label: 'Total Revenue',
       value: kpi ? formatTND(kpi.total_revenue) : '—',
       icon: <DollarSign size={15} />,
-      borderColor: "#6366f1",
+      borderColor: '#6366f1',
     },
     {
       label: 'Avg. EHR',
       value: kpi ? formatEHR(kpi.avg_ehr) : '—',
       icon: <Activity size={15} />,
-      borderColor: "#22c55e",
+      borderColor: '#3b82f6',
     },
     {
-      label: 'Total Hours',
-      value: `${totalHours.toFixed(1)}h`,
-      icon: <Clock size={15} />,
-      borderColor: "#f59e0b",
-    },
-    {
-      label: 'Profit Margin',
+      label: 'Avg. Profit Margin',
       value: avgMargin !== null ? `${avgMargin.toFixed(1)}%` : '—',
       icon: <TrendingUp size={15} />,
-      borderColor: "#3b82f6",
+      // Border colour responds to margin health so the card itself is a signal
+      borderColor: avgMargin !== null ? marginColor(avgMargin) : '#94a3b8',
+    },
+    {
+      label: 'Total Hours Logged',
+      value: totalHours > 0 ? `${totalHours.toFixed(1)}h` : '—',
+      icon: <Clock size={15} />,
+      borderColor: '#f59e0b',
     },
   ];
 
-  // ── Export ────────────────────────────────────────────────────────────────
+  // ── Export ───────────────────────────────────────────────────────────────────
   const handleExport = async (fmt: 'pdf' | 'excel') => {
     const set = fmt === 'pdf' ? setPdfState : setXlsState;
     set('loading');
@@ -220,6 +306,8 @@ export default function AnalyticsDashboard() {
       setExportErr('Export failed. Please try again.');
     }
   };
+
+  // ── Render ───────────────────────────────────────────────────────────────────
 
   return (
     <AppShell
@@ -247,78 +335,92 @@ export default function AnalyticsDashboard() {
 
       <FilterBar filters={filters} onChange={setFilters} projects={projects} clients={clients} />
 
-      {/* ── Row 1: KPI cards ──────────────────────────────────────────────── */}
+      {/* ── Row 1: KPI cards ─────────────────────────────────────────────────── */}
       <div className="grid grid-cols-4 gap-3.5 mb-4">
         {KPI_CARDS.map(c => (
           <KpiCard key={c.label} label={c.label} value={c.value} icon={c.icon} borderColor={c.borderColor} />
         ))}
       </div>
 
-      {/* ── Row 2: Cumulative Hours + Revenue by Client ───────────────────── */}
+      {/* ── Row 2: Cumulative Hours + Revenue by Client ───────────────────────── */}
       <div className="grid grid-cols-2 gap-4 mb-4">
 
-        {/* Cumulative Hours Over Time */}
+        {/* Cumulative Hours — only meaningful per-project */}
         <div className="card p-5">
-          <p className="section-title mb-1">Cumulative Hours Over Time</p>
-          {!hasProject && (
-            <p className="text-xs text-slate-400 mb-2">Select a project from the filters above</p>
-          )}
+          <SectionHeader
+            title="Cumulative Hours Over Time"
+            sub="Select a project from the filters above"
+          />
           {hasProject ? (
             loadingCumulative ? (
-              <div className="h-48 flex items-center justify-center text-sm text-slate-400">Loading…</div>
+              <Empty message="Loading…" />
             ) : cumulativeHours && cumulativeHours.length > 0 ? (
               <ResponsiveContainer width="100%" height={195}>
                 <LineChart data={cumulativeHours} margin={{ top: 8, right: 12, left: -10, bottom: 4 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
-                  <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false} tickFormatter={v => `${v}h`} />
-                  {/* Fix #2: Tooltip formatter with proper type handling */}
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: 10, fill: '#94a3b8' }}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 10, fill: '#94a3b8' }}
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={v => `${v}h`}
+                  />
                   <Tooltip
                     contentStyle={{ fontSize: 12 }}
-                    formatter={(value: ChartFormatterValue) => {
-                      const v = getChartValue(value);
-                      return [`${v ?? 0}h`, 'Cumulative'];
-                    }}
+                    formatter={(value: ChartFormatterValue) => [
+                      `${getChartValue(value) ?? 0}h`, 'Cumulative',
+                    ]}
                   />
-                  <Line type="monotone" dataKey="cumulative_hours" stroke="#6366f1" strokeWidth={2} dot={false} />
+                  <Line
+                    type="monotone"
+                    dataKey="cumulative_hours"
+                    stroke="#6366f1"
+                    strokeWidth={2}
+                    dot={false}
+                  />
                 </LineChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-48 flex items-center justify-center text-sm text-slate-400">
-                No time logs yet for this project.
-              </div>
+              <Empty message="No time logs yet for this project." />
             )
           ) : (
-            <div className="h-48 flex items-center justify-center text-sm text-slate-300">
-              Choose a project to see the time trend
-            </div>
+            <Empty h={195} message="Choose a project to see the time trend" />
           )}
         </div>
 
-        {/* Revenue by Client — donut + legend */}
+        {/* Revenue by Client — answers "who are our biggest clients by contract value" */}
         <div className="card p-5">
-          <p className="section-title mb-2">Revenue by Client</p>
+          <SectionHeader
+            title="Revenue by Client"
+            sub="Contract value — not adjusted for hours worked"
+          />
           {revenueData.length === 0 ? (
-            <div className="h-48 flex items-center justify-center text-sm text-slate-400">No data</div>
+            <Empty />
           ) : (
-            <div className="flex items-center gap-4 pt-2">
+            <div className="flex items-center gap-4 pt-1">
               <ResponsiveContainer width={160} height={160}>
                 <PieChart>
                   <Pie
                     data={revenueData}
-                    dataKey="total_revenue" nameKey="client_name"
+                    dataKey="total_revenue"
+                    nameKey="client_name"
                     cx="50%" cy="50%"
                     innerRadius={42} outerRadius={70}
                     strokeWidth={2} stroke="#fff"
                   >
-                    {revenueData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+                    {revenueData.map((_, i) => (
+                      <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                    ))}
                   </Pie>
-                  {/* Fix #2: Tooltip formatter with proper type handling */}
                   <Tooltip
-                    formatter={(value: ChartFormatterValue) => {
-                      const v = getChartValue(value);
-                      return formatTND(Number(v ?? 0));
-                    }}
+                    formatter={(value: ChartFormatterValue) =>
+                      formatTND(Number(getChartValue(value) ?? 0))
+                    }
                     contentStyle={{ fontSize: 11 }}
                   />
                 </PieChart>
@@ -344,29 +446,40 @@ export default function AnalyticsDashboard() {
         </div>
       </div>
 
-      {/* ── Row 3: Client Profitability + Scope Creep ─────────────────────── */}
-      <div className="grid grid-cols-2 gap-4 mb-4">
+      {/* ── Row 3: Client Profit Margin + Scope Creep ────────────────────────── */}
+      <div className="grid grid-cols-2 gap-4">
 
-        {/* Client Profitability Ranking */}
+        {/* Client Profit Margin */}
+        {/* Answers: which client relationships are most profitable to grow? */}
         <div className="card p-5">
-          <p className="section-title mb-1">Client Profitability Ranking</p>
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-4">Effective hourly rate · hover for revenue & revisions</p>
-          {profitability.length === 0 ? (
-            <div className="h-44 flex items-center justify-center text-sm text-slate-400">No data</div>
+          <SectionHeader
+            title="Client Profit Margin"
+            sub="Avg. across their projects"
+          />
+          {clientMargins.length === 0 ? (
+            <Empty
+              h={hBarHeight(3)}
+              message={
+                validMargins.length === 0
+                  ? 'No data — ensure designer hourly rates are configured'
+                  : 'Could not map project margins to clients'
+              }
+            />
           ) : (
-            <ResponsiveContainer width="100%" height={Math.max(160, profitability.length * 52 + 32)}>
-              <BarChart
-                data={profitability}
-                layout="vertical"
-                margin={{ top: 4, right: 72, left: 4, bottom: 4 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
+            <>
+              <ResponsiveContainer width="100%" height={hBarHeight(clientMargins.length)}>
+                <BarChart
+                  data={clientMargins}
+                  layout="vertical"
+                  margin={{ top: 4, right: 60, left: 4, bottom: 4 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
                   <XAxis
                     type="number"
                     tick={{ fontSize: 10, fill: '#94a3b8' }}
                     tickLine={false}
                     axisLine={false}
-                    tickFormatter={v => formatEHR(v)}   // was formatTND
+                    tickFormatter={(v: number) => `${v}%`}
                     height={15}
                   />
                   <YAxis
@@ -375,47 +488,57 @@ export default function AnalyticsDashboard() {
                     tick={{ fontSize: 11, fill: '#475569' }}
                     tickLine={false}
                     axisLine={false}
-                    width={60}
+                    width={80}
+                    tickFormatter={(v: string) => v.length > 14 ? `${v.slice(0, 14)}…` : v}
                   />
-                <Tooltip
-                  contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid #e2e8f0' }}
-                    formatter={(value: ChartFormatterValue) => [formatEHR(Number(getChartValue(value) ?? 0)), 'EHR']}
+                  {/* Zero line — bars left of here represent loss-making clients */}
+                  <ReferenceLine x={0} stroke="#e2e8f0" strokeWidth={1} />
+                  <Tooltip
+                    contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid #e2e8f0' }}
+                    formatter={(value: ChartFormatterValue) => [
+                      `${Number(getChartValue(value) ?? 0).toFixed(1)}%`,
+                      'Avg. Margin',
+                    ]}
                     labelFormatter={(label: unknown) => {
                       const name = String(label ?? '');
-                      const row = profitability.find(r => r.client_name === name);
-                      if (!row) return name;
-                      return `${name}  ·  Revenue: ${formatTND(row.total_revenue)}  ·  Revisions: ${row.revision_count}`;
+                      const row  = clientMargins.find(r => r.client_name === name);
+                      return row
+                        ? `${name}  ·  ${row.project_count} project${row.project_count !== 1 ? 's' : ''}`
+                        : name;
                     }}
-                />
-                  <Bar dataKey="ehr" radius={[0, 2, 2, 0]} barSize={14}>
-                    {profitability.map((row, i) => (
-                      <Cell key={i} fill={ehrBarColor(row.ehr)} />
+                  />
+                  <Bar dataKey="avg_margin" radius={[0, 2, 2, 0]} barSize={14}>
+                    {clientMargins.map((row, i) => (
+                      <Cell key={i} fill={marginColor(row.avg_margin)} />
                     ))}
                     <LabelList
-                      dataKey="ehr"
+                      dataKey="avg_margin"
                       position="right"
-                      formatter={(v: unknown) => formatEHR(Number(v ?? 0))}
+                      formatter={(v: unknown) => `${Number(v ?? 0).toFixed(1)}%`}
                       style={{ fontSize: 10, fill: '#64748b', fontFamily: 'monospace' }}
                     />
                   </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+                </BarChart>
+              </ResponsiveContainer>
+              <MarginLegend />
+            </>
           )}
         </div>
 
         {/* Scope Creep Index */}
         <div className="card p-5 flex flex-col" style={{ minHeight: `${hBarHeight(6)}px` }}>
-          <p className="section-title mb-1">Scope Creep Index</p>
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-4">
-            Unplanned tasks as % of total · hover for breakdown
-          </p>
+          <SectionHeader
+            title="Scope Creep Index"
+            sub="Unplanned tasks as % of total · hover for breakdown"
+          />
           {(() => {
             const filtered = scopeCreep.filter(r => r.scope_creep_index > 0);
             if (filtered.length === 0) {
               return (
-                <div className="flex-1 flex items-center justify-center text-sm text-slate-400">
-                  {scopeCreep.length > 0 ? 'No scope creep detected across projects 🎉' : 'No data'}
-                </div>
+                <Empty
+                  h={hBarHeight(3)}
+                  message={scopeCreep.length > 0 ? 'No scope creep detected 🎉' : 'No data'}
+                />
               );
             }
             const sorted = [...filtered].sort((a, b) => b.scope_creep_index - a.scope_creep_index);
@@ -434,6 +557,7 @@ export default function AnalyticsDashboard() {
                     tickLine={false}
                     axisLine={false}
                     tickFormatter={(v: number) => `${v}%`}
+                    //height={50}
                   />
                   <YAxis
                     type="category"
@@ -441,20 +565,28 @@ export default function AnalyticsDashboard() {
                     tick={{ fontSize: 11, fill: '#475569' }}
                     tickLine={false}
                     axisLine={false}
+                    //width={90}
                     tickFormatter={(v: string) => v.length > 14 ? `${v.slice(0, 14)}…` : v}
                   />
                   <Tooltip
                     contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid #e2e8f0' }}
-                    formatter={(value: ChartFormatterValue) => [`${getChartValue(value) ?? 0}%`, 'Scope Creep']}
+                    formatter={(value: ChartFormatterValue) => [
+                      `${getChartValue(value) ?? 0}%`, 'Scope Creep',
+                    ]}
                     labelFormatter={(label: unknown) => {
                       const name = String(label ?? '');
-                      const row = sorted.find(r => r.project_name === name);
+                      const row  = sorted.find(r => r.project_name === name);
                       return row
                         ? `${name}  ·  ${row.unplanned_tasks} unplanned / ${row.total_tasks} total`
                         : name;
                     }}
                   />
-                  <Bar dataKey="scope_creep_index" radius={[0, 2, 2, 0]} barSize={14} animationDuration={800}>
+                  <Bar
+                    dataKey="scope_creep_index"
+                    radius={[0, 2, 2, 0]}
+                    barSize={14}
+                    animationDuration={800}
+                  >
                     {sorted.map((row, i) => (
                       <Cell key={i} fill={scopeColor(row.scope_creep_index)} />
                     ))}
@@ -473,77 +605,80 @@ export default function AnalyticsDashboard() {
         </div>
       </div>
 
-      {/* ── Row 4: Profit Margin per Project ──────────────────────────────── */}
-      <div className="card p-5">
-        <div className="flex items-baseline justify-between mb-4">
-          <div>
-            <p className="section-title">Profit Margin per Project</p>
-            <p className="mt-1 text-[10px] font-medium uppercase tracking-wide text-slate-400">
-              Profit margin vs hourly cost
-            </p>
-          </div>
-          {profitMargin.length > 0 && validMargins.length < profitMargin.length && (
-            <span className="text-[10px] text-slate-400">
-              {profitMargin.length - validMargins.length} project(s) excluded — no designer rate set
-            </span>
-          )}
-        </div>
+      {/* ── Row 4: Profit Margin per Project (full width — most important chart) ── */}
+      {/* This is the only chart that answers "are individual projects making money?" */}
+      <div className="card p-5 mb-4">
+        <SectionHeader
+          title="Profit Margin per Project"
+          aside={
+            profitMargin.length > 0 && validMargins.length < profitMargin.length ? (
+              <span className="text-[10px] text-slate-400 shrink-0">
+                {profitMargin.length - validMargins.length} project(s) excluded — no designer rate set
+              </span>
+            ) : undefined
+          }
+        />
         {validMargins.length === 0 ? (
-          <div className="h-32 flex items-center justify-center text-sm text-slate-400">
-            No data - ensure designer hourly rates are configured
-          </div>
+          <Empty h={128} message="No data — ensure designer hourly rates are configured" />
         ) : (
-          <div className="space-y-3" style={{ minHeight: `${hBarHeight(sortedMargins.length)}px` }}>
-            <div className="grid grid-cols-[minmax(0,1.35fr)_minmax(260px,2fr)_76px_124px] gap-4 px-2 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
-              <span>Project</span>
-              <span className="text-center">Margin Spread</span>
-              <span className="text-right">Margin</span>
-              <span className="text-right">EHR / Rate</span>
-            </div>
-            {sortedMargins.map((row) => {
-              const pct = row.profit_margin_pct ?? 0;
-              const widthPct = `${(Math.abs(pct) / profitMarginExtent) * 50}%`;
-              const ehrText = formatEHR(row.ehr);
-              const rateText = row.avg_designer_rate !== null ? formatEHR(row.avg_designer_rate) : '-';
+          <>
+            <div className="space-y-3">
+              <div className="grid grid-cols-[minmax(0,1.35fr)_minmax(260px,2fr)_76px_124px] gap-4 px-2 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                <span>Project</span>
+                <span className="text-center">Margin Spread (±100%)</span>
+                <span className="text-right">Margin</span>
+                <span className="text-right">EHR / Designer Rate</span>
+              </div>
 
-              return (
-                <div
-                  key={row.project_id}
-                  className="grid grid-cols-[minmax(0,1.35fr)_minmax(260px,2fr)_76px_124px] items-center gap-4 rounded-lg border border-slate-100 px-2 py-2.5 hover:bg-slate-50/60"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-slate-800">{row.project_name}</p>
+              {sortedMargins.map((row) => {
+                const pct      = row.profit_margin_pct ?? 0;
+                const widthPct = `${(Math.abs(pct) / MARGIN_EXTENT) * 50}%`;
+                const color    = marginColor(row.profit_margin_pct);
+
+                return (
+                  <div
+                    key={row.project_id}
+                    className="grid grid-cols-[minmax(0,1.35fr)_minmax(260px,2fr)_76px_124px] items-center gap-4 rounded-lg border border-slate-100 px-2 py-2.5 hover:bg-slate-50/60 transition-colors"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-slate-800">{row.project_name}</p>
+                    </div>
+                    {/* Centre-anchored spread bar — right of centre = profit, left = loss */}
+                    <div className="relative h-10 rounded-lg bg-slate-50">
+                      <div className="absolute inset-y-2 left-0 right-0 rounded-full bg-slate-100" />
+                      <div className="absolute inset-y-1.5 left-1/2 w-px -translate-x-1/2 bg-slate-300" />
+                      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-medium text-slate-300">−</div>
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-medium text-slate-300">+</div>
+                      <div
+                        className="absolute top-1/2 h-3 -translate-y-1/2 rounded-full transition-all"
+                        style={{
+                          width: widthPct,
+                          left: pct >= 0 ? '50%' : `calc(50% - ${widthPct})`,
+                          backgroundColor: color,
+                        }}
+                      />
+                    </div>
+                    <div className="text-right">
+                      <span className="font-mono text-xs font-semibold" style={{ color }}>
+                        {pct.toFixed(1)}%
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-mono text-[11px] font-semibold text-slate-700">
+                        {formatEHR(row.ehr)}
+                      </p>
+                      <p className="font-mono text-[10px] text-slate-400">
+                        {row.avg_designer_rate !== null ? formatEHR(row.avg_designer_rate) : '—'}
+                      </p>
+                    </div>
                   </div>
-                  <div className="relative h-10 rounded-lg bg-slate-50">
-                    <div className="absolute inset-y-2 left-0 right-0 rounded-full bg-slate-100" />
-                    <div className="absolute inset-y-1.5 left-1/2 w-px -translate-x-1/2 bg-slate-300" />
-                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-medium text-slate-300">-</div>
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-medium text-slate-300">+</div>
-                    <div
-                      className="absolute top-1/2 h-3 -translate-y-1/2 rounded-full"
-                      style={{
-                        width: widthPct,
-                        left: pct >= 0 ? '50%' : `calc(50% - ${widthPct})`,
-                        backgroundColor: marginColor(row.profit_margin_pct),
-                      }}
-                    />
-                  </div>
-                  <div className="text-right">
-                    <span className="font-mono text-xs font-semibold" style={{ color: marginColor(row.profit_margin_pct) }}>
-                      {pct.toFixed(1)}%
-                    </span>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-mono text-[11px] font-semibold text-slate-700">{ehrText}</p>
-                    <p className="font-mono text-[10px] text-slate-400">{rateText}</p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+            <MarginLegend />
+          </>
         )}
       </div>
-
     </AppShell>
   );
 }
