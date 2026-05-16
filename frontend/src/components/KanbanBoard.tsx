@@ -20,7 +20,7 @@ interface ColumnDef {
 const COLUMNS: ColumnDef[] = [
   {
     id: 'Todo',
-    label: 'Todo',
+    label: 'To Do',
     dotColor: 'bg-slate-400',
     hdrColor: 'text-slate-600',
     colBg: 'bg-slate-100/90',      // ← was 'bg-slate-100'
