@@ -68,15 +68,19 @@ _groq_client = Groq(api_key=os.getenv('GROQ_API_KEY', ''))
 
 ESTIMATOR_SYSTEM_PROMPT = """
 You are an experienced graphic design project manager.
-Given a task name and description, estimate how many hours a professional designer
-would need to complete it. Consider complexity, typical revision cycles, and
-design industry norms.
+Estimate how many hours a professional designer would need to complete the given task.
+Consider complexity, typical revision cycles, and design industry norms.
+
+Rules:
+- If historical similar tasks are provided, weight them heavily in your estimate.
+- Description is optional when historical data is present — rely on task name and history.
+- Only return null if the task name is genuinely too ambiguous to estimate even with the available context.
 
 Respond ONLY with valid JSON in this exact shape:
 {"suggested_hours": <float>, "reasoning": "<one sentence>"}
 
-If the description is too vague to estimate, return:
-{"suggested_hours": null, "reasoning": "Description too vague to estimate."}
+If genuinely impossible to estimate, return:
+{"suggested_hours": null, "reasoning": "<specific reason why>"}
 """.strip()
 
 
@@ -89,32 +93,47 @@ def estimate_task_hours(request):
 
     if not task_name:
         return Response({'detail': 'task_name is required.'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    if project_id:
+        from apps.projects.models import Project
+        if not Project.objects.filter(id=project_id).exists():
+            return Response({'detail': 'project_id does not exist.'}, status=status.HTTP_400_BAD_REQUEST)
 
     historical = ''
+    has_historical = False
     if project_id:
         keywords = {
             token for token in re.findall(r'[A-Za-z0-9]+', task_name.lower())
             if len(token) >= 3
         }
         logs = TimeLog.objects.filter(task__project_id=project_id).select_related('task')
-        if keywords:
-            keyword_filter = Q()
-            for keyword in keywords:
-                keyword_filter |= Q(task__task_name__icontains=keyword)
-            matched_logs = logs.filter(keyword_filter)
-            if matched_logs.exists():
-                logs = matched_logs
+        project_has_any_logs = logs.exists()
 
-        logs = (
-            logs.values('task__task_name', 'task__estimated_hours', 'hours_spent')
-            .order_by('-created_at')[:10]
-        )
-        if logs:
-            lines = [
-                f"- \"{log['task__task_name']}\": estimated {log['task__estimated_hours']}h, actual {log['hours_spent']}h"
-                for log in logs
-            ]
-            historical = '\n'.join(lines)
+        if not project_has_any_logs:
+            if not description:
+                return Response(
+                    {'detail': 'No historical data exists for this project. Description is required for estimation.'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        else:
+            if keywords:
+                keyword_filter = Q()
+                for keyword in keywords:
+                    keyword_filter |= Q(task__task_name__icontains=keyword)
+                matched_logs = logs.filter(keyword_filter)
+                logs = matched_logs if matched_logs.exists() else logs  # fallback, but now explicit
+
+            logs = (
+                logs.values('task__task_name', 'task__estimated_hours', 'hours_spent')
+                .order_by('-created_at')[:10]
+            )
+            if logs:
+                has_historical = True
+                lines = [
+                    f"- \"{log['task__task_name']}\": estimated {log['task__estimated_hours']}h, actual {log['hours_spent']}h"
+                    for log in logs
+                ]
+                historical = '\n'.join(lines)
 
     user_message = f"Task: {task_name}\nDescription: {description or 'No description provided.'}"
     if historical:
