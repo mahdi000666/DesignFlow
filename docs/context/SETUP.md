@@ -62,18 +62,18 @@ Useful extensions to install inside VS Code:
 A GitHub repository is where your code lives remotely. It acts as your backup and version history.
 
 1. Go to github.com → **New repository**
-2. Name: `design-analytics` · Set to **Private**
+2. Name: `DesignFlow` · Set to **Private**
 3. Check **"Add a README file"** — GitHub creates `README.md` for you automatically
 4. Click **Create repository**
 
 Clone it to your machine. Cloning downloads the repo and creates the folder:
 ```bash
 cd C:\Users\YourName\Projects
-git clone https://github.com/YOUR_USERNAME/design-analytics.git
-cd design-analytics
+git clone https://github.com/YOUR_USERNAME/DesignFlow.git
+cd DesignFlow
 ```
 
-You now have `design-analytics/` as your working folder. All future commands happen inside it.
+You now have `DesignFlow/` as your working folder. All future commands happen inside it.
 
 ---
 
@@ -85,7 +85,7 @@ A `.gitignore` file tells Git which files and folders to never commit. This is c
 
 **This file must exist before your first `git add .`** — if you commit a secret accidentally, it stays in Git history even after you delete it.
 
-Create `design-analytics/.gitignore`:
+Create `DesignFlow/.gitignore`:
 ```gitignore
 # Python virtual environment — reinstalled from requirements.txt
 venv/
@@ -130,7 +130,7 @@ The backend is a Django application — it handles your database, business logic
 A virtual environment is an isolated Python installation for this project. Without it, packages from different projects conflict with each other and with your system Python.
 
 ```bash
-# Run from the design-analytics root folder
+# Run from the DesignFlow root folder
 python -m venv venv
 ```
 
@@ -538,10 +538,10 @@ Open a **new terminal** and keep the backend terminal running. The backend must 
 
 ### 4.1 Scaffold with Vite
 
-Vite is the build tool that creates and runs your React project. Run this from the `design-analytics` root:
+Vite is the build tool that creates and runs your React project. Run this from the `DesignFlow` root:
 
 ```bash
-cd C:\Users\Mahdi\Proj\PFE\design-analytics
+cd C:\Users\Mahdi\Proj\PFE\DesignFlow
 npm create vite@latest frontend -- --template react-ts
 ```
 
@@ -551,7 +551,7 @@ This creates the entire `frontend/` folder with a working React + TypeScript pro
 cd frontend
 ```
 
-> ⚠️ Every `npm` command must be run from inside the `frontend/` folder, not from `design-analytics/` root. If you get `Could not read package.json`, you are in the wrong directory.
+> ⚠️ Every `npm` command must be run from inside the `frontend/` folder, not from `DesignFlow/` root. If you get `Could not read package.json`, you are in the wrong directory.
 
 ### 4.2 Install dependencies
 
@@ -626,7 +626,7 @@ Visit http://localhost:5173 — you should see the default Vite + React page. Th
 ## Step 5 — Create docs folder and commit
 
 ```bash
-# From design-analytics root
+# From DesignFlow root
 mkdir docs
 # Copy SETUP.md, DATA_MODEL.md, DEVELOPMENT.md, PROJECT_CONTEXT.md into docs/
 ```
@@ -643,7 +643,7 @@ git push origin main
 ## What the Final Structure Looks Like
 
 ```
-design-analytics/
+DesignFlow/
 ├── .gitignore                      ← committed
 ├── README.md                       ← committed
 ├── venv/                           ← NOT committed
@@ -684,7 +684,7 @@ design-analytics/
 Replace the GitHub-generated README with:
 
 ```markdown
-# Design Project Profitability Analytics System
+# DesignFlow
 
 Final year project — a web-based project management and BI system for graphic design agencies.
 Built with Django + React/TypeScript.
@@ -733,13 +733,13 @@ This prints emails to your terminal instead of sending them, so you can copy the
 
 ```bash
 # Terminal 1 — Backend (always activate venv first)
-cd C:\Users\Mahdi\Proj\PFE\design-analytics
+cd C:\Users\Mahdi\Proj\PFE\DesignFlow
 venv\Scripts\activate
 cd backend
 python manage.py runserver
 
 # Terminal 2 — Frontend
-cd C:\Users\Mahdi\Proj\PFE\design-analytics\frontend
+cd C:\Users\Mahdi\Proj\PFE\DesignFlow\frontend
 npm run dev
 
 # After editing any model
@@ -755,24 +755,3 @@ npm install package-name
 ```
 
 ---
-
-## Deployment on Render (Week 12)
-
-### Backend
-1. Render → New → Web Service → connect GitHub repo
-2. Root directory: `backend`
-3. Build: `pip install -r requirements.txt && python manage.py collectstatic --no-input && python manage.py migrate`
-4. Start: `gunicorn core.wsgi:application`
-5. Add all `.env` variables in Render's Environment tab — set `DEBUG=False`, update `ALLOWED_HOSTS`
-
-### PostgreSQL
-1. Render → New → PostgreSQL (free, 90 days)
-2. Copy the Internal Database URL → add as `DATABASE_URL` env var
-3. Install `dj-database-url` and update `settings.py` to use it when present
-
-### Frontend
-1. Render → New → Static Site
-2. Root: `frontend` · Build: `npm install && npm run build` · Publish: `dist`
-3. Set `VITE_API_BASE_URL` to your deployed backend URL (e.g. `https://design-analytics.onrender.com/api`)
-
-> Always deploy backend first. Get its URL. Then deploy frontend pointing to it.
