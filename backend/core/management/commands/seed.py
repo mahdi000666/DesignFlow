@@ -2,9 +2,7 @@
 Management command: seed
 Creates realistic fake data for a Tunisian graphic design agency (DesignFlow).
 
-Placement:  backend/apps/users/management/commands/seed.py
-            (create the management/commands/ directories and __init__.py files
-             if they don't exist yet)
+Placement: backend/core/management/commands/seed.py
 
 Usage:
     python manage.py seed           # idempotent — skips already-present emails
@@ -15,6 +13,7 @@ Superuser / manager login:             manager@gmail.com
 """
 
 import random
+import datetime
 from datetime import date, timedelta
 from decimal import Decimal
 
@@ -444,13 +443,24 @@ class Command(BaseCommand):
 
     @transaction.atomic
     def handle(self, *args, **options):
+        from django.db.models.signals import post_save
+        from apps.users.models import User
+        from apps.users.signals import on_user_created
+
         if options["flush"]:
             self._flush()
 
-        manager_user = self._seed_manager()
-        designer_map = self._seed_designers()   # email → Designer instance
-        client_map   = self._seed_clients()     # email → Client instance
-        self._seed_projects(manager_user, designer_map, client_map)
+        # Demo accounts are activated immediately, so invitation emails would be misleading.
+        signal_was_connected = post_save.disconnect(on_user_created, sender=User)
+        try:
+            manager_user = self._seed_manager()
+            designer_map = self._seed_designers()   # email -> Designer instance
+            client_map   = self._seed_clients()     # email -> Client instance
+            self._seed_projects(manager_user, designer_map, client_map)
+            self._seed_current_week_logs()
+        finally:
+            if signal_was_connected:
+                post_save.connect(on_user_created, sender=User)
 
         self.stdout.write(self.style.SUCCESS("\n✅  Seed complete."))
         self.stdout.write(f"    Password for all accounts: {PASSWORD}")
@@ -533,14 +543,12 @@ class Command(BaseCommand):
                 role="Designer",
                 days_ago=150 - i * 10,
             )
-            # The post_save signal creates the Designer profile automatically.
-            # We just need to fill in the domain-specific fields.
-            Designer.objects.filter(user=user).update(
-                hourly_rate=d["hourly_rate"],
-                specialization=d["specialization"],
-                available_hours_per_week=d["available_hours_per_week"],
-            )
-            result[d["email"]] = Designer.objects.get(user=user)
+            designer, _ = Designer.objects.get_or_create(user=user)
+            designer.hourly_rate = d["hourly_rate"]
+            designer.specialization = d["specialization"]
+            designer.available_hours_per_week = d["available_hours_per_week"]
+            designer.save(update_fields=["hourly_rate", "specialization", "available_hours_per_week"])
+            result[d["email"]] = designer
         return result
 
     def _seed_clients(self) -> dict:
@@ -556,11 +564,11 @@ class Command(BaseCommand):
                 role="Client",
                 days_ago=120 - i * 5,
             )
-            Client.objects.filter(user=user).update(
-                phone=c["phone"],
-                industry=c["industry"],
-            )
-            result[c["email"]] = Client.objects.get(user=user)
+            client, _ = Client.objects.get_or_create(user=user)
+            client.phone = c["phone"]
+            client.industry = c["industry"]
+            client.save(update_fields=["phone", "industry"])
+            result[c["email"]] = client
         return result
 
     # ------------------------------------------------------------------ #
@@ -874,3 +882,61 @@ class Command(BaseCommand):
             count += 1
 
         self.stdout.write(f"    ↳ files     {count} created")
+
+    def _seed_current_week_logs(self):
+        """
+        Create a small number of time logs dated within the current calendar
+        week so the Designer Utilisation widget on the Manager Dashboard
+        shows meaningful data instead of 0% for all designers.
+
+        The DesignerUtilizationView defaults to the current Mon–Sun window
+        when no date filter is supplied, so historical logs don't count.
+        """
+        from apps.projects.models import Project, ProjectAssignment
+        from apps.tasks.models import Task
+        from apps.timelog.models import TimeLog
+
+        today      = date.today()
+        week_start = today - timedelta(days=today.weekday())  # Monday
+        count      = 0
+
+        for project in Project.objects.filter(status='Active'):
+            assignments = list(
+                ProjectAssignment.objects.filter(project=project).select_related('designer')
+            )
+            if not assignments:
+                continue
+
+            # Prefer tasks already in progress; fall back to Todo tasks.
+            tasks = list(Task.objects.filter(project=project, status='InProgress'))
+            if not tasks:
+                tasks = list(Task.objects.filter(project=project, status='Todo'))
+            if not tasks:
+                continue
+
+            for assignment in assignments:
+                designer = assignment.designer
+                n_logs   = RNG.randint(1, 2)
+                for _ in range(n_logs):
+                    task  = RNG.choice(tasks)
+                    hours = round(Decimal(str(RNG.uniform(2.0, 7.0))), 2)
+
+                    # Random day between Monday and today
+                    days_offset = RNG.randint(0, today.weekday())
+                    log_dt = timezone.make_aware(
+                        datetime.datetime.combine(
+                            week_start + timedelta(days=days_offset),
+                            datetime.time(RNG.randint(8, 17), RNG.randint(0, 59)),
+                        )
+                    )
+
+                    tl = TimeLog.objects.create(
+                        task=task,
+                        designer=designer,
+                        hours_spent=hours,
+                        description=f"Current-week session on '{task.task_name}'.",
+                    )
+                    _backdate(TimeLog, tl.pk, created_at=log_dt)
+                    count += 1
+
+        self.stdout.write(f'\n  ↳ current-week logs  {count} created (designer utilisation)')

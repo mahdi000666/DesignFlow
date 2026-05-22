@@ -174,7 +174,8 @@ export default function ProjectList() {
                   ? Math.round((p.actual_hours / Number(p.budget_hours)) * 100)
                   : null;
 
-                const ehr = p.budget_amount && p.actual_hours > 0
+                const EHR_MIN_HOURS = 10;
+                const ehr = p.budget_amount && p.actual_hours > EHR_MIN_HOURS
                   ? Number(p.budget_amount) / p.actual_hours
                   : null;
 

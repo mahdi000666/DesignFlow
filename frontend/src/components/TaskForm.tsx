@@ -10,10 +10,16 @@ export interface ParentTaskOption {
   task_name: string;
 }
 
+const optionalPositiveNumber = (label: string) =>
+  z.string().optional().refine(
+    value => value == null || value === '' || Number(value) > 0,
+    `${label} must be greater than 0`,
+  );
+
 const schema = z.object({
   task_name:       z.string().min(1, 'Task name is required'),
   description:     z.string().optional(),
-  estimated_hours: z.string().optional(),
+  estimated_hours: optionalPositiveNumber('Estimated hours'),
   is_unplanned:    z.boolean(),
   parent_task:     z.string().optional(),
   status:          z.enum(['Todo', 'InProgress', 'Completed']).optional(),
@@ -125,6 +131,7 @@ export default function TaskForm({ projectId, onSubmit, isLoading, defaults, par
           <div className="flex gap-2">
             <input
               type="number"
+              min="0.5"
               step="0.5"
               {...register('estimated_hours')}
               placeholder="e.g. 6"
@@ -141,6 +148,9 @@ export default function TaskForm({ projectId, onSubmit, isLoading, defaults, par
           </div>
           {aiReasoning && (
             <p className="text-xs text-slate-500 mt-2 italic leading-relaxed bg-slate-50 rounded-lg px-3 py-2 border border-slate-100">{aiReasoning}</p>
+          )}
+          {errors.estimated_hours && (
+            <p className="text-xs text-rose-600 mt-1.5 font-medium">{errors.estimated_hours.message}</p>
           )}
         </div>
       </div>

@@ -48,6 +48,16 @@ class ProjectWriteSerializer(serializers.ModelSerializer):
             'budget_hours', 'budget_amount', 'deadline', 'status', 'category',
         ]
 
+    def validate_budget_hours(self, value):
+        if value is not None and value <= 0:
+            raise serializers.ValidationError('Budget hours must be greater than 0.')
+        return value
+
+    def validate_budget_amount(self, value):
+        if value is not None and value <= 0:
+            raise serializers.ValidationError('Budget amount must be greater than 0.')
+        return value
+
 
 class AssignDesignerSerializer(serializers.Serializer):
     # Accepts a plain designer PK — no model instance needed on this payload.

@@ -6,13 +6,32 @@ Both functions return a seeked BytesIO buffer ready to stream as an HTTP respons
 import datetime
 import io
 
-from django.db.models import Avg, Count, Q, Sum
+from django.db.models import Count, Q, Sum
 
 from apps.projects.models import Project
 from apps.tasks.models import Task
 from apps.users.models import Client
 from apps.feedback.models import Feedback
 from apps.timelog.models import TimeLog
+
+
+def _weighted_designer_rate(log_qs, actual_hours):
+    """Return the logged-hours weighted designer rate, or None when rates are incomplete."""
+    if actual_hours <= 0:
+        return None
+
+    # Match ProfitMarginView: rates are weighted by actual logs, not by assigned designers.
+    weighted_total = 0.0
+    rated_hours = 0.0
+    for row in log_qs.values('designer__hourly_rate').annotate(logged_hours=Sum('hours_spent')):
+        hourly_rate = row['designer__hourly_rate']
+        logged_hours = float(row['logged_hours'] or 0)
+        if hourly_rate is None:
+            continue
+        weighted_total += float(hourly_rate) * logged_hours
+        rated_hours += logged_hours
+
+    return weighted_total / actual_hours if rated_hours >= actual_hours else None
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -61,10 +80,10 @@ def generate_project_pdf(project_id: int) -> io.BytesIO:
     revisions = fb_agg['revisions'] or 0
     approvals  = fb_agg['approvals'] or 0
 
-    avg_rate_raw = project.assignments.aggregate(avg=Avg('designer__hourly_rate'))['avg']
+    weighted_rate = _weighted_designer_rate(TimeLog.objects.filter(task__project=project), actual_hours)
     margin = (
-        (ehr - float(avg_rate_raw)) / ehr * 100
-        if avg_rate_raw and ehr > 0 else None
+        (ehr - weighted_rate) / ehr * 100
+        if weighted_rate is not None and ehr > 0 else None
     )
 
     # ── Palette ───────────────────────────────────────────────────────────────
@@ -388,10 +407,10 @@ def generate_excel(project_id: int | None = None) -> io.BytesIO:
         total_t   = agg['total'] or 0
         scope     = round(agg['unplanned'] / total_t * 100, 1) if total_t > 0 else 0
 
-        avg_rate_raw = p.assignments.aggregate(avg=Avg('designer__hourly_rate'))['avg']
+        weighted_rate = _weighted_designer_rate(TimeLog.objects.filter(task__project=p), actual)
         margin_val = (
-            round((ehr_val - float(avg_rate_raw)) / ehr_val * 100, 1)
-            if avg_rate_raw and ehr_val else None
+            round((ehr_val - weighted_rate) / ehr_val * 100, 1)
+            if weighted_rate is not None and ehr_val else None
         )
 
         row_data = [

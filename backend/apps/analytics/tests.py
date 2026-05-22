@@ -8,6 +8,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from apps.feedback.models import Feedback
+from apps.analytics.reports import _weighted_designer_rate
 from apps.projects.models import Project, ProjectAssignment
 from apps.tasks.models import Task
 from apps.timelog.models import TimeLog
@@ -121,6 +122,36 @@ class AnalyticsBehaviorTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data[0]['logged_hours'], 4.0)
         self.assertEqual(response.data[0]['utilization_pct'], 10.0)
+
+    def test_report_weighted_rate_uses_actual_logged_hours(self):
+        senior = User.objects.create_user(
+            email='senior.analytics@example.com',
+            full_name='Senior Designer',
+            role='Designer',
+            password='Password123',
+        )
+        senior.is_active = True
+        senior.save(update_fields=['is_active'])
+        senior_profile = Designer.objects.get(user=senior)
+        senior_profile.hourly_rate = 100
+        senior_profile.save(update_fields=['hourly_rate'])
+
+        TimeLog.objects.create(
+            task=self.task,
+            designer=self.designer_profile,
+            hours_spent=1,
+            description='Junior work',
+        )
+        TimeLog.objects.create(
+            task=self.task,
+            designer=senior_profile,
+            hours_spent=3,
+            description='Senior work',
+        )
+
+        rate = _weighted_designer_rate(TimeLog.objects.filter(task=self.task), 4.0)
+
+        self.assertAlmostEqual(rate, 87.5)
 
     @patch('apps.analytics.views.Groq')
     @patch.dict('os.environ', {'GROQ_API_KEY': 'test-key'})

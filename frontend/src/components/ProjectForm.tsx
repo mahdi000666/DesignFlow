@@ -5,12 +5,18 @@ import { useQuery } from '@tanstack/react-query';
 import apiClient from '../api/clients';
 import type { ProjectPayload } from '../types/project';
 
+const optionalPositiveNumber = (label: string) =>
+  z.string().optional().refine(
+    value => value == null || value === '' || Number(value) > 0,
+    `${label} must be greater than 0`,
+  );
+
 const schema = z.object({
   project_name:  z.string().min(1, 'Project name is required'),
   client:        z.string().min(1, 'Client is required'),
   description:   z.string().optional(),
-  budget_hours:  z.string().optional(),
-  budget_amount: z.string().optional(),
+  budget_hours:  optionalPositiveNumber('Budget hours'),
+  budget_amount: optionalPositiveNumber('Budget amount'),
   deadline:      z.string().optional(),
   status:        z.enum(['Active', 'Completed', 'OnHold']),
   category:      z.string().optional(),
@@ -108,22 +114,30 @@ const ProjectForm = ({ onSubmit, isLoading, defaults }: Props) => {
           <label className={labelCls}>Budget (Hours)</label>
           <input
             type="number"
+            min="0.5"
             step="0.5"
             placeholder="e.g. 80"
             {...register('budget_hours')}
             className={inputCls}
           />
+          {errors.budget_hours && (
+            <p className="text-xs text-rose-600 mt-1">{errors.budget_hours.message}</p>
+          )}
         </div>
 
         <div>
           <label className={labelCls}>Budget (TND)</label>
           <input
             type="number"
+            min="0.01"
             step="0.01"
             placeholder="e.g. 15000"
             {...register('budget_amount')}
             className={inputCls}
           />
+          {errors.budget_amount && (
+            <p className="text-xs text-rose-600 mt-1">{errors.budget_amount.message}</p>
+          )}
         </div>
       </div>
 

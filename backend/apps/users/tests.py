@@ -8,7 +8,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from apps.feedback.models import Feedback
-from apps.timelog.models import TimeLog
+from apps.timelog.models import TimeLog, TimerSession
 from apps.projects.models import Project, ProjectAssignment
 from apps.tasks.models import Task
 from apps.users.models import Client, Designer, InvitationToken, User
@@ -172,6 +172,78 @@ class UserAndProjectContractTests(APITestCase):
         self.assertEqual(delete_response.status_code, status.HTTP_403_FORBIDDEN)
         log.refresh_from_db()
         self.assertEqual(float(log.hours_spent), 5.0)
+
+    def test_timer_stop_rounds_positive_elapsed_to_minimum_log(self):
+        self.client.force_authenticate(self.designer)
+        TimerSession.objects.create(
+            task=self.task,
+            designer=self.designer_profile,
+            state='running',
+            started_at=timezone.now() - timedelta(milliseconds=500),
+            accumulated_secs=0,
+        )
+
+        response = self.client.post(
+            reverse('timer-stop'),
+            {'task_id': self.task.id, 'description': 'Quick correction'},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(float(response.data['hours_spent']), 0.01)
+        self.assertFalse(TimerSession.objects.filter(task=self.task, designer=self.designer_profile).exists())
+
+    def test_project_budget_values_must_be_positive(self):
+        self.client.force_authenticate(self.manager)
+
+        response = self.client.post(
+            reverse('project-list'),
+            {
+                'client': self.client_profile.id,
+                'project_name': 'Invalid Budget',
+                'budget_hours': 0,
+                'budget_amount': -100,
+                'status': 'Active',
+            },
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('budget_hours', response.data)
+        self.assertIn('budget_amount', response.data)
+
+    def test_task_estimated_hours_must_be_positive(self):
+        self.client.force_authenticate(self.manager)
+
+        response = self.client.post(
+            reverse('task-list'),
+            {
+                'project': self.project.id,
+                'task_name': 'Invalid estimate',
+                'estimated_hours': 0,
+            },
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('estimated_hours', response.data)
+
+    def test_designer_invite_hourly_rate_must_be_positive(self):
+        self.client.force_authenticate(self.manager)
+
+        response = self.client.post(
+            '/api/users/invite/',
+            {
+                'email': 'bad-rate@example.com',
+                'full_name': 'Bad Rate',
+                'role': 'Designer',
+                'hourly_rate': -1,
+            },
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('hourly_rate', response.data)
 
     def test_message_reply_must_match_feedback_project(self):
         other_project = Project.objects.create(

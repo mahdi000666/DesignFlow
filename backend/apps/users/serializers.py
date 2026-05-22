@@ -16,6 +16,20 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         token['full_name'] = user.full_name
         return token
 
+    def validate(self, attrs):
+        from rest_framework_simplejwt.exceptions import AuthenticationFailed
+        email = attrs.get(self.username_field, '')
+        try:
+            user = User.objects.get(email=email)
+            if not user.is_active:
+                raise AuthenticationFailed(
+                    'This account has not been activated yet. '
+                    'Please check your email for the invitation link.'
+                )
+        except User.DoesNotExist:
+            pass  # Wrong email — let the parent return the generic message
+        return super().validate(attrs)
+
 
 class ActivateAccountSerializer(serializers.Serializer):
     token    = serializers.CharField()
@@ -96,6 +110,11 @@ class InviteUserSerializer(serializers.Serializer):
         if not any(c.isalpha() for c in name):
             raise serializers.ValidationError('Full name must contain at least one letter.')
         return name
+
+    def validate_hourly_rate(self, value):
+        if value is not None and value <= 0:
+            raise serializers.ValidationError('Hourly rate must be greater than 0.')
+        return value
 
     def validate(self, data):
         if data['role'] == 'Designer' and not data.get('hourly_rate'):
@@ -182,6 +201,11 @@ class UserMeSerializer(serializers.ModelSerializer):
             return obj.designer_profile.hourly_rate
         except Designer.DoesNotExist:
             return None
+
+    def validate_available_hours_per_week(self, value):
+        if value is not None and value <= 0:
+            raise serializers.ValidationError('Available hours per week must be greater than 0.')
+        return value
 
     def to_representation(self, instance):
         data = super().to_representation(instance)

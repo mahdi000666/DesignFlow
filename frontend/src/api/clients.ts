@@ -32,6 +32,8 @@ apiClient.interceptors.response.use(
       try {
         const { data } = await apiClient.post('/auth/token/refresh/', { refresh });
         localStorage.setItem('access_token', data.access);
+        // SimpleJWT can rotate refresh tokens; keep storage aligned with the backend response.
+        if (data.refresh) localStorage.setItem('refresh_token', data.refresh);
         original.headers.Authorization = `Bearer ${data.access}`;
         return apiClient(original); // retry the original request with the new token
       } catch {

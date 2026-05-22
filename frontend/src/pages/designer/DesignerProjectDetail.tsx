@@ -60,6 +60,7 @@ export default function DesignerProjectDetail() {
 
   const [activeTab,    setActiveTab]    = useState<Tab>('tasks');
   const [pendingStopTaskId,  setPendingStopTaskId]  = useState<number | null>(null);
+  const [pendingStopCompletesTask, setPendingStopCompletesTask] = useState(false);
   const [stopDescription,    setStopDescription]    = useState('');
 
   const taskLogMap = useMemo<Record<number, number>>(() => {
@@ -88,25 +89,51 @@ export default function DesignerProjectDetail() {
     if (tab === 'files')    markFilesRead();
   };
 
-  const handleStop = (taskId: number) => {
+  const resetStopModal = () => {
+    setPendingStopTaskId(null);
+    setPendingStopCompletesTask(false);
+    setStopDescription('');
+  };
+
+  const handleStop = (taskId: number, completesTask = false) => {
     setPendingStopTaskId(taskId);
+    setPendingStopCompletesTask(completesTask);
     setStopDescription('');
   };
 
   const confirmStop = () => {
     if (pendingStopTaskId == null) return;
-    timerMutations.stop.mutate({ taskId: pendingStopTaskId, description: stopDescription });
-    setPendingStopTaskId(null);
-    setStopDescription('');
+    const taskId = pendingStopTaskId;
+    const shouldComplete = pendingStopCompletesTask;
+
+    timerMutations.stop.mutate(
+      { taskId, description: stopDescription },
+      {
+        onSuccess: () => {
+          if (shouldComplete) {
+            updateTask.mutate({ id: taskId, payload: { status: 'Completed' } });
+          }
+          resetStopModal();
+        },
+      },
+    );
   };
 
-  const handleTaskMoved = (taskId: number, newStatus: Task['status']) => {
-    if (newStatus === 'InProgress') {
+  const handleStatusChange = (taskId: number, newStatus: Task['status']) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task || task.status === newStatus) return;
+
+    if (newStatus === 'InProgress' && !sessionByTask[taskId]) {
       timerMutations.start.mutate(taskId);
-    } else if (newStatus === 'Completed') {
-      const session = sessionByTask[taskId];
-      if (session) handleStop(taskId);
     }
+
+    if (newStatus === 'Completed' && sessionByTask[taskId]) {
+      // Completion is persisted only after the stop request creates the final time log.
+      handleStop(taskId, true);
+      return;
+    }
+
+    updateTask.mutate({ id: taskId, payload: { status: newStatus } });
   };
 
   const budgetPct = project?.budget_hours && project?.actual_hours != null
@@ -297,11 +324,8 @@ export default function DesignerProjectDetail() {
         <div>
           <KanbanBoard
             tasks={tasks}
-            onStatusChange={(id, status) =>
-              updateTask.mutate({ id, payload: { status } })
-            }
+            onStatusChange={handleStatusChange}
             isLoading={loadingTasks}
-            onTaskMoved={handleTaskMoved}
             renderCard={(task, columnColor) => (
               <KanbanTaskCard
                 task={task}
@@ -366,7 +390,7 @@ export default function DesignerProjectDetail() {
             />
             <div className="flex gap-2 mt-4">
               <button
-                onClick={() => setPendingStopTaskId(null)}
+                onClick={resetStopModal}
                 className="flex-1 px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
               >
                 Cancel

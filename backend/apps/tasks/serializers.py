@@ -28,6 +28,11 @@ class TaskWriteSerializer(serializers.ModelSerializer):
             'estimated_hours', 'status', 'is_unplanned',
         ]
 
+    def validate_estimated_hours(self, value):
+        if value is not None and value <= 0:
+            raise serializers.ValidationError('Estimated hours must be greater than 0.')
+        return value
+
     def validate(self, attrs):
         parent  = attrs.get('parent_task')
         project = attrs.get('project', getattr(self.instance, 'project', None))

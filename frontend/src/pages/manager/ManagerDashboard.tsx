@@ -610,8 +610,10 @@ export default function ManagerDashboard() {
                   p.budget_hours && p.actual_hours != null
                     ? Math.round((p.actual_hours / Number(p.budget_hours)) * 100)
                     : null;
+
+                const EHR_MIN_HOURS = 10;
                 const ehr =
-                  p.budget_amount && p.actual_hours > 0
+                  p.budget_amount && p.actual_hours > EHR_MIN_HOURS
                     ? Number(p.budget_amount) / p.actual_hours
                     : null;
                 const isOver =

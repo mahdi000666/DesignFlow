@@ -61,6 +61,7 @@ export interface RevenueByClientItem {
 export interface ProfitMarginItem {
   project_id:         number;
   project_name:       string;
+  budget_amount?:     number
   ehr:                number;
   avg_designer_rate:  number | null;
   profit_margin_pct:  number | null;

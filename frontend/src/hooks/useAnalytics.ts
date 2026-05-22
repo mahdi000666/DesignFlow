@@ -72,6 +72,6 @@ export const useAISummary = (projectId: number | undefined) =>
   useQuery({
     queryKey: ['analytics', 'ai-summary', projectId],
     queryFn:  () => getAISummary(projectId!),
-    enabled:  false,           // ← changed: manual trigger only
+    enabled:  false,           // AI summaries are generated only after a user clicks the button.
     staleTime: 5 * 60 * 1000,
   });

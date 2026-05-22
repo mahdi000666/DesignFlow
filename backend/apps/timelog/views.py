@@ -200,11 +200,18 @@ def timer_stop(request):
     except TimerSession.DoesNotExist:
         return Response({'detail': 'No timer for this task.'}, status=status.HTTP_404_NOT_FOUND)
     
-    total_secs = session.accumulated_secs
+    total_secs = Decimal(session.accumulated_secs)
     if session.state == 'running':
-        total_secs += int((timezone.now() - session.started_at).total_seconds())
+        elapsed_secs = Decimal(str((timezone.now() - session.started_at).total_seconds()))
+        total_secs += max(elapsed_secs, Decimal('0'))
 
-    hours = (Decimal(total_secs) / Decimal(3600)).quantize(Decimal('0.01'))
+    if total_secs <= 0:
+        return Response({'detail': 'Timer has no elapsed time to log.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # A real but very short defense/demo timer should not become a useless 0.00h log.
+    hours = (total_secs / Decimal(3600)).quantize(Decimal('0.01'))
+    if hours == Decimal('0.00'):
+        hours = Decimal('0.01')
 
     timelog = TimeLog.objects.create(
         task=session.task,

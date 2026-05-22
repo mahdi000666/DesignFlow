@@ -23,7 +23,7 @@ const COLUMNS: ColumnDef[] = [
     label: 'To Do',
     dotColor: 'bg-slate-400',
     hdrColor: 'text-slate-600',
-    colBg: 'bg-slate-100/90',      // ← was 'bg-slate-100'
+    colBg: 'bg-slate-100/90',
     badgeBg: 'bg-slate-200/80',
   },
   {
@@ -31,7 +31,7 @@ const COLUMNS: ColumnDef[] = [
     label: 'In Progress',
     dotColor: 'bg-blue-400',
     hdrColor: 'text-blue-600',
-    colBg: 'bg-blue-50/60',       // ← was 'bg-blue-100'
+    colBg: 'bg-blue-50/60',
     badgeBg: 'bg-blue-100/80',
   },
   {
@@ -39,7 +39,7 @@ const COLUMNS: ColumnDef[] = [
     label: 'Completed',
     dotColor: 'bg-emerald-400',
     hdrColor: 'text-emerald-600',
-    colBg: 'bg-emerald-50/40',    // ← was 'bg-emerald-100'
+    colBg: 'bg-emerald-50/40',
     badgeBg: 'bg-emerald-100/60',
   },
 ];
@@ -114,10 +114,9 @@ interface Props {
   onStatusChange: (taskId: number, newStatus: Task['status']) => void;
   renderCard:     (task: Task, columnColor: string) => React.ReactNode;
   isLoading?:     boolean;
-  onTaskMoved?:   (taskId: number, newStatus: Task['status']) => void;
 }
 
-export default function KanbanBoard({ tasks, onStatusChange, renderCard, isLoading, onTaskMoved }: Props) {
+export default function KanbanBoard({ tasks, onStatusChange, renderCard, isLoading }: Props) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
   );
@@ -135,8 +134,8 @@ export default function KanbanBoard({ tasks, onStatusChange, renderCard, isLoadi
     const newStatus = over.id as Task['status'];
     const task      = tasks.find(t => t.id === taskId);
     if (task && task.status !== newStatus) {
+      // The page owns side effects such as timer starts/stops before it persists status.
       onStatusChange(taskId, newStatus);
-      onTaskMoved?.(taskId, newStatus);
     }
   };
 

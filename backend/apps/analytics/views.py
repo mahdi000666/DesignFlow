@@ -17,8 +17,10 @@ from apps.timelog.models import TimeLog
 from apps.users.models import Client, Designer
 from apps.users.permissions import IsManager
 
+EHR_MIN_HOURS = 10
 
 def _parse_filters(request):
+    # Centralized parsing keeps every analytics widget on the same client/project/date scope.
     filters = {}
     raw_from = request.query_params.get('date_from')
     raw_to = request.query_params.get('date_to')
@@ -37,6 +39,7 @@ def _parse_filters(request):
 
 
 def _apply_project_filters(queryset, filters, include_created_at=False):
+    # Most analytics use timelog dates; include_created_at is only for project-count style metrics.
     if filters.get('client_id'):
         queryset = queryset.filter(client_id=filters['client_id'])
     if filters.get('project_id'):
@@ -49,6 +52,7 @@ def _apply_project_filters(queryset, filters, include_created_at=False):
 
 
 def _apply_timelog_filters(queryset, filters):
+    # Timelog filters are applied before aggregates so sums do not include out-of-range work.
     if filters.get('client_id'):
         queryset = queryset.filter(task__project__client_id=filters['client_id'])
     if filters.get('project_id'):
@@ -97,13 +101,14 @@ class KPISummaryView(APIView):
             filters,
         ).count()
 
-        ehrs = []
+        total_budget = 0.0
+        total_hours  = 0.0
         for project in projects.filter(budget_amount__isnull=False):
-            actual_hours = _project_log_hours(project, filters)
-            if actual_hours > 0:
-                ehrs.append(float(project.budget_amount) / actual_hours)
-
-        avg_ehr = sum(ehrs) / len(ehrs) if ehrs else 0
+            actual = _project_log_hours(project, filters)
+            if actual >= EHR_MIN_HOURS:
+                total_budget += float(project.budget_amount)
+                total_hours  += actual
+        avg_ehr = total_budget / total_hours if total_hours > 0 else 0
 
         return Response({
             'total_revenue': total_revenue,
@@ -164,13 +169,15 @@ class EHRView(APIView):
         data = []
         for project in projects:
             actual_hours = _project_log_hours(project, filters)
-            ehr = (float(project.budget_amount) / actual_hours) if actual_hours > 0 else None
+            reliable = actual_hours >= EHR_MIN_HOURS
+            ehr = (float(project.budget_amount) / actual_hours) if reliable else None
             data.append({
-                'project_id': project.id,
+                'project_id':   project.id,
                 'project_name': project.project_name,
                 'budget_amount': float(project.budget_amount),
                 'actual_hours': actual_hours,
-                'ehr': round(ehr, 2) if ehr is not None else None,
+                'ehr':          round(ehr, 2) if ehr is not None else None,
+                'ehr_reliable': reliable,   # frontend can show a warning badge when False
             })
 
         return Response(data)
@@ -203,16 +210,20 @@ class ClientProfitabilityView(APIView):
                 Feedback.objects.filter(project__in=projects, category='Revision'),
                 filters,
             ).count()
-            ehr = total_revenue / total_hours if total_hours > 0 else None
+            ehr = (
+                total_revenue / total_hours
+                if total_hours >= EHR_MIN_HOURS   # ← was: total_hours > 0
+                else None
+            )
             weighted_ehr = (ehr / (1 + revision_count)) if ehr is not None else None
 
             data.append({
-                'client_id': client.id,
-                'client_name': client.user.full_name,
-                'total_revenue': total_revenue,
-                'total_hours': total_hours,
-                'ehr': round(ehr, 2) if ehr is not None else None,
-                'weighted_ehr': round(weighted_ehr, 2) if weighted_ehr is not None else None,
+                'client_id':      client.id,
+                'client_name':    client.user.full_name,
+                'total_revenue':  total_revenue,
+                'total_hours':    total_hours,
+                'ehr':            round(ehr, 2) if ehr is not None else None,
+                'weighted_ehr':   round(weighted_ehr, 2) if weighted_ehr is not None else None,
                 'revision_count': revision_count,
             })
 
@@ -370,22 +381,22 @@ class ProfitMarginView(APIView):
                 filters,
             )
             actual_hours = float(log_qs.aggregate(total=Sum('hours_spent'))['total'] or 0)
-            if actual_hours == 0:
+            if actual_hours < EHR_MIN_HOURS:   # ← was: actual_hours == 0
                 continue
 
             ehr = float(project.budget_amount) / actual_hours
 
             weighted_total = 0.0
-            rated_hours = 0.0
+            rated_hours    = 0.0
             for row in log_qs.values('designer__hourly_rate').annotate(
                 logged_hours=Sum('hours_spent')
             ):
-                hourly_rate = row['designer__hourly_rate']
+                hourly_rate  = row['designer__hourly_rate']
                 logged_hours = float(row['logged_hours'] or 0)
                 if hourly_rate is None:
                     continue
                 weighted_total += float(hourly_rate) * logged_hours
-                rated_hours += logged_hours
+                rated_hours    += logged_hours
 
             weighted_rate = (
                 weighted_total / actual_hours
@@ -398,9 +409,10 @@ class ProfitMarginView(APIView):
             )
 
             data.append({
-                'project_id': project.id,
-                'project_name': project.project_name,
-                'ehr': round(ehr, 2),
+                'project_id':        project.id,
+                'project_name':      project.project_name,
+                'budget_amount':     float(project.budget_amount),
+                'ehr':               round(ehr, 2),
                 'actual_hours':      round(actual_hours, 2),
                 'avg_designer_rate': round(weighted_rate, 2) if weighted_rate is not None else None,
                 'profit_margin_pct': round(margin, 1) if margin is not None else None,
@@ -413,7 +425,7 @@ class AISummaryView(APIView):
     permission_classes = [IsManager]
 
     def get(self, request):
-        filters = _parse_filters(request)
+        filters    = _parse_filters(request)
         project_id = filters.get('project_id')
         if not project_id:
             return Response({'error': 'project param is required'}, status=400)
@@ -430,48 +442,66 @@ class AISummaryView(APIView):
             actual=Sum('time_logs__hours_spent'),
         )
 
-        total_tasks = task_agg['total'] or 0
+        total_tasks     = task_agg['total'] or 0
         completed_tasks = task_agg['completed'] or 0
-        unplanned = task_agg['unplanned'] or 0
-        actual_hours = float(task_agg['actual'] or 0)
-        budget_hours = float(project.budget_hours or 0)
+        unplanned       = task_agg['unplanned'] or 0
+        actual_hours    = float(task_agg['actual'] or 0)
+        budget_hours    = float(project.budget_hours or 0)
 
         budget_utilization = (actual_hours / budget_hours * 100) if budget_hours > 0 else None
-        task_completion = (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0
-        scope_creep = (unplanned / total_tasks * 100) if total_tasks > 0 else 0
-        ehr = (
-            float(project.budget_amount) / actual_hours
-            if actual_hours > 0 and project.budget_amount
-            else None
-        )
-        target_rate = (
+        task_completion    = (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0
+        scope_creep        = (unplanned / total_tasks * 100) if total_tasks > 0 else 0
+        target_rate        = (
             float(project.budget_amount) / budget_hours
             if budget_hours > 0 and project.budget_amount
             else None
+        )
+
+        # Guard: only compute EHR once enough hours have been logged.
+        # Below EHR_MIN_HOURS the ratio is meaningless and will mislead the LLM.
+        ehr_reliable = actual_hours >= EHR_MIN_HOURS
+        ehr = (
+            float(project.budget_amount) / actual_hours
+            if ehr_reliable and project.budget_amount
+            else None
+        )
+        ehr_str = (
+            f'{ehr:.2f} TND/h'
+            if ehr is not None
+            else f'insufficient data ({actual_hours:.1f}h logged, minimum {EHR_MIN_HOURS}h required)'
         )
 
         feedback_agg = Feedback.objects.filter(project=project).aggregate(
             revisions=Count('id', filter=Q(category='Revision')),
             approvals=Count('id', filter=Q(category='Approval')),
         )
-        revisions = feedback_agg['revisions'] or 0
-        approvals = feedback_agg['approvals'] or 0
+        revisions      = feedback_agg['revisions'] or 0
+        approvals      = feedback_agg['approvals'] or 0
         days_remaining = (
             (project.deadline - datetime.date.today()).days
             if project.deadline else None
         )
 
         prompt = (
-            'You are a project health analyst for a tunisian design agency. '
+            'You are a project health analyst for a Tunisian design agency. '
             'Write a 3-4 sentence plain-English health summary for this project. '
             'Flag the single biggest risk and suggest one concrete action for the manager.\n\n'
+            'CRITICAL CONTEXT: For Active or On-Hold projects, the Effective Hourly Rate '
+            '(EHR) is calculated as budget_amount divided by actual_hours_logged_so_far. '
+            'Because actual_hours is only partial for incomplete projects, the EHR will '
+            'always appear very high early on (e.g., 145 TND/h vs a target of 60 TND/h) '
+            'and will naturally decrease toward the target as more hours are logged. '
+            'DO NOT flag a high EHR as a cost overrun for incomplete projects. '
+            'Instead, focus on: revision-to-approval ratio, scope creep, deadline risk, '
+            'and whether budget utilisation is outpacing task completion.\n\n'
             f'Project: {project.project_name}\n'
+            f'Status: {project.status}\n'
             f'Budget utilisation: {f"{budget_utilization:.0f}%" if budget_utilization is not None else "unknown"}\n'
             f'Task completion: {task_completion:.0f}%\n'
             f'Scope creep index: {scope_creep:.0f}%\n'
             f'Revision-to-approval ratio: {revisions}:{approvals}\n'
-            f'Effective Hourly Rate: {f"{ehr:.2f}" if ehr is not None else "N/A"}\n'
-            f'Target Hourly Rate: {f"{target_rate:.2f}" if target_rate is not None else "N/A"}\n'
+            f'Effective Hourly Rate (interim): {ehr_str}\n'
+            f'Target Hourly Rate: {f"{target_rate:.2f} TND/h" if target_rate is not None else "N/A"}\n'
             f'Days until deadline: {days_remaining if days_remaining is not None else "no deadline set"}'
         )
 
@@ -481,7 +511,7 @@ class AISummaryView(APIView):
                 raise RuntimeError('GROQ_API_KEY is not configured')
 
             groq_client = Groq(api_key=api_key)
-            response = groq_client.chat.completions.create(
+            response    = groq_client.chat.completions.create(
                 model='llama-3.3-70b-versatile',
                 messages=[{'role': 'user', 'content': prompt}],
                 max_tokens=300,

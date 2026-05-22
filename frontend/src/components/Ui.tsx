@@ -1,93 +1,11 @@
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
-// ─── Status Badge ─────────────────────────────────────────────────────────────
-
-type ProjectStatus = 'Active' | 'Completed' | 'OnHold';
-type TaskStatus    = 'Todo' | 'InProgress' | 'Completed';
-type FeedbackStatus = 'Pending' | 'InProgress' | 'Resolved';
-type FeedbackCategory = 'Revision' | 'Approval' | 'Question';
-
-type AnyStatus = ProjectStatus | TaskStatus | FeedbackStatus | FeedbackCategory | string;
-
-const STATUS_STYLES: Record<string, string> = {
-  Active:     'badge-active',
-  Completed:  'badge-done',
-  OnHold:     'badge-hold',
-  InProgress: 'badge-active',
-  Todo:       'badge-pending',
-  Pending:    'badge-pending',
-  Resolved:   'badge-done',
-  Revision:   'badge-revision',
-  Approval:   'badge-done',
-  Question:   'badge-hold',
-};
-
-const STATUS_LABELS: Record<string, string> = {
-  InProgress: 'In Progress',
-  OnHold:     'On Hold',
-};
-
-export function StatusBadge({ value }: { value: AnyStatus }) {
-  const cls   = STATUS_STYLES[value] ?? 'badge-pending';
-  const label = STATUS_LABELS[value] ?? value;
-  return <span className={cls}>{label}</span>;
-}
-
-// ─── Priority Badge ───────────────────────────────────────────────────────────
-
-type Priority = 'High' | 'Medium' | 'Low';
-
-const PRIORITY_STYLES: Record<Priority, string> = {
-  High:   'badge-high',
-  Medium: 'badge-medium',
-  Low:    'badge-low',
-};
-
-export function PriorityBadge({ value }: { value: Priority | string }) {
-  const cls = PRIORITY_STYLES[value as Priority] ?? 'badge-pending';
-  return <span className={cls}>{value}</span>;
-}
-
 export function UnreadBadge({ count }: { count: number }) {
   if (count === 0) return null;
   return (
     <span className="ml-1.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold leading-none">
       {count}
     </span>
-  );
-}
-
-// ─── Progress Bar ─────────────────────────────────────────────────────────────
-
-interface ProgressBarProps {
-  value: number;
-  showLabel?: boolean;
-  color?: string;
-  height?: string;
-}
-
-export function ProgressBar({
-  value,
-  showLabel = false,
-  color = 'bg-primary',
-  height = 'h-1.5',
-}: ProgressBarProps) {
-  const pct = Math.min(100, Math.max(0, value));
-
-  return (
-    <div className="flex items-center gap-2">
-      <div className={`flex-1 ${height} rounded-full bg-slate-100 overflow-hidden`}>
-        <div
-          className={`${height} rounded-full ${color} transition-all duration-500`}
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-      {showLabel && (
-        <span className="text-xs font-semibold text-slate-500 w-9 text-right">
-          {Math.round(pct)}%
-        </span>
-      )}
-    </div>
   );
 }
 

@@ -210,13 +210,18 @@ export default function AnalyticsDashboard() {
     () => [...validMargins].sort((a, b) => (b.profit_margin_pct ?? 0) - (a.profit_margin_pct ?? 0)),
     [validMargins],
   );
-  const avgMargin = useMemo(
-    () =>
-      validMargins.length
-        ? validMargins.reduce((s, r) => s + r.profit_margin_pct!, 0) / validMargins.length
-        : null,
-    [validMargins],
-  );
+    const avgMargin = useMemo(() => {
+    if (!validMargins.length) return null;
+    const totalRevenue = validMargins.reduce((s, r) => s + (r.budget_amount || 0), 0);
+    if (totalRevenue <= 0) {
+      // Fallback if budget data is missing
+      return validMargins.reduce((s, r) => s + r.profit_margin_pct!, 0) / validMargins.length;
+    }
+    return (
+      validMargins.reduce((s, r) => s + (r.profit_margin_pct ?? 0) * (r.budget_amount || 0), 0) /
+      totalRevenue
+    );
+  }, [validMargins]);
 
   // Fixed ±100% scale — bar widths read as absolute percentages, not relative to peer max.
   const MARGIN_EXTENT = 100;
@@ -230,26 +235,38 @@ export default function AnalyticsDashboard() {
     [profitMargin],
   );
 
-  const clientMargins = useMemo(() => {
+    const clientMargins = useMemo(() => {
     const projectClientMap = new Map(
-      projects.map(p => [p.id, { name: p.client_name, clientId: p.client }]),
+      projects.map(p => [
+        p.id,
+        { name: p.client_name, clientId: p.client, budget: Number(p.budget_amount || 0) },
+      ]),
     );
-    const clientMap = new Map<number, { name: string; margins: number[] }>();
+    const clientMap = new Map<number, { name: string; margins: number[]; budgets: number[] }>();
 
     for (const pm of validMargins) {
       const info = projectClientMap.get(pm.project_id);
       if (!info) continue;
-      const existing = clientMap.get(info.clientId) ?? { name: info.name, margins: [] };
+      const existing = clientMap.get(info.clientId) ?? { name: info.name, margins: [], budgets: [] };
       existing.margins.push(pm.profit_margin_pct!);
+      existing.budgets.push(info.budget);
       clientMap.set(info.clientId, existing);
     }
 
     return Array.from(clientMap.values())
-      .map(({ name, margins }) => ({
-        client_name:   name,
-        avg_margin:    Math.round((margins.reduce((s, v) => s + v, 0) / margins.length) * 10) / 10,
-        project_count: margins.length,
-      }))
+      .map(({ name, margins, budgets }) => {
+        const totalBudget = budgets.reduce((s, v) => s + v, 0);
+        const weightedMargin =
+          totalBudget > 0
+            ? margins.reduce((sum, m, i) => sum + m * budgets[i], 0) / totalBudget
+            : margins.reduce((s, v) => s + v, 0) / margins.length; // fallback
+
+        return {
+          client_name:   name,
+          avg_margin:    Math.round(weightedMargin * 10) / 10,
+          project_count: margins.length,
+        };
+      })
       .sort((a, b) => b.avg_margin - a.avg_margin);
   }, [validMargins, projects]);
 
@@ -537,7 +554,7 @@ export default function AnalyticsDashboard() {
               return (
                 <Empty
                   h={hBarHeight(3)}
-                  message={scopeCreep.length > 0 ? 'No scope creep detected 🎉' : 'No data'}
+                  message={scopeCreep.length > 0 ? 'No scope creep detected' : 'No data'}
                 />
               );
             }

@@ -40,10 +40,15 @@ function InviteModal({ onClose }: { onClose: () => void }) {
     setError(''); setSuccess('');
     if (!fullName.trim() || !email.trim()) { setError('Full name and email are required.'); return; }
     if (role === 'Designer' && !hourlyRate) { setError('Hourly rate is required for Designer accounts.'); return; }
+    const parsedHourlyRate = parseFloat(hourlyRate);
+    if (role === 'Designer' && (Number.isNaN(parsedHourlyRate) || parsedHourlyRate <= 0)) {
+      setError('Hourly rate must be greater than 0.');
+      return;
+    }
     try {
       await mutateAsync({
         full_name: fullName.trim(), email: email.trim(), role,
-        ...(role === 'Designer' ? { hourly_rate: parseFloat(hourlyRate) } : {}),
+        ...(role === 'Designer' ? { hourly_rate: parsedHourlyRate } : {}),
       });
       setSuccess('Invitation sent! The user will receive an email to set their password.');
       setFullName(''); setEmail(''); setHourlyRate('');
@@ -84,7 +89,7 @@ function InviteModal({ onClose }: { onClose: () => void }) {
               <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">
                 Hourly rate (TND) <span className="text-rose-400">*</span>
               </label>
-              <input type="number" min="0" step="0.01" className={inputCls} placeholder="75.00"
+              <input type="number" min="0.01" step="0.01" className={inputCls} placeholder="75.00"
                 value={hourlyRate} onChange={e => setHourlyRate(e.target.value)} />
             </div>
           )}
