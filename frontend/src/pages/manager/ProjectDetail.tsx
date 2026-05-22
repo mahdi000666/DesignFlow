@@ -163,16 +163,21 @@ export default function ProjectDetail() {
   const { data: rawTasks = [], isLoading: loadingTasks } = useTasks(projectId);
   const tasks = useMemo(() => [...rawTasks].sort((a, b) => a.id - b.id), [rawTasks]);
 
+  const EHR_MIN_HOURS = 10;
+
   const projectedEHR = useMemo(() => {
     if (!project || project.status === 'Completed' || !project.budget_amount || !project.budget_hours || tasks.length === 0) {
       return null;
     }
+    // Align with ProfitMarginView: need enough hours for a reliable projection
+    if (project.actual_hours < EHR_MIN_HOURS) return null;
     const completedTasks = tasks.filter(t => t.status === 'Completed').length;
     if (completedTasks === 0) return null;
     const taskRatio = completedTasks / tasks.length;
     const projectedHours = project.actual_hours / taskRatio;
     return Number(project.budget_amount) / projectedHours;
   }, [project, tasks]);
+
 
   const { data: logs = [] } = useTimeLogs(projectId);
   const { data: files = [] } = useFiles(projectId);
@@ -264,7 +269,7 @@ export default function ProjectDetail() {
     ? Number(project.budget_amount) / Number(project.budget_hours)
     : null;
 
-  const currentEHR = project.budget_amount && project.actual_hours > 0
+  const currentEHR = project.budget_amount && project.actual_hours >= EHR_MIN_HOURS
     ? Number(project.budget_amount) / project.actual_hours
     : null;
 

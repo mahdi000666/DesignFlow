@@ -71,6 +71,7 @@ export interface ProfitMarginItem {
   target_ehr: number | null;        // NEW
   margin_at_budget: number | null;  // NEW
   projected_margin: number | null;  // NEW
+  projected_ehr: number | null;  // NEW
 }
 
 export interface AISummaryResponse {

@@ -424,6 +424,7 @@ class ProfitMarginView(APIView):
 
             # --- projected final margin for active work --------------------
             projected_margin = None
+            projected_ehr    = None
             if project.status != 'Completed' and weighted_rate is not None:
                 task_qs       = Task.objects.filter(project=project)
                 total_tasks   = task_qs.count()
@@ -440,6 +441,7 @@ class ProfitMarginView(APIView):
                     )
                 elif budget_hours > 0:
                     # No completed tasks yet — fall back to budget-hour estimate
+                    projected_ehr    = target_ehr
                     projected_margin = margin_at_budget
 
             data.append({
@@ -455,6 +457,7 @@ class ProfitMarginView(APIView):
                 'target_ehr':        round(target_ehr, 2) if target_ehr is not None else None,
                 'margin_at_budget':  round(margin_at_budget, 1) if margin_at_budget is not None else None,
                 'projected_margin':  round(projected_margin, 1) if projected_margin is not None else None,
+                'projected_ehr':     round(projected_ehr, 2) if projected_ehr is not None else None,
             })
 
         return Response(data)

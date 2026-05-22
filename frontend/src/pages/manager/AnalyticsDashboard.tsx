@@ -649,8 +649,9 @@ export default function AnalyticsDashboard() {
                 <span className="text-right">EHR / Designer Rate</span>
               </div>
 
-                            {sortedMargins.map((row) => {
+              {sortedMargins.map((row) => {
                 const isCompleted = row.status === 'Completed';
+                const displayEHR = isCompleted ? row.ehr : (row.projected_ehr ?? row.ehr);
                 const displayPct = isCompleted
                   ? row.profit_margin_pct
                   : (row.projected_margin ?? row.margin_at_budget ?? row.profit_margin_pct);
@@ -702,7 +703,7 @@ export default function AnalyticsDashboard() {
                     </div>
                     <div className="text-right">
                       <p className="font-mono text-[11px] font-semibold text-slate-700">
-                        {formatEHR(row.ehr)}
+                        {formatEHR(displayEHR)}
                       </p>
                       <p className="font-mono text-[10px] text-slate-400">
                         {row.avg_designer_rate !== null ? formatEHR(row.avg_designer_rate) : '—'}

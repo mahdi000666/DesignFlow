@@ -16,11 +16,10 @@ from apps.timelog.models import TimeLog
 
 
 def _weighted_designer_rate(log_qs, actual_hours):
-    """Return the logged-hours weighted designer rate, or None when rates are incomplete."""
+    """Return the logged-hours weighted designer rate, imputing missing rates from the known average."""
     if actual_hours <= 0:
         return None
 
-    # Match ProfitMarginView: rates are weighted by actual logs, not by assigned designers.
     weighted_total = 0.0
     rated_hours = 0.0
     for row in log_qs.values('designer__hourly_rate').annotate(logged_hours=Sum('hours_spent')):
@@ -31,7 +30,12 @@ def _weighted_designer_rate(log_qs, actual_hours):
         weighted_total += float(hourly_rate) * logged_hours
         rated_hours += logged_hours
 
-    return weighted_total / actual_hours if rated_hours >= actual_hours else None
+    # Impute missing rates from known average (matches ProfitMarginView logic)
+    if actual_hours > 0 and rated_hours > 0:
+        known_avg = weighted_total / rated_hours
+        imputed = known_avg * (actual_hours - rated_hours)
+        return (weighted_total + imputed) / actual_hours
+    return None
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -52,15 +56,18 @@ def generate_project_pdf(project_id: int) -> io.BytesIO:
     # ── Data ──────────────────────────────────────────────────────────────────
     project = Project.objects.select_related('client__user').get(id=project_id)
 
-    task_agg = Task.objects.filter(project=project).aggregate(
+    task_qs = Task.objects.filter(project=project)
+    task_agg = task_qs.aggregate(
         estimated=Sum('estimated_hours'),
-        actual=Sum('time_logs__hours_spent'),
         total=Count('id', distinct=True),
         completed=Count('id', filter=Q(status='Completed'), distinct=True),
         unplanned=Count('id', filter=Q(is_unplanned=True), distinct=True),
     )
 
-    actual_hours    = float(task_agg['actual']    or 0)
+    # Query actual hours separately to avoid join duplication inflating estimates
+    actual_hours = float(
+        TimeLog.objects.filter(task__project=project).aggregate(t=Sum('hours_spent'))['t'] or 0
+    )
     estimated_h     = float(task_agg['estimated'] or 0)
     budget_hours    = float(project.budget_hours  or 0)
     budget_amount   = float(project.budget_amount or 0)
@@ -85,6 +92,28 @@ def generate_project_pdf(project_id: int) -> io.BytesIO:
         (ehr - weighted_rate) / ehr * 100
         if weighted_rate is not None and ehr > 0 else None
     )
+
+    # --- Projected metrics for incomplete projects (matches dashboard) ---
+    is_completed = project.status == 'Completed'
+    projected_ehr = None
+    projected_margin = None
+    target_ehr = budget_amount / budget_hours if budget_hours > 0 else None
+
+    if not is_completed and actual_hours > 0 and total_tasks > 0 and completed_tasks > 0:
+        completion_ratio = completed_tasks / total_tasks
+        projected_hours = actual_hours / completion_ratio
+        projected_ehr = budget_amount / projected_hours
+        if weighted_rate is not None and projected_ehr > 0:
+            projected_margin = (projected_ehr - weighted_rate) / projected_ehr * 100
+    elif not is_completed and target_ehr is not None and weighted_rate is not None:
+        # No completed tasks yet — fall back to margin at budget hours
+        projected_margin = (target_ehr - weighted_rate) / target_ehr * 100
+
+    # Decide what to display
+    display_ehr = ehr if is_completed else (projected_ehr if projected_ehr is not None else ehr)
+    display_margin = margin if is_completed else (projected_margin if projected_margin is not None else margin)
+    ehr_label = 'EFF. HOURLY RATE' if is_completed else 'PROJ. HOURLY RATE'
+    margin_label = 'Profit Margin' if is_completed else 'Projected Margin'
 
     # ── Palette ───────────────────────────────────────────────────────────────
     C_PRIMARY    = colors.HexColor('#6366f1')
@@ -204,7 +233,8 @@ def generate_project_pdf(project_id: int) -> io.BytesIO:
     # ── KPI strip (4 tiles in one table row) ──────────────────────────────────
     util_col  = traffic(budget_util,  warn=80, danger=100)
     scope_col = traffic(scope_creep,  warn=15, danger=30)
-    ehr_col   = traffic(ehr, warn=0, danger=0, invert=True) if ehr > 0 else C_SLATE_400
+    # Green when EHR meets/exceeds target, red when below target, grey when no hours
+    ehr_col   = C_SUCCESS if (target_ehr and display_ehr >= target_ehr) else (C_DANGER if display_ehr > 0 else C_SLATE_400)
 
     def kpi_cell(label: str, value: str, val_color=C_SLATE_900):
         return [
@@ -217,7 +247,7 @@ def generate_project_pdf(project_id: int) -> io.BytesIO:
         [[
             kpi_cell('BUDGET UTILISATION', f'{budget_util:.0f}%',    util_col),
             kpi_cell('ACTUAL HOURS',       f'{actual_hours:.1f} h',  C_SLATE_900),
-            kpi_cell('EFF. HOURLY RATE',   f'{ehr:.2f} TND' if ehr else '—', ehr_col),
+            kpi_cell(ehr_label,            f'{display_ehr:.2f} TND' if display_ehr else '—', ehr_col),
             kpi_cell('SCOPE CREEP',        f'{scope_creep:.0f}%',    scope_col),
         ]],
         colWidths=[kpi_col_w] * 4,
@@ -243,15 +273,15 @@ def generate_project_pdf(project_id: int) -> io.BytesIO:
         ('Budget Hours',          f'{budget_hours:.1f} h'     if budget_hours  else '—'),
         ('Actual Hours Logged',   f'{actual_hours:.1f} h'),
         ('Estimated Hours',       f'{estimated_h:.1f} h'      if estimated_h   else '—'),
-        ('Effective Hourly Rate', f'{ehr:.2f} TND'            if ehr           else '—'),
+        ('Projected Hourly Rate', f'{display_ehr:.2f} TND'    if display_ehr   else '—'),
         ('Budget Utilisation',    f'{budget_util:.1f}%'),
         ('Scope Creep Index',     f'{scope_creep:.1f}%'),
         ('Revisions',             str(revisions)),
         ('Approvals',             str(approvals)),
         ('Rev : Approval Ratio',  f'{revisions} : {approvals}'),
     ]
-    if margin is not None:
-        metrics.append(('Profit Margin', f'{margin:.1f}%'))
+    if display_margin is not None:
+        metrics.append((margin_label, f'{display_margin:.1f}%'))
 
     LBL_W = CONTENT_W * 0.50
     VAL_W = CONTENT_W - LBL_W
@@ -392,13 +422,17 @@ def generate_excel(project_id: int | None = None) -> io.BytesIO:
         projects = projects.filter(id=project_id)
 
     for i, p in enumerate(projects, 2):
-        agg = Task.objects.filter(project=p).aggregate(
+        task_qs = Task.objects.filter(project=p)
+        agg = task_qs.aggregate(
             estimated=Sum('estimated_hours'),
-            actual=Sum('time_logs__hours_spent'),
             total=Count('id'),
             unplanned=Count('id', filter=Q(is_unplanned=True)),
         )
-        actual    = float(agg['actual']    or 0)
+
+        # Query actual hours separately to avoid join duplication
+        actual = float(
+            TimeLog.objects.filter(task__project=p).aggregate(t=Sum('hours_spent'))['t'] or 0
+        )
         estimated = float(agg['estimated'] or 0)
         budget_h  = float(p.budget_hours   or 0)
         budget_a  = float(p.budget_amount  or 0)
