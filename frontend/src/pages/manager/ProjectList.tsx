@@ -9,6 +9,7 @@ import apiClient from '../../api/clients';
 import type { Project, ProjectPayload } from '../../types/project';
 import type { ScopeCreepItem } from '../../types/analytic';
 import { STATUS_BADGE, STATUS_DOT, barColor, statusLabel, categoryClass } from '../../utils/project';
+import { formatEHR } from '../../utils/format';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -18,9 +19,33 @@ const STATUS_CYCLE: Record<Project['status'], Project['status']> = {
   OnHold:    'Active',
 };
 
-const ehrColor = (actualHours: number, budgetHours: number | null) => {
-  if (budgetHours == null) return 'text-emerald-700';
-  return actualHours > Number(budgetHours) ? 'text-rose-600' : 'text-emerald-700';
+const ehrDisplay = (p: Project) => {
+  const EHR_MIN_HOURS = 10;
+  const ehr = p.budget_amount && p.actual_hours > EHR_MIN_HOURS
+    ? Number(p.budget_amount) / p.actual_hours
+    : null;
+  const targetEHR = p.budget_amount && p.budget_hours
+    ? Number(p.budget_amount) / Number(p.budget_hours)
+    : null;
+
+  if (ehr === null) return { text: '—', cls: 'text-slate-300', title: undefined };
+
+  if (p.status === 'Completed' && targetEHR !== null) {
+    return {
+      text: formatEHR(ehr),
+      cls: ehr >= targetEHR ? 'text-emerald-700' : 'text-rose-600',
+      title: `Final EHR vs target ${formatEHR(targetEHR)}`,
+    };
+  }
+
+  // Active / OnHold — neutral, with context on hover
+  return {
+    text: formatEHR(ehr),
+    cls: 'text-slate-600',
+    title: targetEHR !== null
+      ? `Interim EHR — target is ${formatEHR(targetEHR)}, will decline as more hours are logged`
+      : 'Interim EHR — no budget hours set',
+  };
 };
 
 const scColor = (pct: number) =>
@@ -174,13 +199,6 @@ export default function ProjectList() {
                   ? Math.round((p.actual_hours / Number(p.budget_hours)) * 100)
                   : null;
 
-                const EHR_MIN_HOURS = 10;
-                const ehr = p.budget_amount && p.actual_hours > EHR_MIN_HOURS
-                  ? Number(p.budget_amount) / p.actual_hours
-                  : null;
-
-                const isOver = p.budget_hours != null && p.actual_hours > Number(p.budget_hours);
-
                 const sc = scopeCreepMap.get(p.id);
                 const scPct = sc != null ? sc.index : null;
 
@@ -218,14 +236,23 @@ export default function ProjectList() {
                     </td>
 
                     <td className="px-4 py-3.5">
-                      {ehr !== null ? (
-                        <span className={`font-mono text-sm font-semibold ${ehrColor(p.actual_hours, p.budget_hours)}`}>
-                          {isOver && <span className="mr-0.5">↑</span>}
-                          {Math.round(ehr)} TND/h
-                        </span>
-                      ) : (
-                        <span className="text-slate-300 text-sm">—</span>
-                      )}
+                      {(() => {
+                        const display = ehrDisplay(p);
+                        if (display.text === '—') {
+                          return <span className="text-slate-300 text-sm">—</span>;
+                        }
+                        return (
+                          <span
+                            className={`font-mono text-sm font-semibold ${display.cls}`}
+                            title={display.title}
+                          >
+                            {p.status !== 'Completed' && p.budget_hours != null && p.actual_hours > Number(p.budget_hours) && (
+                              <span className="mr-0.5">↑</span>
+                            )}
+                            {display.text}
+                          </span>
+                        );
+                      })()}
                     </td>
 
                     <td className="px-4 py-3.5">

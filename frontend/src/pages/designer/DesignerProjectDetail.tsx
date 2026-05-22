@@ -151,7 +151,6 @@ export default function DesignerProjectDetail() {
   const currentEHR = project?.budget_amount && project?.actual_hours != null && project.actual_hours > 0
     ? Number(project.budget_amount) / project.actual_hours
     : null;
-  const ehrGood = currentEHR != null && targetEHR != null ? currentEHR >= targetEHR : true;
 
   const myLogs        = useMemo(() => logs.filter(l => l.designer_user_id === userId), [logs, userId]);
   const myHours       = myLogs.reduce((sum, l) => sum + Number(l.hours_spent), 0);
@@ -288,12 +287,12 @@ export default function DesignerProjectDetail() {
             {targetEHR != null && currentEHR != null && (
               <p className="text-xs text-slate-400">
                 Target EHR:{' '}
-                <span className={`font-semibold ${ehrGood ? 'line-through text-slate-400' : 'text-rose-600'}`}>
+                <span className="font-semibold text-slate-700">
                   {formatEHR(targetEHR)}
                 </span>
                 {' · '}
-                Current EHR:{' '}
-                <span className={`font-semibold ${ehrGood ? 'text-emerald-600' : 'text-rose-600'}`}>
+                Current EHR (interim):{' '}
+                <span className="font-semibold text-amber-600">
                   {formatEHR(currentEHR)}
                 </span>
               </p>

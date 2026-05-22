@@ -59,13 +59,18 @@ export interface RevenueByClientItem {
 }
 
 export interface ProfitMarginItem {
-  project_id:         number;
-  project_name:       string;
-  budget_amount?:     number
-  ehr:                number;
-  avg_designer_rate:  number | null;
-  profit_margin_pct:  number | null;
-  actual_hours:       number;
+  project_id: number;
+  project_name: string;
+  status: 'Active' | 'Completed' | 'OnHold';
+  budget_amount: number;
+  budget_hours: number;
+  ehr: number;
+  actual_hours: number;
+  avg_designer_rate: number | null;
+  profit_margin_pct: number | null;
+  target_ehr: number | null;        // NEW
+  margin_at_budget: number | null;  // NEW
+  projected_margin: number | null;  // NEW
 }
 
 export interface AISummaryResponse {

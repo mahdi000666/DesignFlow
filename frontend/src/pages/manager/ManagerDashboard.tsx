@@ -612,7 +612,11 @@ export default function ManagerDashboard() {
                     : null;
 
                 const EHR_MIN_HOURS = 10;
-                const ehr =
+                const targetEHR =
+                  p.budget_amount && p.budget_hours
+                    ? Number(p.budget_amount) / Number(p.budget_hours)
+                    : null;
+                const currentEHR =
                   p.budget_amount && p.actual_hours > EHR_MIN_HOURS
                     ? Number(p.budget_amount) / p.actual_hours
                     : null;
@@ -665,12 +669,21 @@ export default function ManagerDashboard() {
 
                       {/* EHR */}
                       <div className="-ml-14 justify-self-start text-left">
-                        {ehr !== null ? (
+                        {currentEHR !== null && targetEHR !== null ? (
                           <span
-                            className={`font-mono text-xs font-bold ${isOver ? 'text-rose-600' : 'text-emerald-700'
+                            className={`font-mono text-xs font-bold ${p.status === 'Completed'
+                                ? currentEHR >= targetEHR
+                                  ? 'text-emerald-700'
+                                  : 'text-rose-600'
+                                : 'text-slate-500'
                               }`}
+                            title={
+                              p.status !== 'Completed'
+                                ? `Interim EHR — will decline toward target ${formatEHR(targetEHR)} as more hours are logged`
+                                : undefined
+                            }
                           >
-                            {formatEHR(ehr)}
+                            {formatEHR(currentEHR)}
                           </span>
                         ) : (
                           <span className="font-mono text-xs text-slate-300">—</span>

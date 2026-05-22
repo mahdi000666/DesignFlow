@@ -381,11 +381,13 @@ class ProfitMarginView(APIView):
                 filters,
             )
             actual_hours = float(log_qs.aggregate(total=Sum('hours_spent'))['total'] or 0)
-            if actual_hours < EHR_MIN_HOURS:   # ← was: actual_hours == 0
+            if actual_hours < EHR_MIN_HOURS:
                 continue
 
             ehr = float(project.budget_amount) / actual_hours
+            budget_hours = float(project.budget_hours or 0)
 
+            # --- designer cost aggregation (relaxed guard) -----------------
             weighted_total = 0.0
             rated_hours    = 0.0
             for row in log_qs.values('designer__hourly_rate').annotate(
@@ -393,29 +395,66 @@ class ProfitMarginView(APIView):
             ):
                 hourly_rate  = row['designer__hourly_rate']
                 logged_hours = float(row['logged_hours'] or 0)
-                if hourly_rate is None:
-                    continue
-                weighted_total += float(hourly_rate) * logged_hours
-                rated_hours    += logged_hours
+                if hourly_rate is not None:
+                    weighted_total += float(hourly_rate) * logged_hours
+                    rated_hours    += logged_hours
 
-            weighted_rate = (
-                weighted_total / actual_hours
-                if actual_hours > 0 and rated_hours >= actual_hours
-                else None
-            )
+            # Impute missing rates from known average; if none known, skip
+            if actual_hours > 0 and rated_hours > 0:
+                known_avg = weighted_total / rated_hours
+                imputed   = known_avg * (actual_hours - rated_hours)
+                weighted_rate = (weighted_total + imputed) / actual_hours
+            else:
+                weighted_rate = None
+
             margin = (
                 (ehr - weighted_rate) / ehr * 100
                 if weighted_rate is not None else None
             )
 
+            # --- target / budget-margin (fixed, meaningful from day 1) -----
+            target_ehr = (
+                float(project.budget_amount) / budget_hours
+                if budget_hours > 0 else None
+            )
+            margin_at_budget = (
+                (target_ehr - weighted_rate) / target_ehr * 100
+                if target_ehr is not None and weighted_rate is not None else None
+            )
+
+            # --- projected final margin for active work --------------------
+            projected_margin = None
+            if project.status != 'Completed' and weighted_rate is not None:
+                task_qs       = Task.objects.filter(project=project)
+                total_tasks   = task_qs.count()
+                done_tasks    = task_qs.filter(status='Completed').count()
+
+                if total_tasks > 0 and done_tasks > 0:
+                    # Extrapolate: if 50 % of tasks done but only 41 % of hours
+                    # burned, we will likely finish under budget hours.
+                    completion_ratio = done_tasks / total_tasks
+                    projected_hours  = actual_hours / completion_ratio
+                    projected_ehr    = float(project.budget_amount) / projected_hours
+                    projected_margin = (
+                        (projected_ehr - weighted_rate) / projected_ehr * 100
+                    )
+                elif budget_hours > 0:
+                    # No completed tasks yet — fall back to budget-hour estimate
+                    projected_margin = margin_at_budget
+
             data.append({
                 'project_id':        project.id,
                 'project_name':      project.project_name,
+                'status':            project.status,
                 'budget_amount':     float(project.budget_amount),
+                'budget_hours':      budget_hours,
                 'ehr':               round(ehr, 2),
                 'actual_hours':      round(actual_hours, 2),
                 'avg_designer_rate': round(weighted_rate, 2) if weighted_rate is not None else None,
                 'profit_margin_pct': round(margin, 1) if margin is not None else None,
+                'target_ehr':        round(target_ehr, 2) if target_ehr is not None else None,
+                'margin_at_budget':  round(margin_at_budget, 1) if margin_at_budget is not None else None,
+                'projected_margin':  round(projected_margin, 1) if projected_margin is not None else None,
             })
 
         return Response(data)

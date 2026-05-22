@@ -152,18 +152,30 @@ function AISummaryCard({ projectId }: { projectId: number }) {
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function ProjectDetail() {
-  const { id }    = useParams<{ id: string }>();
+  const { id } = useParams<{ id: string }>();
   const projectId = Number(id);
-  const navigate  = useNavigate();
-  const { user }  = useAuth();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const isManager = user?.role === 'Manager';
   const userId = Number(user?.user_id ?? 0);
 
   const { data: project, isLoading: loadingProject } = useProject(projectId);
   const { data: rawTasks = [], isLoading: loadingTasks } = useTasks(projectId);
   const tasks = useMemo(() => [...rawTasks].sort((a, b) => a.id - b.id), [rawTasks]);
-  const { data: logs     = [] } = useTimeLogs(projectId);
-  const { data: files    = [] } = useFiles(projectId);
+
+  const projectedEHR = useMemo(() => {
+    if (!project || project.status === 'Completed' || !project.budget_amount || !project.budget_hours || tasks.length === 0) {
+      return null;
+    }
+    const completedTasks = tasks.filter(t => t.status === 'Completed').length;
+    if (completedTasks === 0) return null;
+    const taskRatio = completedTasks / tasks.length;
+    const projectedHours = project.actual_hours / taskRatio;
+    return Number(project.budget_amount) / projectedHours;
+  }, [project, tasks]);
+
+  const { data: logs = [] } = useTimeLogs(projectId);
+  const { data: files = [] } = useFiles(projectId);
   const { data: messages = [] } = useMessages(projectId);
   const { data: feedback = [] } = useFeedback(projectId);
 
@@ -259,8 +271,6 @@ export default function ProjectDetail() {
   const remaining = project.budget_hours && project.actual_hours != null
     ? Math.max(0, Number(project.budget_hours) - project.actual_hours)
     : null;
-
-  const ehrGood = currentEHR != null && targetEHR != null ? currentEHR >= targetEHR : true;
 
   const revisions = feedback.filter(f => f.category === 'Revision').length;
   const approvals  = feedback.filter(f => f.category === 'Approval').length;
@@ -463,10 +473,18 @@ export default function ProjectDetail() {
           borderColor="#6366f1"
         />
         <KpiCard
-          label="Eff. Hourly Rate"
-          value={currentEHR != null ? formatEHR(currentEHR) : '—'}
+          label={project.status === 'Completed' ? 'Eff. Hourly Rate' : 'Proj. Hourly Rate'}
+          value={
+            project.status === 'Completed'
+              ? (currentEHR != null ? formatEHR(currentEHR) : '—')
+              : (projectedEHR != null ? formatEHR(projectedEHR) : currentEHR != null ? `${formatEHR(currentEHR)} (interim)` : '—')
+          }
           icon={<DollarSign size={15} />}
-          borderColor="#22c55e"
+          borderColor={
+            project.status === 'Completed'
+              ? (currentEHR != null && targetEHR != null ? (currentEHR >= targetEHR ? '#22c55e' : '#ef4444') : '#94a3b8')
+              : (projectedEHR != null && targetEHR != null ? (projectedEHR >= targetEHR ? '#22c55e' : '#ef4444') : '#f59e0b')
+          }
         />
         <KpiCard
           label="Scope Creep Index"
@@ -540,17 +558,35 @@ export default function ProjectDetail() {
                 Remaining — {Math.round(remaining ?? 0)} h
               </span>
             </div>
-            {targetEHR != null && currentEHR != null && (
+                        {targetEHR != null && (
               <p className="text-xs text-slate-400">
                 Target EHR:{' '}
-                <span className={`font-semibold ${ehrGood ? 'line-through text-slate-400' : 'text-rose-600'}`}>
+                <span className="font-semibold text-slate-700">
                   {formatEHR(targetEHR)}
                 </span>
                 {' · '}
-                Current EHR:{' '}
-                <span className={`font-semibold ${ehrGood ? 'text-emerald-600' : 'text-rose-600'}`}>
-                  {formatEHR(currentEHR)}
-                </span>
+                {project.status === 'Completed' && currentEHR != null ? (
+                  <>
+                    Final EHR:{' '}
+                    <span className={`font-semibold ${currentEHR >= targetEHR ? 'text-emerald-600' : 'text-rose-600'}`}>
+                      {formatEHR(currentEHR)}
+                    </span>
+                  </>
+                ) : projectedEHR != null ? (
+                  <>
+                    Projected final EHR:{' '}
+                    <span className={`font-semibold ${projectedEHR >= targetEHR ? 'text-emerald-600' : 'text-rose-600'}`}>
+                      {formatEHR(projectedEHR)}
+                    </span>
+                  </>
+                ) : currentEHR != null ? (
+                  <>
+                    Current EHR (interim):{' '}
+                    <span className="font-semibold text-amber-600">
+                      {formatEHR(currentEHR)}
+                    </span>
+                  </>
+                ) : null}
               </p>
             )}
           </div>

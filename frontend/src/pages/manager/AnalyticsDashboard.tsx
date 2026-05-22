@@ -210,11 +210,12 @@ export default function AnalyticsDashboard() {
     () => [...validMargins].sort((a, b) => (b.profit_margin_pct ?? 0) - (a.profit_margin_pct ?? 0)),
     [validMargins],
   );
-    const avgMargin = useMemo(() => {
+  
+  // ── Revenue-weighted portfolio average ─────────────────────────────────
+  const avgMargin = useMemo(() => {
     if (!validMargins.length) return null;
     const totalRevenue = validMargins.reduce((s, r) => s + (r.budget_amount || 0), 0);
     if (totalRevenue <= 0) {
-      // Fallback if budget data is missing
       return validMargins.reduce((s, r) => s + r.profit_margin_pct!, 0) / validMargins.length;
     }
     return (
@@ -235,7 +236,8 @@ export default function AnalyticsDashboard() {
     [profitMargin],
   );
 
-    const clientMargins = useMemo(() => {
+  // ── Revenue-weighted client margins ──────────────────────────────────
+  const clientMargins = useMemo(() => {
     const projectClientMap = new Map(
       projects.map(p => [
         p.id,
@@ -259,7 +261,7 @@ export default function AnalyticsDashboard() {
         const weightedMargin =
           totalBudget > 0
             ? margins.reduce((sum, m, i) => sum + m * budgets[i], 0) / totalBudget
-            : margins.reduce((s, v) => s + v, 0) / margins.length; // fallback
+            : margins.reduce((s, v) => s + v, 0) / margins.length;
 
         return {
           client_name:   name,
@@ -647,10 +649,13 @@ export default function AnalyticsDashboard() {
                 <span className="text-right">EHR / Designer Rate</span>
               </div>
 
-              {sortedMargins.map((row) => {
-                const pct      = row.profit_margin_pct ?? 0;
-                const widthPct = `${(Math.abs(pct) / MARGIN_EXTENT) * 50}%`;
-                const color    = marginColor(row.profit_margin_pct);
+                            {sortedMargins.map((row) => {
+                const isCompleted = row.status === 'Completed';
+                const displayPct = isCompleted
+                  ? row.profit_margin_pct
+                  : (row.projected_margin ?? row.margin_at_budget ?? row.profit_margin_pct);
+                const widthPct = `${(Math.abs(displayPct ?? 0) / MARGIN_EXTENT) * 50}%`;
+                const color = marginColor(displayPct);
 
                 return (
                   <div
@@ -658,9 +663,19 @@ export default function AnalyticsDashboard() {
                     className="grid grid-cols-[minmax(0,1.35fr)_minmax(260px,2fr)_76px_124px] items-center gap-4 rounded-lg border border-slate-100 px-2 py-2.5 hover:bg-slate-50/60 transition-colors"
                   >
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-slate-800">{row.project_name}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="truncate text-sm font-medium text-slate-800">{row.project_name}</p>
+                        {!isCompleted && (
+                          <span className="shrink-0 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-100">
+                            {row.status}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-slate-400 mt-0.5">
+                        {isCompleted ? 'Final margin' : `Projected · ${row.actual_hours}h of ${Math.round(row.budget_hours)}h logged`}
+                      </p>
                     </div>
-                    {/* Centre-anchored spread bar — right of centre = profit, left = loss */}
+                    {/* Centre-anchored spread bar */}
                     <div className="relative h-10 rounded-lg bg-slate-50">
                       <div className="absolute inset-y-2 left-0 right-0 rounded-full bg-slate-100" />
                       <div className="absolute inset-y-1.5 left-1/2 w-px -translate-x-1/2 bg-slate-300" />
@@ -670,15 +685,20 @@ export default function AnalyticsDashboard() {
                         className="absolute top-1/2 h-3 -translate-y-1/2 rounded-full transition-all"
                         style={{
                           width: widthPct,
-                          left: pct >= 0 ? '50%' : `calc(50% - ${widthPct})`,
+                          left: (displayPct ?? 0) >= 0 ? '50%' : `calc(50% - ${widthPct})`,
                           backgroundColor: color,
                         }}
                       />
                     </div>
                     <div className="text-right">
                       <span className="font-mono text-xs font-semibold" style={{ color }}>
-                        {pct.toFixed(1)}%
+                        {(displayPct ?? 0).toFixed(1)}%
                       </span>
+                      {!isCompleted && row.projected_margin != null && row.profit_margin_pct != null && (
+                        <p className="text-[9px] text-slate-400 mt-0.5">
+                          Raw: {row.profit_margin_pct.toFixed(0)}%
+                        </p>
+                      )}
                     </div>
                     <div className="text-right">
                       <p className="font-mono text-[11px] font-semibold text-slate-700">
