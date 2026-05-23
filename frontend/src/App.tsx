@@ -1,6 +1,5 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from './hooks/useAuth';
-import ProtectedRoute from './components/ProtectedRoute';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { ProtectedRoute, PublicRoute, RootRedirect } from './components/RouteGuards';
 import LoginPage from './pages/auth/LoginPage';
 import ActivatePage from './pages/auth/ActivatePage';
 import ProjectList from './pages/manager/ProjectList';
@@ -16,24 +15,6 @@ import TeamPage from './pages/manager/TeamPage';
 import SettingsPage from './pages/SettingsPage';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import ResetPasswordPage  from './pages/auth/ResetPasswordPage';
-
-function RootRedirect() {
-  const { user } = useAuth();
-  if (!user) return <Navigate to="/login" replace />;
-  if (user.role === 'Manager')  return <Navigate to="/manager"  replace />;
-  if (user.role === 'Designer') return <Navigate to="/designer" replace />;
-  if (user.role === 'Client')   return <Navigate to="/client"   replace />;
-  return <Navigate to="/login" replace />;
-}
-
-function PublicRoute({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
-  if (!user) return <>{children}</>;
-  if (user.role === 'Manager')  return <Navigate to="/manager"  replace />;
-  if (user.role === 'Designer') return <Navigate to="/designer" replace />;
-  if (user.role === 'Client')   return <Navigate to="/client"   replace />;
-  return <>{children}</>;
-}
 
 export default function App() {
   return (
