@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useState, useMemo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useProjects, useCreateProject } from '../../hooks/useProjects';
-import { useScopeCreep } from '../../hooks/useAnalytics';
+import { useProfitMargin, useScopeCreep } from '../../hooks/useAnalytics';
 import ProjectForm from '../../components/ProjectForm';
 import AppShell from '../../components/AppShell';
 import apiClient from '../../api/clients';
@@ -19,35 +19,6 @@ const STATUS_CYCLE: Record<Project['status'], Project['status']> = {
   OnHold:    'Active',
 };
 
-const ehrDisplay = (p: Project) => {
-  const EHR_MIN_HOURS = 10;
-  const ehr = p.budget_amount && p.actual_hours > EHR_MIN_HOURS
-    ? Number(p.budget_amount) / p.actual_hours
-    : null;
-  const targetEHR = p.budget_amount && p.budget_hours
-    ? Number(p.budget_amount) / Number(p.budget_hours)
-    : null;
-
-  if (ehr === null) return { text: '—', cls: 'text-slate-300', title: undefined };
-
-  if (p.status === 'Completed' && targetEHR !== null) {
-    return {
-      text: formatEHR(ehr),
-      cls: ehr >= targetEHR ? 'text-emerald-700' : 'text-rose-600',
-      title: `Final EHR vs target ${formatEHR(targetEHR)}`,
-    };
-  }
-
-  // Active / OnHold — neutral, with context on hover
-  return {
-    text: formatEHR(ehr),
-    cls: 'text-slate-600',
-    title: targetEHR !== null
-      ? `Interim EHR — target is ${formatEHR(targetEHR)}, will decline as more hours are logged`
-      : 'Interim EHR — no budget hours set',
-  };
-};
-
 const scColor = (pct: number) =>
   pct === 0 ? 'text-slate-400' : pct <= 20 ? 'text-amber-600' : 'text-rose-600';
 
@@ -55,6 +26,7 @@ const scColor = (pct: number) =>
 
 export default function ProjectList() {
   const { data: projects = [], isLoading } = useProjects();
+  const { data: profitMargin = [] } = useProfitMargin();
   const { data: scopeCreepData = [] }      = useScopeCreep();
   const createProject = useCreateProject();
   const navigate      = useNavigate();
@@ -100,6 +72,48 @@ export default function ProjectList() {
     });
     return map;
   }, [scopeCreepData]);
+
+  const profitMarginMap = useMemo(() => {
+  const map = new Map<number, { projectedEHR: number | null; ehr: number | null; targetEHR: number | null }>();
+  profitMargin.forEach(r => {
+    map.set(r.project_id, {
+      projectedEHR: r.projected_ehr,
+      ehr:          r.ehr,
+      targetEHR:    r.target_ehr,
+    });
+  });
+  return map;
+}, [profitMargin]);
+
+const ehrDisplay = (p: Project) => {
+  const pm = profitMarginMap.get(p.id);
+  const targetEHR = p.budget_amount && p.budget_hours
+    ? Number(p.budget_amount) / Number(p.budget_hours)
+    : null;
+
+  if (p.status === 'Completed') {
+    // Raw = final for completed projects
+    const ehr = pm?.ehr ?? null;
+    if (ehr === null) return { text: '—', cls: 'text-slate-300', title: undefined };
+    return {
+      text:  formatEHR(ehr),
+      cls:   targetEHR !== null && ehr >= targetEHR ? 'text-emerald-700' : 'text-rose-600',
+      title: `Final EHR vs target ${formatEHR(targetEHR ?? 0)}`,
+    };
+  }
+
+  // Active / OnHold — use projected if available, else suppress
+  const displayEHR = pm?.projectedEHR ?? null;
+  if (displayEHR === null) return { text: '—', cls: 'text-slate-300', title: 'Insufficient data for projection' };
+
+  return {
+    text:  formatEHR(displayEHR),
+    cls:   targetEHR !== null && displayEHR >= targetEHR ? 'text-emerald-700' : 'text-rose-600',
+    title: targetEHR !== null
+      ? `Projected final EHR vs target ${formatEHR(targetEHR)}`
+      : 'Projected final EHR',
+  };
+};
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -246,9 +260,6 @@ export default function ProjectList() {
                             className={`font-mono text-sm font-semibold ${display.cls}`}
                             title={display.title}
                           >
-                            {p.status !== 'Completed' && p.budget_hours != null && p.actual_hours > Number(p.budget_hours) && (
-                              <span className="mr-0.5">↑</span>
-                            )}
                             {display.text}
                           </span>
                         );

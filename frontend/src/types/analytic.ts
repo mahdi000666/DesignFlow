@@ -20,6 +20,7 @@ export interface EHRItem {
   budget_amount: number;
   actual_hours:  number;
   ehr:           number | null;
+  ehr_reliable: boolean;
 }
 
 export interface ClientProfitabilityItem {
@@ -28,6 +29,7 @@ export interface ClientProfitabilityItem {
   total_revenue:  number;
   total_hours:    number;
   ehr:            number | null;
+  weighted_ehr:   number | null;
   revision_count: number;
 }
 

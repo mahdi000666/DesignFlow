@@ -695,9 +695,9 @@ export default function AnalyticsDashboard() {
                       <span className="font-mono text-xs font-semibold" style={{ color }}>
                         {(displayPct ?? 0).toFixed(1)}%
                       </span>
-                      {!isCompleted && row.projected_margin != null && row.profit_margin_pct != null && (
+                      {row.margin_at_budget != null && (
                         <p className="text-[9px] text-slate-400 mt-0.5">
-                          Raw: {row.profit_margin_pct.toFixed(0)}%
+                          Floor: {row.margin_at_budget.toFixed(0)}%
                         </p>
                       )}
                     </div>
