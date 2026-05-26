@@ -8,6 +8,8 @@ export interface ProjectAssignment {
 export interface Project {
   readonly id:           number;
   readonly client_name:  string;
+  readonly client_phone: string;
+  readonly client_industry: string;
   readonly actual_hours: number;
   readonly assignments:  ProjectAssignment[];
   readonly created_at:   string;

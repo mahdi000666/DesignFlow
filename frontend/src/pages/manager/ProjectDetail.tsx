@@ -149,6 +149,51 @@ function AISummaryCard({ projectId }: { projectId: number }) {
   );
 }
 
+function ClientChip({ name, phone, industry }: { name: string; phone: string; industry: string }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const hasExtra = phone || industry;
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => hasExtra && setOpen(v => !v)}
+        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-slate-100 border border-slate-200 text-slate-600 ${hasExtra ? 'hover:bg-slate-200 transition-colors' : ''}`}
+      >
+        <User size={12} className="text-purple-500" />
+        {name}
+        {hasExtra && <ChevronDown size={11} className={`opacity-50 transition-transform ${open ? 'rotate-180' : ''}`} />}
+      </button>
+
+      {open && hasExtra && (
+        <div className="absolute top-full left-0 mt-1.5 bg-white border border-slate-200 rounded-xl shadow-lg z-20 p-3 min-w-[180px] space-y-2">
+          {industry && (
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Industry</p>
+              <p className="text-xs text-slate-700 mt-0.5">{industry}</p>
+            </div>
+          )}
+          {phone && (
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Phone</p>
+              <p className="text-xs text-slate-700 mt-0.5">{phone}</p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function ProjectDetail() {
@@ -435,10 +480,11 @@ export default function ProjectDetail() {
         )}
 
         {/* Client */}
-        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-slate-100 border border-slate-200 text-slate-600">
-          <User size={12} className="text-purple-500" />
-          {project.client_name}
-        </span>
+        <ClientChip
+          name={project.client_name}
+          phone={project.client_phone ?? ''}
+          industry={project.client_industry ?? ''}
+        />
 
         {/* Designers count */}
         {project.assignments.length > 0 && (

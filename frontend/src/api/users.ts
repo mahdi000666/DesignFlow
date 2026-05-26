@@ -42,3 +42,8 @@ export const uploadAvatar = async (file: File): Promise<MeData> => {
   });
   return data;
 };
+
+export const toggleUserActive = async (userId: number): Promise<{ id: number; is_active: boolean }> => {
+  const { data } = await apiClient.patch(`/users/${userId}/toggle-active/`);
+  return data;
+};

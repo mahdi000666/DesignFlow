@@ -10,7 +10,7 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from django.utils import timezone
 from datetime import timedelta
 from django.db.models import Sum
-
+from django.shortcuts import get_object_or_404
 from apps.users.permissions import IsManager
 from apps.users.models import Client, Designer, InvitationToken, User
 from apps.timelog.models import TimeLog
@@ -115,6 +115,15 @@ def me(request):
     serializer.save()
     return Response(serializer.data)
 
+@api_view(['PATCH'])
+@permission_classes([IsManager])
+def toggle_user_active(request, pk):
+    user = get_object_or_404(User, pk=pk)
+    if user == request.user:
+        return Response({'error': 'Cannot deactivate your own account.'}, status=400)
+    user.is_active = not user.is_active
+    user.save(update_fields=['is_active'])
+    return Response({'id': user.id, 'is_active': user.is_active})
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])

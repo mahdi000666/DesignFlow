@@ -27,6 +27,8 @@ class ProjectAssignmentReadSerializer(serializers.ModelSerializer):
 
 class ProjectReadSerializer(serializers.ModelSerializer):
     client_name  = serializers.CharField(source='client.user.full_name', read_only=True)
+    client_phone    = serializers.CharField(source='client.phone', read_only=True)
+    client_industry = serializers.CharField(source='client.industry', read_only=True)
     actual_hours = serializers.SerializerMethodField()
     assignments  = ProjectAssignmentReadSerializer(many=True, read_only=True)
 
@@ -35,7 +37,7 @@ class ProjectReadSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'project_name', 'description', 'status', 'category',
             'budget_hours', 'budget_amount', 'deadline',
-            'client', 'client_name', 'actual_hours', 'assignments',
+            'client', 'client_name', 'client_phone', 'client_industry', 'actual_hours', 'assignments',
             'created_at', 'updated_at',
         ]
 

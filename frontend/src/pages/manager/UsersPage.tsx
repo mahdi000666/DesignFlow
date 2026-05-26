@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Plus, X } from 'lucide-react';
 import AppShell from '../../components/AppShell';
-import { useTeam, useInviteUser } from '../../hooks/useUsers';
+import { useTeam, useInviteUser, useToggleUserActive } from '../../hooks/useUsers';
 import type { DesignerCard, TeamUser } from '../../types/user';
 import { formatEHR, Initials } from '../../utils/format';
 
@@ -184,7 +184,11 @@ function DesignerCardComponent({ d }: { d: DesignerCard }) {
 
 // ─── User table row ───────────────────────────────────────────────────────────
 
-function UserRow({ u }: { u: TeamUser }) {
+function UserRow({ u, onToggle, toggling }: {
+  u: TeamUser;
+  onToggle: (id: number) => void;
+  toggling: boolean;
+}) {
   const color = avatarColor(u.id);
   return (
     <tr className="border-b border-slate-50 last:border-0 hover:bg-slate-50/60 transition-colors">
@@ -209,11 +213,18 @@ function UserRow({ u }: { u: TeamUser }) {
       <td className="py-3 pr-4 text-sm text-slate-500">
         {u.specialization || <span className="text-slate-300">—</span>}
       </td>
-      <td className="py-3">
-        <span className={`inline-flex items-center gap-1.5 text-xs font-medium ${u.is_active ? 'text-emerald-600' : 'text-slate-400'}`}>
+      <td className="py-3 pr-4">
+        <button
+          onClick={() => onToggle(u.id)}
+          disabled={toggling}
+          className={`inline-flex items-center gap-1.5 text-xs font-medium rounded-lg px-2 py-1 transition-colors disabled:opacity-40 cursor-pointer ${u.is_active
+              ? 'text-emerald-600 hover:bg-emerald-50'
+              : 'text-slate-400 hover:bg-slate-100'
+            }`}
+        >
           <span className={`w-1.5 h-1.5 rounded-full ${u.is_active ? 'bg-emerald-500' : 'bg-slate-300'}`} />
           {u.is_active ? 'Active' : 'Pending'}
-        </span>
+        </button>
       </td>
     </tr>
   );
@@ -222,10 +233,28 @@ function UserRow({ u }: { u: TeamUser }) {
 // ─── Page ────────────────────────────────────────────────────────────────────
 
 export default function TeamPage() {
-  const [showInvite, setShowInvite] = useState(false);
-  const { data, isLoading }         = useTeam();
+  const [showInvite, setShowInvite]     = useState(false);
+  const [roleFilter, setRoleFilter]     = useState<'All' | 'Manager' | 'Designer' | 'Client'>('All');
+  const [statusFilter, setStatusFilter] = useState<'All' | 'Active' | 'Pending'>('All');
+  const { data, isLoading }             = useTeam();
+  const { mutate: toggleActive, variables: togglingId, isPending: isToggling } = useToggleUserActive();
   const designers = data?.designers ?? [];
-  const users     = data?.users     ?? [];
+  const allUsers  = data?.users     ?? [];
+
+  const users = allUsers.filter(u => {
+    const roleOk   = roleFilter   === 'All' || u.role === roleFilter;
+    const statusOk = statusFilter === 'All'
+      || (statusFilter === 'Active'  && u.is_active)
+      || (statusFilter === 'Pending' && !u.is_active);
+    return roleOk && statusOk;
+  });
+
+  const filterBtnCls = (active: boolean) =>
+    `px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${
+      active
+        ? 'bg-primary text-white border-primary'
+        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+    }`;
 
   return (
     <AppShell
@@ -239,6 +268,7 @@ export default function TeamPage() {
     >
       {showInvite && <InviteModal onClose={() => setShowInvite(false)} />}
 
+      {/* designer cards — unchanged */}
       {isLoading ? (
         <div className="grid grid-cols-3 gap-4 mb-5">
           {[1, 2, 3].map(i => <div key={i} className="card p-5 h-56 animate-pulse" />)}
@@ -253,11 +283,27 @@ export default function TeamPage() {
         </div>
       )}
 
-      {/* All users table — no invite button, title centered */}
       <div className="card overflow-hidden">
-        <div className="px-5 py-3.5 border-b border-slate-100 text-center">
+        {/* Header with filters */}
+        <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between gap-3 flex-wrap">
           <p className="text-sm font-semibold text-slate-900">All Users</p>
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Role filter */}
+            <div className="flex items-center gap-1">
+              {(['All', 'Manager', 'Designer', 'Client'] as const).map(r => (
+                <button key={r} onClick={() => setRoleFilter(r)} className={filterBtnCls(roleFilter === r)}>{r}</button>
+              ))}
+            </div>
+            <div className="w-px h-4 bg-slate-200" />
+            {/* Status filter */}
+            <div className="flex items-center gap-1">
+              {(['All', 'Active', 'Pending'] as const).map(s => (
+                <button key={s} onClick={() => setStatusFilter(s)} className={filterBtnCls(statusFilter === s)}>{s}</button>
+              ))}
+            </div>
+          </div>
         </div>
+
         <div className="px-5">
           <table className="w-full text-sm">
             <thead>
@@ -268,9 +314,16 @@ export default function TeamPage() {
               </tr>
             </thead>
             <tbody>
-              {users.map(u => <UserRow key={u.id} u={u} />)}
+              {users.map(u => (
+                <UserRow
+                  key={u.id}
+                  u={u}
+                  onToggle={id => toggleActive(id)}
+                  toggling={isToggling && togglingId === u.id}
+                />
+              ))}
               {!isLoading && users.length === 0 && (
-                <tr><td colSpan={5} className="py-8 text-center text-sm text-slate-400">No users found.</td></tr>
+                <tr><td colSpan={5} className="py-8 text-center text-sm text-slate-400">No users match the current filters.</td></tr>
               )}
             </tbody>
           </table>

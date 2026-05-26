@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getMe, updateMe, changePassword, getTeam, inviteUser, uploadAvatar } from '../api/users';
+import { getMe, updateMe, changePassword, getTeam, inviteUser, uploadAvatar, toggleUserActive } from '../api/users';
 import type { InviteUserPayload } from '../types/user';
 
 export const useMe = () =>
@@ -42,5 +42,13 @@ export const useUploadAvatar = () => {
   return useMutation({
     mutationFn: (file: File) => uploadAvatar(file),
     onSuccess:  () => qc.invalidateQueries({ queryKey: ['me'] }),
+  });
+};
+
+export const useToggleUserActive = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (userId: number) => toggleUserActive(userId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['team'] }),
   });
 };

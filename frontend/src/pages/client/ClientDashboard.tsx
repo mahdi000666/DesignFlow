@@ -153,6 +153,12 @@ export default function ClientDashboard() {
       {/* ── KPI row ───────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-4 gap-3.5 mb-4">
         <KpiCard
+          label="Total Contract Value"
+          value={formatTND(totalContractValue)}
+          icon={<DollarSign size={15} />}
+          borderColor="#3b82f6"
+        />
+        <KpiCard
           label="My Projects"
           value={projects.length}
           icon={<FolderOpen size={15} />}
@@ -163,12 +169,6 @@ export default function ClientDashboard() {
           value={pendingFeedback}
           icon={<MessageSquare size={15} />}
           borderColor="#f59e0b"
-        />
-        <KpiCard
-          label="Total Contract Value"
-          value={formatTND(totalContractValue)}
-          icon={<DollarSign size={15} />}
-          borderColor="#3b82f6"
         />
         <KpiCard
           label="Unread Messages"
