@@ -10,6 +10,7 @@ const apiClient = axios.create({
 });
 
 // REQUEST interceptor — attach the stored access token to every outgoing request.
+// Runs automatically on every request before it leaves the browser.
 apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem('access_token');
   if (token) config.headers.Authorization = `Bearer ${token}`;
@@ -26,6 +27,10 @@ apiClient.interceptors.response.use(
     const isRefreshRequest = original?.url?.includes('/auth/token/refresh/');
 
     // _retry flag prevents an infinite loop if the refresh call itself returns 401
+    // status === 401 Only act on "unauthorized" errors
+    // !original._retry Prevents infinite loop — only try refreshing once per request
+    // !isRefreshRequest If the refresh call itself gets a 401, don't try to refresh again
+    // refresh Only attempt if a refresh token actually exists in storage
     if (error.response?.status === 401 && original && !original._retry && !isRefreshRequest && refresh) {
       original._retry = true;
 
@@ -42,6 +47,7 @@ apiClient.interceptors.response.use(
         localStorage.removeItem('refresh_token');
       }
     }
+    // Cannot recover so we clean up.
     if (error.response?.status === 401 && (!refresh || isRefreshRequest)) {
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');

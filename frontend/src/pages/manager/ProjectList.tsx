@@ -46,7 +46,8 @@ export default function ProjectList() {
       await queryClient.cancelQueries({ queryKey: ['projects'] });
       const previous = queryClient.getQueryData<Project[]>(['projects']);
       queryClient.setQueryData<Project[]>(['projects'], old =>
-        old?.map(p => p.id === id ? { ...p, status } : p) ?? []
+        old?.map(p => p.id === id ? { ...p, status } : p) ?? [] // 	For each project p: if it's the one we just updated, return a new object with the new status; otherwise return it unchanged.
+        // Spread: copy all properties from the old project (...p), then overwrite status with the new value.
       );
       return { previous };
     },
@@ -119,7 +120,9 @@ const ehrDisplay = (p: Project) => {
     const q = search.toLowerCase();
     return projects
       .filter(p => {
+        // If the search box is empty, return true otherwise check if the project name OR client name contains what the user typed.
         const matchSearch = !q || p.project_name.toLowerCase().includes(q) || p.client_name.toLowerCase().includes(q);
+        // Check if the uesr selected 'All' otherwise check if the project status or client name is equal to the chosen filter
         const matchStatus = statusFilter === 'All' || p.status === statusFilter;
         const matchClient = clientFilter === 'All' || p.client_name === clientFilter;
         return matchSearch && matchStatus && matchClient;

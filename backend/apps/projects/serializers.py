@@ -16,8 +16,12 @@ class ProjectAssignmentReadSerializer(serializers.ModelSerializer):
     def get_avatar_url(self, obj):
         request = self.context.get('request')
         user = obj.designer.user
+
+        # If user has no avatar, return None.
         if not hasattr(user, 'profile_picture') or not user.profile_picture:
             return None
+        
+        # Build absolute URL because the frontend needs absolute URLs to display images.
         return request.build_absolute_uri(user.profile_picture.url) if request else user.profile_picture.url
 
 
@@ -62,5 +66,7 @@ class ProjectWriteSerializer(serializers.ModelSerializer):
 class AssignDesignerSerializer(serializers.Serializer):
     # Accepts a plain designer PK — no model instance needed on this payload.
     designer_id = serializers.PrimaryKeyRelatedField(
+    # Before accepting that number, check the Designer table to make sure it actually exists.
+    # Fetch the user profile too, in case we need it later.
         queryset=Designer.objects.select_related('user').all()
     )

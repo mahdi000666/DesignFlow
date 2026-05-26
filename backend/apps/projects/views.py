@@ -21,6 +21,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        # Fetch client and designer user ids.
         qs = Project.objects.select_related('client__user').prefetch_related(
             'assignments__designer__user'
         )
@@ -46,14 +47,14 @@ class ProjectViewSet(viewsets.ModelViewSet):
             return [IsManager()]
         if self.action in ('update', 'partial_update'):
             return [IsManager()]
-        return [IsAuthenticated()]
+        return [IsAuthenticated()] # Must be authenticated for the other actions.
 
     # --- custom action --------------------------------------------------
 
     @action(detail=True, methods=['post'], url_path='assign')
     def assign_designer(self, request, pk=None):
         project    = get_object_or_404(Project, pk=pk)
-        serializer = AssignDesignerSerializer(data=request.data)
+        serializer = AssignDesignerSerializer(data=request.data) # Validate designer_id is a real designer.
         serializer.is_valid(raise_exception=True)
 
         designer = serializer.validated_data['designer_id']
@@ -67,6 +68,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
             )
         return Response({'detail': 'Designer assigned.'}, status=status.HTTP_201_CREATED)
     
+    # Regex that makes the URL DELETE /api/projects/id/assign/designer_id/
     @action(detail=True, methods=['delete'], url_path='assign/(?P<designer_id>[^/.]+)')
     def remove_designer(self, request, pk=None, designer_id=None):
         project    = get_object_or_404(Project, pk=pk)

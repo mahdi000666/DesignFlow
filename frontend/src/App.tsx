@@ -11,7 +11,7 @@ import ClientDashboard from './pages/client/ClientDashboard';
 import ClientProjectDetail from './pages/client/ClientProjectDetail';
 import DesignerProjectDetail from './pages/designer/DesignerProjectDetail';
 import AnalyticsDashboard from './pages/manager/AnalyticsDashboard';
-import TeamPage from './pages/manager/TeamPage';
+import TeamPage from './pages/manager/UsersPage';
 import SettingsPage from './pages/SettingsPage';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import ResetPasswordPage  from './pages/auth/ResetPasswordPage';
