@@ -9,8 +9,9 @@ from .models import User, Designer, Client, InvitationToken
 
 # post_save is a signal that Django sends after a model’s save().
 # receiver turns the function into the signal handler to execute the signal code.
-# sender and kwargs are not used but required by the signal API.
-# created is set by django, true if INSERT, false if UPDATE.
+# kwargs is not used but required by the signal API.
+# sender=User restricts this to the User model.
+# created is set by django, true on INSERT, false on UPDATE.
 @receiver(post_save, sender=User)
 def on_user_created(sender, instance, created, **kwargs):
     """
@@ -18,7 +19,7 @@ def on_user_created(sender, instance, created, **kwargs):
     'created' is True only on first creation, False on updates.
     We only want to send an invitation on first creation.
     """
-    # created is false so we exit, we need true (new user created).
+    # created is false so we exit.
     if not created:
         return
     if instance.is_staff or instance.is_superuser:

@@ -8,10 +8,11 @@ export interface AuthUser {
 }
 
 export interface AuthContextValue {
-  user: AuthUser | null;
+  user: AuthUser | null; // Context value can be null when logged out.
   login: (access: string, refresh: string) => AuthUser;
   logout: () => void;
   updateUser: (patch: Partial<AuthUser>) => void;
 }
 
+// Create a global state.
 export const AuthContext = createContext<AuthContextValue | null>(null);

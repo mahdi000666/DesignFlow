@@ -9,7 +9,8 @@ class UserManager(BaseUserManager):
     def create_user(self, email, full_name, role, password=None):
         if not email:
             raise ValueError('Email is required')
-        # calls the User model from below, normalize for lower case.
+        # self.model refers to the User class.
+        # normalize_email lowercases the domain part of the email.
         user = self.model(email=self.normalize_email(email), full_name=full_name, role=role)
         if password:
             user.set_password(password)

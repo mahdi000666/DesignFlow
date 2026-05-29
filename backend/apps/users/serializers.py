@@ -6,7 +6,7 @@ from .models import User, InvitationToken, Designer, Client
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError as DjangoValidationError
 
-
+# Extend the default JWT with custom data such as email, role and full-name.
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
@@ -40,11 +40,13 @@ class ActivateAccountSerializer(serializers.Serializer):
     phone    = serializers.CharField(required=False, allow_blank=True, default='')
     industry = serializers.CharField(required=False, allow_blank=True, default='')
 
+    # Django's built-in password validators.
     def validate_password(self, value):
         user = getattr(self, '_invitation', None)
         validate_password(value, user=user.user if user else None)
         return value
-
+    
+    # Looks up the token checks if it exists, used or expired.
     def validate_token(self, value):
         try:
             self._invitation = InvitationToken.objects.select_related('user').get(token=value)
@@ -209,11 +211,13 @@ class UserMeSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
+        # Set defaults (blank/None) for profile fields.
         data['specialization']           = ''
         data['available_hours_per_week'] = None
         data['phone']                    = ''
         data['industry']                 = ''
 
+        # Overwrite with real values if the profile exists.
         if instance.role == 'Designer':
             try:
                 profile = instance.designer_profile
@@ -232,6 +236,7 @@ class UserMeSerializer(serializers.ModelSerializer):
         return data
 
     def update(self, instance, validated_data):
+        # Update if provided with full name, otherwise keep the exisitng one.
         instance.full_name = validated_data.get('full_name', instance.full_name)
 
         if 'profile_picture' in validated_data:

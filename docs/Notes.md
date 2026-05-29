@@ -1,6 +1,7 @@
 --- BACKEND ---
 
 DRF - the middleman between the database and the React app, it speaks Python to the database and JSON to the frontend.
+REST - Representational State Transfer. It's an architectural style for designing networked applications. The backend exposes resources as URLs and we use standard HTTP methods such as GET, POST, DELETE etc.
 
 ORM - python code that django translates to raw sql
 
@@ -15,7 +16,7 @@ apps/urls - routing for specific app, instead of manually writing a path() for l
 viewset - bundles all actions (crud) in 1 class
 
 view - decides who can do it and what data they see
-serializer - decides what shape that data is in — what gets validated on input and what gets returned on output
+serializer - decides what shape that data is in — what gets validated on input and what gets returned on output. Python objects <-> JSON.
 DRF's ModelViewSet handles all the data processing internally
 
 permission_classes = [IsAuthenticated] - reject anyone whos not authenticated
@@ -43,6 +44,10 @@ why not store analytics or make a model - analytics are computed from data thats
 
 AUTH_USER_MODEL = 'users.User' - replaced Django's default User model with a custom one that uses email instead of username and adds a role field
 REST_FRAMEWORK - sets JWT as the default authentication method globally, so every endpoint requires a valid token unless explicitly made public
+
+related_name='designer_profile'
+related_name='client_profile'
+allows acessing the related profile eg. designer_obj = some_user.designer_profile
 
 --- DATABASE ---
 
@@ -126,6 +131,8 @@ Login → get both tokens
 Every request → send access token
 Access token expires → interceptor catches 401 → sends refresh token to /auth/token/refresh/ → backend returns a new access token → rotate the refresh token after using it to grab a new access token
 Refresh token expires → must log in again
+
+JWT - not encrypted but encoded with base64, the backend verifies its not tampered with using the secret key.
 
 const ehr = pm?.ehr ?? null;
 ?  Optional chaining, if value is null or undefined, stop safely.

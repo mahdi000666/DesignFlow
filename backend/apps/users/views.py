@@ -112,7 +112,7 @@ def me(request):
 
     serializer = UserMeSerializer(request.user, data=request.data, partial=True, context={'request': request})
     serializer.is_valid(raise_exception=True)
-    serializer.save()
+    serializer.save() # Triggers update()
     return Response(serializer.data)
 
 @api_view(['PATCH'])
@@ -176,8 +176,9 @@ def team_list(request):
       - users:     flat list of all users for the All Users table
     """
     today      = timezone.now().date()
-    week_start = today - timedelta(days=today.weekday())  # Monday of current week
+    week_start = today - timedelta(days=today.weekday())  # Monday of current week, today.weekday() returns 0 for Monday, 6 for Sunday.
 
+    # Fetch all designers along with their user, assignments and project relations.
     designers = (
         Designer.objects
         .select_related('user')
@@ -185,6 +186,7 @@ def team_list(request):
         .all()
     )
 
+    # Fetch designer time logs created from Monday onwards.
     designer_data = []
     for d in designers:
         weekly_hours = float(
@@ -193,12 +195,14 @@ def team_list(request):
             .aggregate(total=Sum('hours_spent'))['total'] or 0
         )
 
+        # Filters the prefetched assignments to only active projects and collects their names.
         active_projects = [
             a.project.project_name
             for a in d.assignments.all()
             if a.project.status == 'Active'
         ]
 
+        # Calculate utilisation percentage for this week.
         util_pct = (
             round(weekly_hours / d.available_hours_per_week * 100, 1)
             if d.available_hours_per_week else None
@@ -217,6 +221,7 @@ def team_list(request):
             'avatar_url': request.build_absolute_uri(d.user.profile_picture.url) if d.user.profile_picture else None,
         })
 
+    # Separate query for all users table.
     all_users = (
         User.objects
         .select_related('designer_profile', 'client_profile')

@@ -57,6 +57,7 @@ export default function AppShell({ title, breadcrumb, actions, children }: AppSh
   const role             = user?.role ?? 'Manager';
   const navItems         = NAV_BY_ROLE[role] ?? [];
 
+  // Determines if a nav link should be highlighted.
   const isActive = (path: string) => {
     const base = `/${role.toLowerCase()}`;
     return path === base
