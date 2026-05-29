@@ -38,18 +38,22 @@ class TaskViewSet(viewsets.ModelViewSet):
         else:
             qs = Task.objects.none()
 
+        # Narrows to a single project's tasks.
         if project_id:
             qs = qs.filter(project_id=project_id)
 
+        # Narrows by task status
         if status_filter:
             qs = qs.filter(status=status_filter)
 
+        # Exclude subtasks from the top-level list since they are returned nested inside their parent via TaskReadSerializer.
         if self.action == 'list':
             qs = qs.filter(parent_task__isnull=True)
 
         return qs
 
     def get_serializer_class(self):
+        # Designer doing PATCH → limited serializer (status field only).
         if self.action == 'partial_update' and self.request.user.role == 'Designer':
             return TaskStatusSerializer
         if self.action in ('create', 'update', 'partial_update'):
@@ -73,8 +77,9 @@ Consider complexity, typical revision cycles, and design industry norms.
 
 Rules:
 - If historical similar tasks are provided, weight them heavily in your estimate.
+- If historical data is provided but not directly relevant to this task, ignore it and estimate from general design industry knowledge instead.
 - Description is optional when historical data is present — rely on task name and history.
-- Only return null if the task name is genuinely too ambiguous to estimate even with the available context.
+- Only return null if the task name itself is so vague that no reasonable estimate is possible. A descriptive task name always warrants a numeric estimate.
 
 Respond ONLY with valid JSON in this exact shape:
 {"suggested_hours": <float>, "reasoning": "<one sentence>"}
@@ -100,12 +105,13 @@ def estimate_task_hours(request):
             return Response({'detail': 'project_id does not exist.'}, status=status.HTTP_400_BAD_REQUEST)
 
     historical = ''
-    has_historical = False
     if project_id:
+        # Extract meaningful words from the task name (3+ characters, letters/digits only).
         keywords = {
             token for token in re.findall(r'[A-Za-z0-9]+', task_name.lower())
             if len(token) >= 3
         }
+        # Fetch all time logs for this project, joining the task table so we can filter/sort by task fields without extra queries.
         logs = TimeLog.objects.filter(task__project_id=project_id).select_related('task')
         project_has_any_logs = logs.exists()
 
@@ -116,28 +122,36 @@ def estimate_task_hours(request):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
         else:
+            # Project has logs — try to narrow to similar tasks using keyword matching.
             if keywords:
                 keyword_filter = Q()
                 for keyword in keywords:
+                    # Q() allows filtering conditions in a loop.
                     keyword_filter |= Q(task__task_name__icontains=keyword)
                 matched_logs = logs.filter(keyword_filter)
-                logs = matched_logs if matched_logs.exists() else logs  # fallback, but now explicit
+                logs = matched_logs if matched_logs.exists() else logs  # fallback to all project logs if no matches exist.
 
+            # Take only the 10 most recent entries.
             logs = (
                 logs.values('task__task_name', 'task__estimated_hours', 'hours_spent')
                 .order_by('-created_at')[:10]
             )
             if logs:
-                has_historical = True
+                # Format each log as a readable bullet line for the LLM.
                 lines = [
                     f"- \"{log['task__task_name']}\": estimated {log['task__estimated_hours']}h, actual {log['hours_spent']}h"
                     for log in logs
                 ]
-                historical = '\n'.join(lines)
+                historical = '\n'.join(lines) # Join all lines into one block of text.
 
     user_message = f"Task: {task_name}\nDescription: {description or 'No description provided.'}"
     if historical:
+        # Append historical data block only when it exists.
         user_message += f"\n\nRecent similar tasks on this project:\n{historical}"
+    
+    # print("=== GROQ REQUEST ===")
+    # print(user_message)
+    # print("====================")
 
     try:
         chat = _groq_client.chat.completions.create(
@@ -149,7 +163,8 @@ def estimate_task_hours(request):
             temperature=0.2,
             max_tokens=100,
         )
-        raw = chat.choices[0].message.content.strip()
+        raw = chat.choices[0].message.content.strip() # Extract the text response.
+        # Parse the JSON string the LLM returned into a Python dict.
         result = json.loads(raw)
 
         if 'suggested_hours' not in result or 'reasoning' not in result:
@@ -166,6 +181,8 @@ def estimate_task_hours(request):
             'estimated_hours': None,
             'reasoning': 'AI service unavailable.',
         })
-
-    result['estimated_hours'] = result['suggested_hours']
-    return Response(result)
+    
+    return Response({
+        'estimated_hours':    result['suggested_hours'], # Renamed to match the Task model field.
+        'reasoning':          result['reasoning'],
+    })

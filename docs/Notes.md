@@ -5,7 +5,7 @@ REST - Representational State Transfer. It's an architectural style for designin
 
 ORM - python code that django translates to raw sql
 
-indexes - database optimization to avoid scanning every row (slow)
+indexes - database optimization to avoid scanning every row (slow). example: ['client', 'status'] "get all Active projects for client X"
 
 aggregate queries - compute a single value from many rows
 
@@ -14,6 +14,8 @@ core/urls - central router of the backend, every requests hits this file
 apps/urls - routing for specific app, instead of manually writing a path() for list, detail, create, update, delete, they are automatically generated
 
 viewset - bundles all actions (crud) in 1 class
+
+queryset - is Django's representation of a database query that has not run yet. It's lazy — defining it does not hit the database.
 
 view - decides who can do it and what data they see
 serializer - decides what shape that data is in — what gets validated on input and what gets returned on output. Python objects <-> JSON.
@@ -35,6 +37,9 @@ unique_together (database level) - prevent duplicate row
 
 @action(detail=True) means this action operates on a single project
 
+HEAD - identical to GET but the server returns only the response headers, with no body.
+OPTIONS — returns a description of what the endpoint supports (allowed methods, accepted content types).
+
 SerializerMethodField - when u can't pull a value directly from a model field 
 PrimaryKeyRelatedField - Validates that the submitted ID actually exists in the table. 
 
@@ -48,6 +53,8 @@ REST_FRAMEWORK - sets JWT as the default authentication method globally, so ever
 related_name='designer_profile'
 related_name='client_profile'
 allows acessing the related profile eg. designer_obj = some_user.designer_profile
+
+strip() - removes spaces and tabs
 
 --- DATABASE ---
 
