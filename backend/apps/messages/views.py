@@ -35,23 +35,31 @@ class MessageViewSet(viewsets.ModelViewSet):
             qs = qs.filter(project_id=project_id)
 
         if project_id:
-            # Project board: ?replies=1 → replies only, default → chat only
+            # Project board: ?replies=1 → replies only, default → chat only.
             qs = qs.filter(feedback__isnull=not is_replies)
         elif is_replies:
-            # Explicit global replies fetch
+            # Explicit global replies fetch.
             qs = qs.filter(feedback__isnull=False)
-        # else: global dashboard fetch (no project, no replies flag) — return all
+        # else: global dashboard fetch (no project, no replies flag) — return all.
 
         # Annotate is_read per requesting user via the M2M junction table.
+        # Tells the user whether each message is already read.
         ReadThrough = Message.read_by.through
         qs = qs.annotate(
             is_read=Exists(
                 ReadThrough.objects.filter(
-                    message_id=OuterRef('pk'),
+                    message_id=OuterRef('pk'), # WHERE message_read_by.message_id = message.id   -- OuterRef('pk').
                     user_id=user.id,
                 )
             )
         )
+        # message_read_by
+        # ───────────────────────────
+        # id  | message_id | user_id
+        # ────|────────────|─────────
+        # 1   | 42         | 7
+        # 2   | 42         | 9
+        # 3   | 55         | 7
 
         return qs.distinct()
 
@@ -89,10 +97,10 @@ class MessageViewSet(viewsets.ModelViewSet):
 
         # Bulk-insert into the junction table, silently skip already-read rows.
         ReadThrough = Message.read_by.through
-        message_ids = list(qs.values_list('id', flat=True))
+        message_ids = list(qs.values_list('id', flat=True)) # Fetches only the ID column as a flat list. flat list means no wrapping tuples.
         ReadThrough.objects.bulk_create(
-            [ReadThrough(message_id=mid, user_id=user.id) for mid in message_ids],
-            ignore_conflicts=True,
+            [ReadThrough(message_id=mid, user_id=user.id) for mid in message_ids], # Inserts one junction row per message.
+            ignore_conflicts=True, # If the row already exists/read then skip it without raising an error.
         )
 
         return Response({'marked': len(message_ids)})

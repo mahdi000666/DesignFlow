@@ -6,8 +6,8 @@ from apps.users.models import User
 class FileUpload(models.Model):
     FILE_TYPE_CHOICES = [
     ('deliverable', 'Deliverable'),
-    ('reference', 'Reference'),
-    ('brand_guideline', 'Brand Guideline'),
+    ('reference', 'Reference'), # A reference is a visual inspiration or direction, can be a screenshot of a competitor's website.
+    ('brand_guideline', 'Brand Guideline'), # A brand guideline is a formal brand identity rules. A PDF specifying exact logo usage, approved hex colours, font families, spacing rules.
     ]
     project     = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='files')
     uploaded_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='uploaded_files')

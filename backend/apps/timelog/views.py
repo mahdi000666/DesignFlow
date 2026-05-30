@@ -34,11 +34,14 @@ class TimeLogViewSet(viewsets.ModelViewSet):
         else:
             qs = TimeLog.objects.none()
 
+        # Filter by project.
         if project_id:
             qs = qs.filter(task__project_id=project_id)
+        # Filter by task.
         if task_id:
             qs = qs.filter(task_id=task_id)
 
+        # Filter by designer.
         designer_user_id = self.request.query_params.get('designer_user_id')
         if designer_user_id and user.role == 'Manager':
             qs = qs.filter(designer__user_id=designer_user_id)
@@ -58,6 +61,7 @@ class TimeLogViewSet(viewsets.ModelViewSet):
             return [IsManager()]
         return [permissions.IsAuthenticated()]
 
+    # No longer used since time logs are no longer logged manually.
     def perform_create(self, serializer):
         task = serializer.validated_data['task']
         designer = self.request.user.designer_profile
@@ -73,6 +77,7 @@ class TimeLogViewSet(viewsets.ModelViewSet):
 
 # ─── Timer endpoints ──────────────────────────────────────────────────────────
 
+# Shows active or paused timers, useful when a designer wants to continue working on an active session.
 @api_view(['GET'])
 @permission_classes([IsDesigner])
 def active_timers(request):
@@ -202,14 +207,16 @@ def timer_stop(request):
     
     total_secs = Decimal(session.accumulated_secs)
     if session.state == 'running':
+        # str to prevent float garbage.
         elapsed_secs = Decimal(str((timezone.now() - session.started_at).total_seconds()))
-        total_secs += max(elapsed_secs, Decimal('0'))
+        total_secs += max(elapsed_secs, Decimal('0')) # Guards against negative value.
 
+    # Reject a stop with zero elapsed — avoid a 0-hour log record.
     if total_secs <= 0:
         return Response({'detail': 'Timer has no elapsed time to log.'}, status=status.HTTP_400_BAD_REQUEST)
 
     # A real but very short defense/demo timer should not become a useless 0.00h log.
-    hours = (total_secs / Decimal(3600)).quantize(Decimal('0.01'))
+    hours = (total_secs / Decimal(3600)).quantize(Decimal('0.01')) # Rounds to exactly 2 decimal places.
     if hours == Decimal('0.00'):
         hours = Decimal('0.01')
 

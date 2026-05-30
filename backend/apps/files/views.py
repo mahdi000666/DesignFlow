@@ -8,7 +8,8 @@ from .serializers import FileUploadReadSerializer, FileUploadWriteSerializer
 
 class FileUploadViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
-    parser_classes     = [parsers.MultiPartParser, parsers.FormParser]
+    # Handles multipart/form-data encoding.
+    parser_classes     = [parsers.MultiPartParser, parsers.FormParser] # MultiPartParser handles the file bytes. FormParser handles regular form fields sent alongside.
     # No PUT or PATCH — uploaded files are immutable; replace by delete + re-upload.
     http_method_names  = ['get', 'post', 'delete', 'head', 'options']
 
@@ -32,7 +33,7 @@ class FileUploadViewSet(viewsets.ModelViewSet):
         if project_id:
             qs = qs.filter(project_id=project_id)
 
-        return qs.distinct()
+        return qs.distinct() # Prevents duplicate when joining tables. Without it, a designer on a project with three assignments would see every file three times.
 
     def get_serializer_class(self):
         if self.action == 'create':
@@ -57,12 +58,12 @@ class FileUploadViewSet(viewsets.ModelViewSet):
         if user.role != 'Manager' and instance.uploaded_by != user:
             raise PermissionDenied('You can only delete files you uploaded.')
 
-        # Remove only files that resolve inside MEDIA_ROOT.
+        # Remove only files that resolve inside MEDIA_ROOT. resolve() eliminates ../../ in the path for security reasons.
         media_root = settings.MEDIA_ROOT.resolve()
         full_path = (settings.MEDIA_ROOT / instance.file_path).resolve()
         if media_root not in full_path.parents:
             raise PermissionDenied('Invalid file path.')
         if full_path.exists():
-            full_path.unlink()
+            full_path.unlink() # Dlete from disk; no error if already gone.
 
-        instance.delete()
+        instance.delete() # Delete the DB record.

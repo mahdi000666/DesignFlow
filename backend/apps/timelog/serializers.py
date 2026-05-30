@@ -19,6 +19,7 @@ class TimeLogReadSerializer(serializers.ModelSerializer):
 
 class TimeLogWriteSerializer(serializers.ModelSerializer):
     # 'designer' is intentionally excluded — set from request.user in perform_create.
+    # This prevents a designer from logging a task as someone else.
     class Meta:
         model  = TimeLog
         fields = ['task', 'hours_spent', 'description']

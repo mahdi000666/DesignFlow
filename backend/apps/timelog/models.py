@@ -26,12 +26,14 @@ class TimerSession(models.Model):
     designer         = models.ForeignKey(Designer, on_delete=models.CASCADE, related_name='timer_sessions')
     task             = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='timer_sessions')
     state            = models.CharField(max_length=10, choices=STATE_CHOICES, default='running')
-    started_at       = models.DateTimeField()   # start of the current run segment
+    started_at       = models.DateTimeField()   # start of the current run segment.
+    # Integer seconds give you exact arithmetic with no floating-point drift.
+    # Storing fractional hours directly would accumulate rounding error across many pause/resume cycles.
     accumulated_secs = models.IntegerField(default=0)
     paused_at        = models.DateTimeField(null=True, blank=True)
 
     class Meta:
-        unique_together = ('designer', 'task')
+        unique_together = ('designer', 'task') # One designer can have at most one TimerSession row per task.
 
     def elapsed_secs(self):
         from django.utils import timezone
@@ -59,7 +61,7 @@ class ActivityLog(models.Model):
 
     class Meta:
         indexes  = [models.Index(fields=['designer', 'timestamp'])]
-        ordering = ['-timestamp']
+        ordering = ['-timestamp'] # Sort in descending order (-).
 
     def __str__(self):
         return f'{self.designer.user.full_name} {self.action} {self.task.task_name}'

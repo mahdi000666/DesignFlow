@@ -35,7 +35,15 @@ get_permissions - control who can do what
 get_or_create (application level) - fetch this row, if it doesn't exist then create it
 unique_together (database level) - prevent duplicate row
 
-@action(detail=True) means this action operates on a single project
+detail=False → URL is /api/messages/mark-read/ (no ID)
+detail=True → URL would be /api/messages/{id}/mark-read/ (acts on one message)
+
+request.query_params.get - URL query string: ?project=5 - Typically GET
+request.data.get - Request body (JSON, form data) - Typically POST, PATCH, PUT
+
+ManyToManyField - Django creates a hidden table.
+
+__str__ - defines how a model instance renders as a string. Python calls it whenever something does str(instance) or repr(instance).
 
 HEAD - identical to GET but the server returns only the response headers, with no body.
 OPTIONS — returns a description of what the endpoint supports (allowed methods, accepted content types).
@@ -43,7 +51,7 @@ OPTIONS — returns a description of what the endpoint supports (allowed methods
 SerializerMethodField - when u can't pull a value directly from a model field 
 PrimaryKeyRelatedField - Validates that the submitted ID actually exists in the table. 
 
-why ProjectAssignment - because relational databases cannot directly store a many-to-many relationship. You can't put a list of designers inside a project row, so a solution is always a junction table in between.
+why ProjectAssignment - because relational databases cannot directly store a many-to-many relationship. You can't put a list of designers inside a project row, so a solution is always a junction table in between. Also ProjectAssignment has extra fields.
 
 why not store analytics or make a model - analytics are computed from data thats already stored, if i store analytics separately, they could go out of sync, for example every time a designer logs time, i'd have to remember to update the analytics table too
 
@@ -54,7 +62,14 @@ related_name='designer_profile'
 related_name='client_profile'
 allows acessing the related profile eg. designer_obj = some_user.designer_profile
 
+models.CASCADE - defines what happens to child rows when their parent is deleted. CASCADE means: delete the child too.
+
+attrs - the dictionary of validated field values passed into validate() in a DRF serializer.
+obj - the model instance being serialized.
+
 strip() - removes spaces and tabs
+
+Decimal stores precise fractional numbers — 0.01, 1.75, 0.003. Unlike Python's float, which uses binary representation and introduces tiny errors (0.1 + 0.2 = 0.30000000000000004), Decimal stores numbers exactly as you'd write them on paper. 
 
 --- DATABASE ---
 
