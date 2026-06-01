@@ -9,6 +9,8 @@ indexes - database optimization to avoid scanning every row (slow). example: ['c
 
 aggregate queries - compute a single value from many rows
 
+annotate - adds a computed column to query results
+
 core/urls - central router of the backend, every requests hits this file
 
 apps/urls - routing for specific app, instead of manually writing a path() for list, detail, create, update, delete, they are automatically generated

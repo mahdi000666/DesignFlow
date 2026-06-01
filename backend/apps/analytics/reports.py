@@ -32,9 +32,9 @@ def _weighted_designer_rate(log_qs, actual_hours):
 
     # Impute missing rates from known average (matches ProfitMarginView logic)
     if actual_hours > 0 and rated_hours > 0:
-        known_avg = weighted_total / rated_hours
-        imputed = known_avg * (actual_hours - rated_hours)
-        return (weighted_total + imputed) / actual_hours
+        known_avg = weighted_total / rated_hours # Calculate the average rate of designers we know (with hourly_rate set).
+        imputed = known_avg * (actual_hours - rated_hours) # Estimate the missing cost using that average.
+        return (weighted_total + imputed) / actual_hours  # Calculate the project cost per hour.
     return None
 
 
@@ -185,13 +185,14 @@ def generate_project_pdf(project_id: int) -> io.BytesIO:
         canvas.restoreState()
 
     buf  = io.BytesIO()
+    # PageTemplate + Frame The printable area inside the margins.
     frame = Frame(
         MX, FOOTER_H + 6,
         CONTENT_W,
         H - HEADER_H - FOOTER_H - 22,
         leftPadding=0, rightPadding=0, topPadding=0, bottomPadding=0,
     )
-    doc = BaseDocTemplate(
+    doc = BaseDocTemplate( # The blank page.
         buf, pagesize=A4,
         pageTemplates=[PageTemplate(id='main', frames=[frame], onPage=on_page)],
     )

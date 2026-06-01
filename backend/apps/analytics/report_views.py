@@ -20,10 +20,10 @@ class ExportView(APIView):
             except Exception as e:
                 return Response({'error': str(e)}, status=400)
             return HttpResponse(
-                buf.read(),
-                content_type='application/pdf',
+                buf.read(), # Read the pdf data stored in memory.
+                content_type='application/pdf', # Tell the browser this is a pdf.
                 headers={
-                    'Content-Disposition': f'attachment; filename="project_{project_id}_report.pdf"',
+                    'Content-Disposition': f'attachment; filename="project_{project_id}_report.pdf"', # Force a download with this filename.
                 },
             )
 

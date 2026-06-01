@@ -19,6 +19,7 @@ from apps.users.permissions import IsManager
 
 EHR_MIN_HOURS = 10
 
+# Reads the URL query string and returns a plain Python dictionary.
 def _parse_filters(request):
     # Centralized parsing keeps every analytics widget on the same client/project/date scope.
     filters = {}
@@ -50,7 +51,7 @@ def _apply_project_filters(queryset, filters, include_created_at=False):
         queryset = queryset.filter(created_at__date__lte=filters['date_to'])
     return queryset
 
-
+# Budget Variance.
 def _apply_timelog_filters(queryset, filters):
     # Timelog filters are applied before aggregates so sums do not include out-of-range work.
     if filters.get('client_id'):
@@ -137,8 +138,10 @@ class BudgetVarianceView(APIView):
             )
 
             if filters.get('date_from') or filters.get('date_to'):
+                # log_qs is the already-date-filtered timelog queryset.
+                # Get the task id column as a list, remove dupes with distinct().
                 task_ids = log_qs.values_list('task_id', flat=True).distinct()
-                task_qs = task_qs.filter(id__in=task_ids)
+                task_qs = task_qs.filter(id__in=task_ids) # Narrow the tasks queryset to only tasks that appear in that ID list.
 
             estimated = float(task_qs.aggregate(total=Sum('estimated_hours'))['total'] or 0)
             actual = float(log_qs.aggregate(total=Sum('hours_spent'))['total'] or 0)
@@ -194,20 +197,29 @@ class ClientProfitabilityView(APIView):
 
         data = []
         for client in clients:
-            projects = _apply_project_filters(
-                Project.objects.filter(client=client),
+            all_projects = Project.objects.filter(client=client)
+
+            log_qs = _apply_timelog_filters(
+                TimeLog.objects.filter(task__project__in=all_projects),
                 filters,
-                include_created_at=True,
             )
-            total_revenue = float(projects.aggregate(total=Sum('budget_amount'))['total'] or 0)
+            # When date filtering, only count revenue from projects that had work logged in that range — same scope as hours.
+            if filters.get('date_from') or filters.get('date_to'):
+                active_project_ids = (
+                    log_qs.values_list('task__project_id', flat=True).distinct()
+                )
+                revenue_projects = all_projects.filter(id__in=active_project_ids)
+            else:
+                revenue_projects = all_projects
+
+            total_revenue = float(
+                revenue_projects.aggregate(total=Sum('budget_amount'))['total'] or 0
+            )
             total_hours = float(
-                _apply_timelog_filters(
-                    TimeLog.objects.filter(task__project__in=projects),
-                    filters,
-                ).aggregate(total=Sum('hours_spent'))['total'] or 0
+                log_qs.aggregate(total=Sum('hours_spent'))['total'] or 0
             )
             revision_count = _apply_feedback_filters(
-                Feedback.objects.filter(project__in=projects, category='Revision'),
+                Feedback.objects.filter(project__in=revenue_projects, category='Revision'),
                 filters,
             ).count()
             ehr = (
@@ -215,6 +227,7 @@ class ClientProfitabilityView(APIView):
                 if total_hours >= EHR_MIN_HOURS   # ← was: total_hours > 0
                 else None
             )
+            # Adding 1 prevents division by zero when revision count is 0.
             weighted_ehr = (ehr / (1 + revision_count)) if ehr is not None else None
 
             data.append({
@@ -229,9 +242,9 @@ class ClientProfitabilityView(APIView):
 
         data.sort(
             key=lambda row: (
-                row['weighted_ehr'] is None,
-                -(row['weighted_ehr'] or 0),
-                -row['total_revenue'],
+                row['weighted_ehr'] is None, # Clients with weighted ehr are sorted first vs clients withtout one.
+                -(row['weighted_ehr'] or 0), # Negate the EHR. Sorting ascending on negative values.
+                -row['total_revenue'], # Sort in descending order, since ascending is the default, we negate.
             )
         )
         return Response(data)
@@ -321,9 +334,9 @@ class CumulativeHoursView(APIView):
         )
 
         daily = (
-            timelogs.annotate(date=TruncDate('created_at'))
-            .values('date')
-            .annotate(hours=Sum('hours_spent'))
+            timelogs.annotate(date=TruncDate('created_at')) # Add a computed column to each row that strips the time portion (2025-06-01 14:30:22 becomes 2025-06-01).
+            .values('date') # Group by date.
+            .annotate(hours=Sum('hours_spent')) # Within each date group, sum all hours_spent.
             .order_by('date')
         )
 
@@ -360,7 +373,7 @@ class RevenueByClientView(APIView):
                     'total_revenue': float(total_revenue),
                 })
 
-        data.sort(key=lambda row: row['total_revenue'], reverse=True)
+        data.sort(key=lambda row: row['total_revenue'], reverse=True) # Sort in descending order, highest revenue first.
         return Response(data)
 
 
@@ -390,7 +403,7 @@ class ProfitMarginView(APIView):
             # --- designer cost aggregation (relaxed guard) -----------------
             weighted_total = 0.0
             rated_hours    = 0.0
-            for row in log_qs.values('designer__hourly_rate').annotate(
+            for row in log_qs.values('designer__hourly_rate').annotate( # Groups time logs by designer hourly rate.
                 logged_hours=Sum('hours_spent')
             ):
                 hourly_rate  = row['designer__hourly_rate']
@@ -401,9 +414,9 @@ class ProfitMarginView(APIView):
 
             # Impute missing rates from known average; if none known, skip
             if actual_hours > 0 and rated_hours > 0:
-                known_avg = weighted_total / rated_hours
-                imputed   = known_avg * (actual_hours - rated_hours)
-                weighted_rate = (weighted_total + imputed) / actual_hours
+                known_avg = weighted_total / rated_hours # Calculate the average rate of designers we know (with hourly_rate set).
+                imputed   = known_avg * (actual_hours - rated_hours) # Estimate the missing cost using that average.
+                weighted_rate = (weighted_total + imputed) / actual_hours # Calculate the project cost per hour.
             else:
                 weighted_rate = None
 
