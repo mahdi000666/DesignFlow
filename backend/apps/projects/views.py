@@ -1,4 +1,3 @@
-from django.db.models import Sum
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -12,6 +11,13 @@ from .serializers import (
     AssignDesignerSerializer,
 )
 from apps.users.permissions import IsManager
+from apps.analytics.services import (
+    budget_utilization,
+    logged_hours,
+    project_profit_metrics,
+    rounded,
+)
+from apps.timelog.models import TimeLog
 
 
 class ProjectViewSet(viewsets.ModelViewSet):
@@ -79,26 +85,24 @@ class ProjectViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['get'], url_path='summary')
     def summary(self, request, pk=None):
         project = self.get_object()
-        actual_hours = float(
-            project.tasks.aggregate(total=Sum('time_logs__hours_spent'))['total'] or 0
-        )
+        log_qs = TimeLog.objects.filter(task__project=project)
+        actual_hours = logged_hours(log_qs)
         budget_hours = float(project.budget_hours or 0)
-        budget_amount = float(project.budget_amount or 0)
-
-        ehr = (
-            budget_amount / actual_hours
-            if actual_hours > 0 and project.budget_amount is not None
-            else None
-        )
-        budget_utilization = (
-            actual_hours / budget_hours * 100 if budget_hours > 0 else None
-        )
+        utilization = budget_utilization(project, actual_hours)
+        profitability = project_profit_metrics(project, log_qs)
 
         return Response({
             'project_id': project.id,
             'project_name': project.project_name,
             'actual_hours': round(actual_hours, 2),
             'budget_hours': budget_hours,
-            'budget_utilization_pct': round(budget_utilization, 1) if budget_utilization is not None else None,
-            'ehr': round(ehr, 2) if ehr is not None else None,
+            'budget_utilization_pct': rounded(utilization, 1),
+            'ehr': rounded(profitability['ehr'], 2),
+            'ehr_reliable': profitability['ehr_reliable'],
+            'target_ehr': rounded(profitability['target_ehr'], 2),
+            'avg_designer_rate': rounded(profitability['avg_designer_rate'], 2),
+            'profit_margin_pct': rounded(profitability['profit_margin_pct'], 1),
+            'margin_at_budget': rounded(profitability['margin_at_budget'], 1),
+            'projected_ehr': rounded(profitability['projected_ehr'], 2),
+            'projected_margin': rounded(profitability['projected_margin'], 1),
         })

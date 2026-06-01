@@ -16,12 +16,24 @@ from apps.tasks.models import Task
 from apps.timelog.models import TimeLog
 from apps.users.models import Client, Designer
 from apps.users.permissions import IsManager
+from .services import (
+    EHR_MIN_HOURS,
+    actual_ehr,
+    budget_utilization,
+    budget_variance_pct,
+    client_profitability_metrics,
+    estimate_variance_pct,
+    feedback_revision_summary,
+    logged_hours,
+    project_profit_metrics,
+    project_task_counts,
+    rounded,
+    scope_creep_pct,
+    target_ehr,
+)
 
-EHR_MIN_HOURS = 10
 
-# Reads the URL query string and returns a plain Python dictionary.
 def _parse_filters(request):
-    # Centralized parsing keeps every analytics widget on the same client/project/date scope.
     filters = {}
     raw_from = request.query_params.get('date_from')
     raw_to = request.query_params.get('date_to')
@@ -40,7 +52,6 @@ def _parse_filters(request):
 
 
 def _apply_project_filters(queryset, filters, include_created_at=False):
-    # Most analytics use timelog dates; include_created_at is only for project-count style metrics.
     if filters.get('client_id'):
         queryset = queryset.filter(client_id=filters['client_id'])
     if filters.get('project_id'):
@@ -51,9 +62,8 @@ def _apply_project_filters(queryset, filters, include_created_at=False):
         queryset = queryset.filter(created_at__date__lte=filters['date_to'])
     return queryset
 
-# Budget Variance.
+
 def _apply_timelog_filters(queryset, filters):
-    # Timelog filters are applied before aggregates so sums do not include out-of-range work.
     if filters.get('client_id'):
         queryset = queryset.filter(task__project__client_id=filters['client_id'])
     if filters.get('project_id'):
@@ -78,11 +88,10 @@ def _apply_feedback_filters(queryset, filters):
 
 
 def _project_log_hours(project, filters):
-    total = _apply_timelog_filters(
+    return logged_hours(_apply_timelog_filters(
         TimeLog.objects.filter(task__project=project),
         filters,
-    ).aggregate(total=Sum('hours_spent'))['total']
-    return float(total or 0)
+    ))
 
 
 class KPISummaryView(APIView):
@@ -103,12 +112,12 @@ class KPISummaryView(APIView):
         ).count()
 
         total_budget = 0.0
-        total_hours  = 0.0
+        total_hours = 0.0
         for project in projects.filter(budget_amount__isnull=False):
             actual = _project_log_hours(project, filters)
             if actual >= EHR_MIN_HOURS:
                 total_budget += float(project.budget_amount)
-                total_hours  += actual
+                total_hours += actual
         avg_ehr = total_budget / total_hours if total_hours > 0 else 0
 
         return Response({
@@ -138,22 +147,21 @@ class BudgetVarianceView(APIView):
             )
 
             if filters.get('date_from') or filters.get('date_to'):
-                # log_qs is the already-date-filtered timelog queryset.
-                # Get the task id column as a list, remove dupes with distinct().
                 task_ids = log_qs.values_list('task_id', flat=True).distinct()
-                task_qs = task_qs.filter(id__in=task_ids) # Narrow the tasks queryset to only tasks that appear in that ID list.
+                task_qs = task_qs.filter(id__in=task_ids)
 
             estimated = float(task_qs.aggregate(total=Sum('estimated_hours'))['total'] or 0)
-            actual = float(log_qs.aggregate(total=Sum('hours_spent'))['total'] or 0)
-            variance_pct = ((actual - estimated) / estimated * 100) if estimated > 0 else None
+            actual = logged_hours(log_qs)
+            budget_hours = float(project.budget_hours or 0)
 
             data.append({
                 'project_id': project.id,
                 'project_name': project.project_name,
-                'budget_hours': float(project.budget_hours or 0),
+                'budget_hours': budget_hours,
                 'estimated_hours': estimated,
                 'actual_hours': actual,
-                'variance_pct': round(variance_pct, 1) if variance_pct is not None else None,
+                'budget_variance_pct': rounded(budget_variance_pct(actual, budget_hours), 1),
+                'estimate_variance_pct': rounded(estimate_variance_pct(actual, estimated), 1),
             })
 
         return Response(data)
@@ -172,15 +180,14 @@ class EHRView(APIView):
         data = []
         for project in projects:
             actual_hours = _project_log_hours(project, filters)
-            reliable = actual_hours >= EHR_MIN_HOURS
-            ehr = (float(project.budget_amount) / actual_hours) if reliable else None
+            ehr = actual_ehr(project, actual_hours)
             data.append({
-                'project_id':   project.id,
+                'project_id': project.id,
                 'project_name': project.project_name,
                 'budget_amount': float(project.budget_amount),
                 'actual_hours': actual_hours,
-                'ehr':          round(ehr, 2) if ehr is not None else None,
-                'ehr_reliable': reliable,   # frontend can show a warning badge when False
+                'ehr': rounded(ehr, 2),
+                'ehr_reliable': actual_hours >= EHR_MIN_HOURS,
             })
 
         return Response(data)
@@ -198,53 +205,52 @@ class ClientProfitabilityView(APIView):
         data = []
         for client in clients:
             all_projects = Project.objects.filter(client=client)
-
             log_qs = _apply_timelog_filters(
                 TimeLog.objects.filter(task__project__in=all_projects),
                 filters,
             )
-            # When date filtering, only count revenue from projects that had work logged in that range — same scope as hours.
+
             if filters.get('date_from') or filters.get('date_to'):
-                active_project_ids = (
-                    log_qs.values_list('task__project_id', flat=True).distinct()
-                )
+                active_project_ids = log_qs.values_list('task__project_id', flat=True).distinct()
                 revenue_projects = all_projects.filter(id__in=active_project_ids)
             else:
                 revenue_projects = all_projects
 
-            total_revenue = float(
-                revenue_projects.aggregate(total=Sum('budget_amount'))['total'] or 0
+            metrics = client_profitability_metrics(revenue_projects, log_qs)
+            revision_summary = feedback_revision_summary(
+                list(revenue_projects),
+                _apply_feedback_filters(
+                    Feedback.objects.filter(project__in=revenue_projects),
+                    filters,
+                ),
             )
-            total_hours = float(
-                log_qs.aggregate(total=Sum('hours_spent'))['total'] or 0
-            )
-            revision_count = _apply_feedback_filters(
-                Feedback.objects.filter(project__in=revenue_projects, category='Revision'),
+            approval_count = _apply_feedback_filters(
+                Feedback.objects.filter(project__in=revenue_projects, category='Approval'),
                 filters,
             ).count()
-            ehr = (
-                total_revenue / total_hours
-                if total_hours >= EHR_MIN_HOURS   # ← was: total_hours > 0
-                else None
-            )
-            # Adding 1 prevents division by zero when revision count is 0.
-            weighted_ehr = (ehr / (1 + revision_count)) if ehr is not None else None
 
             data.append({
-                'client_id':      client.id,
-                'client_name':    client.user.full_name,
-                'total_revenue':  total_revenue,
-                'total_hours':    total_hours,
-                'ehr':            round(ehr, 2) if ehr is not None else None,
-                'weighted_ehr':   round(weighted_ehr, 2) if weighted_ehr is not None else None,
-                'revision_count': revision_count,
+                'client_id': client.id,
+                'client_name': client.user.full_name,
+                'project_count': revenue_projects.count(),
+                'total_revenue': metrics.total_revenue,
+                'total_hours': round(metrics.total_hours, 2),
+                'ehr': rounded(metrics.ehr, 2),
+                'avg_designer_rate': rounded(metrics.avg_designer_rate, 2),
+                'profit_margin_pct': rounded(metrics.profit_margin_pct, 1),
+                'revision_count': revision_summary['revision_count'],
+                'approval_count': approval_count,
+                'included_revision_limit': revision_summary['included_revision_limit'],
+                'excess_revision_count': revision_summary['excess_revision_count'],
             })
 
         data.sort(
             key=lambda row: (
-                row['weighted_ehr'] is None, # Clients with weighted ehr are sorted first vs clients withtout one.
-                -(row['weighted_ehr'] or 0), # Negate the EHR. Sorting ascending on negative values.
-                -row['total_revenue'], # Sort in descending order, since ascending is the default, we negate.
+                row['profit_margin_pct'] is None,
+                -(row['profit_margin_pct'] or 0),
+                row['ehr'] is None,
+                -(row['ehr'] or 0),
+                -row['total_revenue'],
             )
         )
         return Response(data)
@@ -271,14 +277,13 @@ class ScopeCreepView(APIView):
             )
             total = agg['total'] or 0
             unplanned = agg['unplanned'] or 0
-            scope_creep_index = (unplanned / total * 100) if total > 0 else 0
 
             data.append({
                 'project_id': project.id,
                 'project_name': project.project_name,
                 'total_tasks': total,
                 'unplanned_tasks': unplanned,
-                'scope_creep_index': round(scope_creep_index, 1),
+                'scope_creep_index': rounded(scope_creep_pct(total, unplanned), 1),
             })
 
         return Response(data)
@@ -299,21 +304,17 @@ class DesignerUtilizationView(APIView):
 
         data = []
         for designer in designers:
-            logged_hours = float(
-                timelogs.filter(designer=designer).aggregate(
-                    total=Sum('hours_spent')
-                )['total'] or 0
-            )
+            designer_hours = logged_hours(timelogs.filter(designer=designer))
             available = designer.available_hours_per_week
-            utilization = (logged_hours / available * 100) if available and available > 0 else None
+            utilization = (designer_hours / available * 100) if available and available > 0 else None
 
             data.append({
                 'designer_id': designer.id,
                 'designer_user_id': designer.user.id,
                 'designer_name': designer.user.full_name,
-                'logged_hours': logged_hours,
+                'logged_hours': designer_hours,
                 'available_hours_per_week': available,
-                'utilization_pct': round(utilization, 1) if utilization is not None else None,
+                'utilization_pct': rounded(utilization, 1),
             })
 
         return Response(data)
@@ -334,9 +335,9 @@ class CumulativeHoursView(APIView):
         )
 
         daily = (
-            timelogs.annotate(date=TruncDate('created_at')) # Add a computed column to each row that strips the time portion (2025-06-01 14:30:22 becomes 2025-06-01).
-            .values('date') # Group by date.
-            .annotate(hours=Sum('hours_spent')) # Within each date group, sum all hours_spent.
+            timelogs.annotate(date=TruncDate('created_at'))
+            .values('date')
+            .annotate(hours=Sum('hours_spent'))
             .order_by('date')
         )
 
@@ -373,7 +374,7 @@ class RevenueByClientView(APIView):
                     'total_revenue': float(total_revenue),
                 })
 
-        data.sort(key=lambda row: row['total_revenue'], reverse=True) # Sort in descending order, highest revenue first.
+        data.sort(key=lambda row: row['total_revenue'], reverse=True)
         return Response(data)
 
 
@@ -393,84 +394,24 @@ class ProfitMarginView(APIView):
                 TimeLog.objects.filter(task__project=project),
                 filters,
             )
-            actual_hours = float(log_qs.aggregate(total=Sum('hours_spent'))['total'] or 0)
-            if actual_hours < EHR_MIN_HOURS:
+            metrics = project_profit_metrics(project, log_qs)
+            if metrics['actual_hours'] < EHR_MIN_HOURS:
                 continue
 
-            ehr = float(project.budget_amount) / actual_hours
-            budget_hours = float(project.budget_hours or 0)
-
-            # --- designer cost aggregation (relaxed guard) -----------------
-            weighted_total = 0.0
-            rated_hours    = 0.0
-            for row in log_qs.values('designer__hourly_rate').annotate( # Groups time logs by designer hourly rate.
-                logged_hours=Sum('hours_spent')
-            ):
-                hourly_rate  = row['designer__hourly_rate']
-                logged_hours = float(row['logged_hours'] or 0)
-                if hourly_rate is not None:
-                    weighted_total += float(hourly_rate) * logged_hours
-                    rated_hours    += logged_hours
-
-            # Impute missing rates from known average; if none known, skip
-            if actual_hours > 0 and rated_hours > 0:
-                known_avg = weighted_total / rated_hours # Calculate the average rate of designers we know (with hourly_rate set).
-                imputed   = known_avg * (actual_hours - rated_hours) # Estimate the missing cost using that average.
-                weighted_rate = (weighted_total + imputed) / actual_hours # Calculate the project cost per hour.
-            else:
-                weighted_rate = None
-
-            margin = (
-                (ehr - weighted_rate) / ehr * 100
-                if weighted_rate is not None else None
-            )
-
-            # --- target / budget-margin (fixed, meaningful from day 1) -----
-            target_ehr = (
-                float(project.budget_amount) / budget_hours
-                if budget_hours > 0 else None
-            )
-            margin_at_budget = (
-                (target_ehr - weighted_rate) / target_ehr * 100
-                if target_ehr is not None and weighted_rate is not None else None
-            )
-
-            # --- projected final margin for active work --------------------
-            projected_margin = None
-            projected_ehr    = None
-            if project.status != 'Completed' and weighted_rate is not None:
-                task_qs       = Task.objects.filter(project=project)
-                total_tasks   = task_qs.count()
-                done_tasks    = task_qs.filter(status='Completed').count()
-
-                if total_tasks > 0 and done_tasks > 0:
-                    # Extrapolate: if 50 % of tasks done but only 41 % of hours
-                    # burned, we will likely finish under budget hours.
-                    completion_ratio = done_tasks / total_tasks
-                    projected_hours  = actual_hours / completion_ratio
-                    projected_ehr    = float(project.budget_amount) / projected_hours
-                    projected_margin = (
-                        (projected_ehr - weighted_rate) / projected_ehr * 100
-                    )
-                elif budget_hours > 0:
-                    # No completed tasks yet — fall back to budget-hour estimate
-                    projected_ehr    = target_ehr
-                    projected_margin = margin_at_budget
-
             data.append({
-                'project_id':        project.id,
-                'project_name':      project.project_name,
-                'status':            project.status,
-                'budget_amount':     float(project.budget_amount),
-                'budget_hours':      budget_hours,
-                'ehr':               round(ehr, 2),
-                'actual_hours':      round(actual_hours, 2),
-                'avg_designer_rate': round(weighted_rate, 2) if weighted_rate is not None else None,
-                'profit_margin_pct': round(margin, 1) if margin is not None else None,
-                'target_ehr':        round(target_ehr, 2) if target_ehr is not None else None,
-                'margin_at_budget':  round(margin_at_budget, 1) if margin_at_budget is not None else None,
-                'projected_margin':  round(projected_margin, 1) if projected_margin is not None else None,
-                'projected_ehr':     round(projected_ehr, 2) if projected_ehr is not None else None,
+                'project_id': project.id,
+                'project_name': project.project_name,
+                'status': project.status,
+                'budget_amount': metrics['budget_amount'],
+                'budget_hours': metrics['budget_hours'],
+                'ehr': rounded(metrics['ehr'], 2),
+                'actual_hours': rounded(metrics['actual_hours'], 2),
+                'avg_designer_rate': rounded(metrics['avg_designer_rate'], 2),
+                'profit_margin_pct': rounded(metrics['profit_margin_pct'], 1),
+                'target_ehr': rounded(metrics['target_ehr'], 2),
+                'margin_at_budget': rounded(metrics['margin_at_budget'], 1),
+                'projected_margin': rounded(metrics['projected_margin'], 1),
+                'projected_ehr': rounded(metrics['projected_ehr'], 2),
             })
 
         return Response(data)
@@ -480,7 +421,7 @@ class AISummaryView(APIView):
     permission_classes = [IsManager]
 
     def get(self, request):
-        filters    = _parse_filters(request)
+        filters = _parse_filters(request)
         project_id = filters.get('project_id')
         if not project_id:
             return Response({'error': 'project param is required'}, status=400)
@@ -490,36 +431,17 @@ class AISummaryView(APIView):
         except Project.DoesNotExist:
             return Response({'error': 'Project not found'}, status=404)
 
-        task_agg = Task.objects.filter(project=project).aggregate(
-            total=Count('id'),
-            completed=Count('id', filter=Q(status='Completed')),
-            unplanned=Count('id', filter=Q(is_unplanned=True)),
-            actual=Sum('time_logs__hours_spent'),
+        counts = project_task_counts(project)
+        actual_hours = logged_hours(TimeLog.objects.filter(task__project=project))
+        budget_util = budget_utilization(project, actual_hours)
+        task_completion = (
+            counts['completed_tasks'] / counts['total_tasks'] * 100
+            if counts['total_tasks'] > 0
+            else 0
         )
-
-        total_tasks     = task_agg['total'] or 0
-        completed_tasks = task_agg['completed'] or 0
-        unplanned       = task_agg['unplanned'] or 0
-        actual_hours    = float(task_agg['actual'] or 0)
-        budget_hours    = float(project.budget_hours or 0)
-
-        budget_utilization = (actual_hours / budget_hours * 100) if budget_hours > 0 else None
-        task_completion    = (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0
-        scope_creep        = (unplanned / total_tasks * 100) if total_tasks > 0 else 0
-        target_rate        = (
-            float(project.budget_amount) / budget_hours
-            if budget_hours > 0 and project.budget_amount
-            else None
-        )
-
-        # Guard: only compute EHR once enough hours have been logged.
-        # Below EHR_MIN_HOURS the ratio is meaningless and will mislead the LLM.
-        ehr_reliable = actual_hours >= EHR_MIN_HOURS
-        ehr = (
-            float(project.budget_amount) / actual_hours
-            if ehr_reliable and project.budget_amount
-            else None
-        )
+        scope_creep = scope_creep_pct(counts['total_tasks'], counts['unplanned_tasks'])
+        target_rate = target_ehr(project)
+        ehr = actual_ehr(project, actual_hours)
         ehr_str = (
             f'{ehr:.2f} TND/h'
             if ehr is not None
@@ -530,8 +452,9 @@ class AISummaryView(APIView):
             revisions=Count('id', filter=Q(category='Revision')),
             approvals=Count('id', filter=Q(category='Approval')),
         )
-        revisions      = feedback_agg['revisions'] or 0
-        approvals      = feedback_agg['approvals'] or 0
+        revisions = feedback_agg['revisions'] or 0
+        approvals = feedback_agg['approvals'] or 0
+        excess_revisions = max(0, revisions - int(project.revision_limit or 0))
         days_remaining = (
             (project.deadline - datetime.date.today()).days
             if project.deadline else None
@@ -544,18 +467,20 @@ class AISummaryView(APIView):
             'CRITICAL CONTEXT: For Active or On-Hold projects, the Effective Hourly Rate '
             '(EHR) is calculated as budget_amount divided by actual_hours_logged_so_far. '
             'Because actual_hours is only partial for incomplete projects, the EHR will '
-            'always appear very high early on (e.g., 145 TND/h vs a target of 60 TND/h) '
-            'and will naturally decrease toward the target as more hours are logged. '
+            'always appear very high early on and will naturally decrease toward the target. '
             'DO NOT flag a high EHR as a cost overrun for incomplete projects. '
-            'Instead, focus on: revision-to-approval ratio, scope creep, deadline risk, '
-            'and whether budget utilisation is outpacing task completion.\n\n'
+            'Extra revisions should be treated as billable contract overages, not as an '
+            'automatic profitability penalty. Focus on revision overage, scope creep, '
+            'deadline risk, and whether budget utilisation is outpacing task completion.\n\n'
             f'Project: {project.project_name}\n'
             f'Status: {project.status}\n'
-            f'Budget utilisation: {f"{budget_utilization:.0f}%" if budget_utilization is not None else "unknown"}\n'
+            f'Budget utilisation: {f"{budget_util:.0f}%" if budget_util is not None else "unknown"}\n'
             f'Task completion: {task_completion:.0f}%\n'
             f'Scope creep index: {scope_creep:.0f}%\n'
+            f'Revision usage: {revisions}/{project.revision_limit} included revisions '
+            f'({excess_revisions} billable overage)\n'
             f'Revision-to-approval ratio: {revisions}:{approvals}\n'
-            f'Effective Hourly Rate (interim): {ehr_str}\n'
+            f'Effective Hourly Rate: {ehr_str}\n'
             f'Target Hourly Rate: {f"{target_rate:.2f} TND/h" if target_rate is not None else "N/A"}\n'
             f'Days until deadline: {days_remaining if days_remaining is not None else "no deadline set"}'
         )
@@ -566,7 +491,7 @@ class AISummaryView(APIView):
                 raise RuntimeError('GROQ_API_KEY is not configured')
 
             groq_client = Groq(api_key=api_key)
-            response    = groq_client.chat.completions.create(
+            response = groq_client.chat.completions.create(
                 model='llama-3.3-70b-versatile',
                 messages=[{'role': 'user', 'content': prompt}],
                 max_tokens=300,

@@ -22,6 +22,7 @@ export interface Project {
   status:         'Active' | 'Completed' | 'OnHold';
   category:       string;
   client:         number;
+  revision_limit: number;
 }
 
 export interface ProjectPayload {
@@ -33,4 +34,5 @@ export interface ProjectPayload {
   deadline?:     string;
   status?:       Project['status'];
   category?:     string;
+  revision_limit?: number;
 }

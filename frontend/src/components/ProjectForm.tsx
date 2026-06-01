@@ -20,6 +20,10 @@ const schema = z.object({
   deadline:      z.string().optional(),
   status:        z.enum(['Active', 'Completed', 'OnHold']),
   category:      z.string().optional(),
+  revision_limit: z.string().optional().refine(
+    value => value == null || value === '' || Number(value) >= 0,
+    'Revision limit cannot be negative',
+  ),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -44,7 +48,7 @@ const labelCls =
 const ProjectForm = ({ onSubmit, isLoading, defaults }: Props) => {
   const { register, handleSubmit, formState: { errors } } = useForm<FormValues>({
     resolver:      zodResolver(schema),
-    defaultValues: { status: 'Active', ...defaults },
+    defaultValues: { status: 'Active', revision_limit: '2', ...defaults },
   });
 
   const { data: clients } = useQuery({
@@ -65,6 +69,7 @@ const ProjectForm = ({ onSubmit, isLoading, defaults }: Props) => {
       deadline:      values.deadline || undefined,
       status:        values.status,
       category:      values.category,
+      revision_limit: values.revision_limit ? parseInt(values.revision_limit, 10) : undefined,
     });
   };
 
@@ -168,6 +173,22 @@ const ProjectForm = ({ onSubmit, isLoading, defaults }: Props) => {
           placeholder="e.g. Branding, Web, Print"
           className={inputCls}
         />
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className={labelCls}>Included Revisions</label>
+          <input
+            type="number"
+            min="0"
+            step="1"
+            placeholder="2"
+            {...register('revision_limit')}
+            className={inputCls}
+          />
+          {errors.revision_limit && (
+            <p className="text-xs text-rose-600 mt-1">{errors.revision_limit.message}</p>
+          )}
+        </div>
       </div>
 
       <div className="pt-1">

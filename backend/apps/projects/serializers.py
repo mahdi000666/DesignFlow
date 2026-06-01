@@ -36,7 +36,7 @@ class ProjectReadSerializer(serializers.ModelSerializer):
         model  = Project
         fields = [
             'id', 'project_name', 'description', 'status', 'category',
-            'budget_hours', 'budget_amount', 'deadline',
+            'budget_hours', 'budget_amount', 'revision_limit', 'deadline',
             'client', 'client_name', 'client_phone', 'client_industry', 'actual_hours', 'assignments',
             'created_at', 'updated_at',
         ]
@@ -51,7 +51,7 @@ class ProjectWriteSerializer(serializers.ModelSerializer):
         model  = Project
         fields = [
             'client', 'project_name', 'description',
-            'budget_hours', 'budget_amount', 'deadline', 'status', 'category',
+            'budget_hours', 'budget_amount', 'revision_limit', 'deadline', 'status', 'category',
         ]
 
     def validate_budget_hours(self, value):
@@ -62,6 +62,11 @@ class ProjectWriteSerializer(serializers.ModelSerializer):
     def validate_budget_amount(self, value):
         if value is not None and value <= 0:
             raise serializers.ValidationError('Budget amount must be greater than 0.')
+        return value
+
+    def validate_revision_limit(self, value):
+        if value is not None and value < 0:
+            raise serializers.ValidationError('Revision limit cannot be negative.')
         return value
 
 

@@ -29,8 +29,13 @@ export interface ClientProfitabilityItem {
   total_revenue:  number;
   total_hours:    number;
   ehr:            number | null;
-  weighted_ehr:   number | null;
   revision_count: number;
+  project_count: number;
+  avg_designer_rate: number | null;
+  profit_margin_pct: number | null;
+  approval_count: number;
+  included_revision_limit: number;
+  excess_revision_count: number;
 }
 
 export interface ScopeCreepItem {

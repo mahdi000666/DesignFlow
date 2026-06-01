@@ -17,7 +17,7 @@ import AppShell from '../../components/AppShell';
 import KanbanBoard from '../../components/KanbanBoard';
 import KanbanTaskCard from '../../components/KanbanTaskCard';
 import { KpiCard, UnreadBadge } from '../../components/Ui';
-import { formatEHR, formatTND } from '../../utils/format';
+import { formatTND } from '../../utils/format';
 import { STATUS_BADGE, STATUS_DOT, barColor, statusLabel, categoryClass } from '../../utils/project';
 import {
   Calendar, User, Tag, Clock, CheckCircle2, FolderOpen, BarChart3,
@@ -143,13 +143,6 @@ export default function DesignerProjectDetail() {
 
   const remaining = project?.budget_hours && project?.actual_hours != null
     ? Math.max(0, Number(project.budget_hours) - project.actual_hours)
-    : null;
-
-  const targetEHR = project?.budget_amount && project?.budget_hours
-    ? Number(project.budget_amount) / Number(project.budget_hours)
-    : null;
-  const currentEHR = project?.budget_amount && project?.actual_hours != null && project.actual_hours > 0
-    ? Number(project.budget_amount) / project.actual_hours
     : null;
 
   const myLogs        = useMemo(() => logs.filter(l => l.designer_user_id === userId), [logs, userId]);
@@ -284,19 +277,6 @@ export default function DesignerProjectDetail() {
                 Remaining — {Math.round(remaining ?? 0)} h
               </span>
             </div>
-            {targetEHR != null && currentEHR != null && (
-              <p className="text-xs text-slate-400">
-                Target EHR:{' '}
-                <span className="font-semibold text-slate-700">
-                  {formatEHR(targetEHR)}
-                </span>
-                {' · '}
-                Current EHR (interim):{' '}
-                <span className="font-semibold text-amber-600">
-                  {formatEHR(currentEHR)}
-                </span>
-              </p>
-            )}
           </div>
         </div>
       )}

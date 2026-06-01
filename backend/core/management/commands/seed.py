@@ -141,6 +141,7 @@ PROJECTS_DATA = [
         "category": "Brand Identity",
         "designers": ["sarra.belhadj@designflow.tn", "amine.karray@designflow.tn"],
         "started_days_ago": 45,
+        "revision_limit": 3,
     },
     {
         "client_email": "leila.oueslati@djerba-horizons.tn",
@@ -156,6 +157,7 @@ PROJECTS_DATA = [
         "category": "Print & Social Media",
         "designers": ["sarra.belhadj@designflow.tn"],
         "started_days_ago": 90,
+        "revision_limit": 2,
     },
     {
         "client_email": "fares.bensalem@cafemedina.tn",
@@ -171,6 +173,7 @@ PROJECTS_DATA = [
         "category": "Packaging & Print",
         "designers": ["amine.karray@designflow.tn", "rania.hammami@designflow.tn"],
         "started_days_ago": 30,
+        "revision_limit": 2,
     },
     {
         "client_email": "imen.gharbi@gharbi-couture.tn",
@@ -186,6 +189,7 @@ PROJECTS_DATA = [
         "category": "Editorial Design",
         "designers": ["rania.hammami@designflow.tn", "nour.bouzid@designflow.tn"],
         "started_days_ago": 120,
+        "revision_limit": 2,
     },
     {
         "client_email": "hedi.mzoughi@tuntech.tn",
@@ -201,6 +205,7 @@ PROJECTS_DATA = [
         "category": "UI/UX Design",
         "designers": ["youssef.trabelsi@designflow.tn"],
         "started_days_ago": 20,
+        "revision_limit": 3,
     },
     {
         "client_email": "mouna.ferchichi@financia.tn",
@@ -216,6 +221,7 @@ PROJECTS_DATA = [
         "category": "Report Design",
         "designers": ["youssef.trabelsi@designflow.tn", "nour.bouzid@designflow.tn"],
         "started_days_ago": 15,
+        "revision_limit": 3,
     },
     {
         "client_email": "aziz.chaabane@chaabaneimmo.tn",
@@ -231,6 +237,7 @@ PROJECTS_DATA = [
         "category": "Outdoor Advertising",
         "designers": ["sarra.belhadj@designflow.tn"],
         "started_days_ago": 75,
+        "revision_limit": 1,
     },
     {
         "client_email": "fares.bensalem@cafemedina.tn",
@@ -246,6 +253,7 @@ PROJECTS_DATA = [
         "category": "Campaign Design",
         "designers": ["rania.hammami@designflow.tn"],
         "started_days_ago": 10,
+        "revision_limit": 2,
     },
 ]
 
@@ -591,6 +599,7 @@ class Command(BaseCommand):
                 "description":   pd["description"],
                 "budget_hours":  pd["budget_hours"],
                 "budget_amount": pd["budget_amount"],
+                "revision_limit": pd.get("revision_limit", 2),
                 "deadline":      TODAY + timedelta(days=pd["deadline_offset"]),
                 "status":        pd["status"],
                 "category":      pd["category"],

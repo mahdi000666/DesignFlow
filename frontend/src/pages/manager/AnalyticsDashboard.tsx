@@ -14,6 +14,7 @@ import {
   useCumulativeHours,
   useRevenueByClient,
   useProfitMargin,
+  useClientProfitability,
 } from '../../hooks/useAnalytics';
 import { useProjects } from '../../hooks/useProjects';
 import { exportPDF, exportExcel } from '../../api/analytics';
@@ -188,6 +189,7 @@ export default function AnalyticsDashboard() {
   const { data: revenueData = [] }  = useRevenueByClient(filters);
   const { data: scopeCreep = [] }   = useScopeCreep(filters);
   const { data: profitMargin = [] } = useProfitMargin(filters);
+  const { data: clientProfitability = [] } = useClientProfitability(filters);
   const { data: cumulativeHours, isLoading: loadingCumulative } = useCumulativeHours(filters);
 
   const hasProject = !!filters.project;
@@ -235,42 +237,6 @@ export default function AnalyticsDashboard() {
     () => profitMargin.reduce((s, r) => s + r.actual_hours, 0),
     [profitMargin],
   );
-
-  // ── Revenue-weighted client margins ──────────────────────────────────
-  const clientMargins = useMemo(() => {
-    const projectClientMap = new Map(
-      projects.map(p => [
-        p.id,
-        { name: p.client_name, clientId: p.client, budget: Number(p.budget_amount || 0) },
-      ]),
-    );
-    const clientMap = new Map<number, { name: string; margins: number[]; budgets: number[] }>();
-
-    for (const pm of validMargins) {
-      const info = projectClientMap.get(pm.project_id);
-      if (!info) continue;
-      const existing = clientMap.get(info.clientId) ?? { name: info.name, margins: [], budgets: [] };
-      existing.margins.push(pm.profit_margin_pct!);
-      existing.budgets.push(info.budget);
-      clientMap.set(info.clientId, existing);
-    }
-
-    return Array.from(clientMap.values())
-      .map(({ name, margins, budgets }) => {
-        const totalBudget = budgets.reduce((s, v) => s + v, 0);
-        const weightedMargin =
-          totalBudget > 0
-            ? margins.reduce((sum, m, i) => sum + m * budgets[i], 0) / totalBudget
-            : margins.reduce((s, v) => s + v, 0) / margins.length;
-
-        return {
-          client_name:   name,
-          avg_margin:    Math.round(weightedMargin * 10) / 10,
-          project_count: margins.length,
-        };
-      })
-      .sort((a, b) => b.avg_margin - a.avg_margin);
-  }, [validMargins, projects]);
 
   // ── KPI cards ────────────────────────────────────────────────────────────────
   // Active Projects and Pending Feedback also appear on the Dashboard KPI row —
@@ -475,20 +441,16 @@ export default function AnalyticsDashboard() {
             title="Client Profit Margin"
             sub="Avg. across their projects"
           />
-          {clientMargins.length === 0 ? (
+          {clientProfitability.length === 0 ? (
             <Empty
               h={hBarHeight(3)}
-              message={
-                validMargins.length === 0
-                  ? 'No data — ensure designer hourly rates are configured'
-                  : 'Could not map project margins to clients'
-              }
+              message={'No data — ensure designer hourly rates are configured'}
             />
           ) : (
             <>
-              <ResponsiveContainer width="100%" height={hBarHeight(clientMargins.length)}>
+              <ResponsiveContainer width="100%" height={hBarHeight(clientProfitability.length)}>
                 <BarChart
-                  data={clientMargins}
+                  data={clientProfitability}
                   layout="vertical"
                   margin={{ top: 4, right: 60, left: 4, bottom: 4 }}
                 >
@@ -520,15 +482,15 @@ export default function AnalyticsDashboard() {
                     ]}
                     labelFormatter={(label: unknown) => {
                       const name = String(label ?? '');
-                      const row  = clientMargins.find(r => r.client_name === name);
+                      const row  = clientProfitability.find(r => r.client_name === name);
                       return row
                         ? `${name}  ·  ${row.project_count} project${row.project_count !== 1 ? 's' : ''}`
                         : name;
                     }}
                   />
-                  <Bar dataKey="avg_margin" radius={[0, 2, 2, 0]} barSize={14}>
-                    {clientMargins.map((row, i) => (
-                      <Cell key={i} fill={marginColor(row.avg_margin)} />
+                  <Bar dataKey="profit_margin_pct" radius={[0, 2, 2, 0]} barSize={14}>
+                    {clientProfitability.map((row, i) => (
+                      <Cell key={i} fill={marginColor(row.profit_margin_pct)} />
                     ))}
                     <LabelList
                       dataKey="avg_margin"

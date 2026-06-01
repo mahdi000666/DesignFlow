@@ -9,7 +9,7 @@ import { useMessages, useMarkMessagesRead } from '../../hooks/useMessages';
 import { useFeedback } from '../../hooks/useFeedback';
 import { useUnreadCount } from '../../hooks/useUnreadCount';
 import { useAuth } from '../../hooks/useAuth';
-import { useAISummary, useScopeCreep } from '../../hooks/useAnalytics';
+import { useAISummary, useScopeCreep, useProfitMargin } from '../../hooks/useAnalytics';
 import TaskForm from '../../components/TaskForm';
 import AssignDesignerPanel from '../../components/AssignDesignerPanel';
 import TimeLogList from '../../components/TimeLogList';
@@ -208,21 +208,6 @@ export default function ProjectDetail() {
   const { data: rawTasks = [], isLoading: loadingTasks } = useTasks(projectId);
   const tasks = useMemo(() => [...rawTasks].sort((a, b) => a.id - b.id), [rawTasks]);
 
-  const EHR_MIN_HOURS = 10;
-
-  const projectedEHR = useMemo(() => {
-    if (!project || project.status === 'Completed' || !project.budget_amount || !project.budget_hours || tasks.length === 0) {
-      return null;
-    }
-    // Align with ProfitMarginView: need enough hours for a reliable projection
-    if (project.actual_hours < EHR_MIN_HOURS) return null;
-    const completedTasks = tasks.filter(t => t.status === 'Completed').length;
-    if (completedTasks === 0) return null;
-    const taskRatio = completedTasks / tasks.length;
-    const projectedHours = project.actual_hours / taskRatio;
-    return Number(project.budget_amount) / projectedHours;
-  }, [project, tasks]);
-
 
   const { data: logs = [] } = useTimeLogs(projectId);
   const { data: files = [] } = useFiles(projectId);
@@ -231,6 +216,9 @@ export default function ProjectDetail() {
 
   const { data: scopeCreepData = [] } = useScopeCreep({ project: projectId });
   const scopeEntry = (scopeCreepData as ScopeCreepItem[])[0] as ScopeCreepItem | undefined;
+
+  const { data: profitMarginData = [] } = useProfitMargin({ project: projectId });
+  const pm = profitMarginData[0];
 
   const markMessagesReadMutation = useMarkMessagesRead(projectId);
   const unreadMessages = messages.filter(
@@ -310,13 +298,9 @@ export default function ProjectDetail() {
 
   const budgetPctRounded = budgetPct != null ? Math.round(budgetPct) : null;
 
-  const targetEHR = project.budget_amount && project.budget_hours
-    ? Number(project.budget_amount) / Number(project.budget_hours)
-    : null;
-
-  const currentEHR = project.budget_amount && project.actual_hours >= EHR_MIN_HOURS
-    ? Number(project.budget_amount) / project.actual_hours
-    : null;
+  const targetEHR = pm?.target_ehr ?? null;
+  const currentEHR = pm?.ehr ?? null;
+  const projectedEHR = pm?.projected_ehr ?? null;
 
   const remaining = project.budget_hours && project.actual_hours != null
     ? Math.max(0, Number(project.budget_hours) - project.actual_hours)
@@ -491,6 +475,14 @@ export default function ProjectDetail() {
           <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-slate-100 border border-slate-200 text-slate-600">
             <Users size={12} className="text-indigo-400" />
             {project.assignments.length} designer{project.assignments.length !== 1 ? 's' : ''}
+          </span>
+        )}
+        {/* Revision usage */}
+        {project.revision_limit != null && (
+          <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border ${revisions > project.revision_limit ? 'bg-rose-50 border-rose-200 text-rose-700' : 'bg-slate-100 border-slate-200 text-slate-600'}`}>
+            <MessageSquare size={12} className={revisions > project.revision_limit ? 'text-rose-500' : 'text-slate-400'} />
+            {revisions} / {project.revision_limit} included
+            {revisions > project.revision_limit && <span className="ml-1 text-[10px] font-bold uppercase tracking-wider">Over limit</span>}
           </span>
         )}
       </div>

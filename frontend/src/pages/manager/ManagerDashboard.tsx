@@ -11,8 +11,9 @@ import {
 } from 'lucide-react';
 import AppShell from '../../components/AppShell';
 import { KpiCard } from '../../components/Ui';
-import { useKPISummary, useBudgetVariance, useDesignerUtilization } from '../../hooks/useAnalytics';
+import { useKPISummary, useBudgetVariance, useDesignerUtilization, useProfitMargin } from '../../hooks/useAnalytics';
 import { useProjects } from '../../hooks/useProjects';
+import type { ProfitMarginItem } from '../../types/analytic';
 import { getAllFeedback } from '../../api/feedbacks';
 import { getAllTimeLogs } from '../../api/timelogs';
 import { getAllMessages } from '../../api/messages';
@@ -189,6 +190,7 @@ export default function ManagerDashboard() {
   const { data: projects = [] }     = useProjects();
   const { data: budgetData = [] }   = useBudgetVariance({});
   const { data: utilization = [] }  = useDesignerUtilization({});
+  const { data: profitMargins = [] } = useProfitMargin();
 
   const { data: allFeedback = [] }     = useQuery({ queryKey: ['feedback-all'],    queryFn: getAllFeedback });
   const { data: allLogs = [] }         = useQuery({ queryKey: ['timelogs-all'],    queryFn: getAllTimeLogs });
@@ -227,6 +229,11 @@ export default function ManagerDashboard() {
         .slice(0, 5),
     [projects],
   );
+  const pmByProject = useMemo(() => {
+    const map = new Map<number, ProfitMarginItem>();
+    profitMargins.forEach(pm => map.set(pm.project_id, pm));
+    return map;
+  }, [profitMargins]);
 
   // Sorted descending, designers with no utilisation excluded
   const sortedUtilization = useMemo(
@@ -611,15 +618,9 @@ export default function ManagerDashboard() {
                     ? Math.round((p.actual_hours / Number(p.budget_hours)) * 100)
                     : null;
 
-                const EHR_MIN_HOURS = 10;
-                const targetEHR =
-                  p.budget_amount && p.budget_hours
-                    ? Number(p.budget_amount) / Number(p.budget_hours)
-                    : null;
-                const currentEHR =
-                  p.budget_amount && p.actual_hours > EHR_MIN_HOURS
-                    ? Number(p.budget_amount) / p.actual_hours
-                    : null;
+                const pm = pmByProject.get(p.id);
+                const targetEHR = pm?.target_ehr ?? null;
+                const currentEHR = pm?.ehr ?? null;
                 const isOver =
                   p.budget_hours != null && p.actual_hours > Number(p.budget_hours);
 
