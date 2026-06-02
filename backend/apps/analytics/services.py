@@ -161,8 +161,7 @@ def feedback_revision_summary(projects, feedback_qs=None) -> dict:
         'excess_revision_count': excess_count,
     }
 
-
-@dataclass(frozen=True)
+@dataclass(frozen=True) # makes the object immutable.
 class ClientProfitability:
     total_revenue: float
     total_hours: float

@@ -50,8 +50,8 @@ export default function KanbanTaskCard({
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [showSubs, setShowSubs] = useState(false);
 
-  useEffect(() => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
+  useEffect(() => { // captures elapsed_secs as the base, then increments a local extra counter and adds its to the base. The backend sends accumulated_secs and the frontend ticks forward from there.
+    if (intervalRef.current) clearInterval(intervalRef.current); // Cancel on unmount, when the user navigates away to avoid memory leaks.
     if (session?.state === 'running') {
       const base = session.elapsed_secs;
       let extra = 0;
@@ -63,6 +63,7 @@ export default function KanbanTaskCard({
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [session]);
 
+  // If running then show the live elapsed, if paused show accumulated_secs frozen.
   const displaySecs = session?.state === 'running'
     ? elapsed
     : (session?.accumulated_secs ?? 0);

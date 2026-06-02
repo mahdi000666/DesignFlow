@@ -23,7 +23,7 @@ export default function MessageBoard({ projectId }: Props) {
   const bottomRef                          = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); // Auto scrolls to the newest message.
   }, [messages]);
 
   const handleSend = () => {
@@ -35,9 +35,10 @@ export default function MessageBoard({ projectId }: Props) {
     );
   };
 
+  // Intercepts enter to send a message or shift+enter for newline.
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
+      e.preventDefault(); // Prevents the browser from creating newline on enter, this is reserved for shift+enter.
       handleSend();
     }
   };
@@ -60,7 +61,7 @@ export default function MessageBoard({ projectId }: Props) {
           </div>
         ) : (
           messages.map(msg => {
-            const isOwn = msg.sender === Number(user?.user_id);
+            const isOwn = msg.sender === Number(user?.user_id); 
             return (
               <div key={msg.id} className={`flex gap-3 ${isOwn ? 'flex-row-reverse' : ''}`}>
 

@@ -68,6 +68,7 @@ export default function FileUploadPanel({ projectId, role, isManager }: Props) {
   const [typeOpen, setTypeOpen] = useState(false);
   const typeRef = useRef<HTMLDivElement>(null);
 
+  // you open the dropdown, then click somewhere else on the page — without this, nothing would close it.
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (typeRef.current && !typeRef.current.contains(e.target as Node)) setTypeOpen(false);
@@ -77,10 +78,10 @@ export default function FileUploadPanel({ projectId, role, isManager }: Props) {
   }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    const file = e.target.files?.[0]; // The browser's object containing whatever the user picked.
     if (!file) return;
     uploadFile.mutate({ fileType, file }, {
-      onSettled: () => { if (inputRef.current) inputRef.current.value = ''; },
+      onSettled: () => { if (inputRef.current) inputRef.current.value = ''; }, // Clear the file input's internal value.
     });
   };
 

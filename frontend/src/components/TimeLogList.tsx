@@ -67,7 +67,7 @@ export default function TimeLogList({ logs, isManager, onDelete, onUpdate }: Pro
         </thead>
         <tbody className="divide-y divide-slate-100">
           {logs.map(log => {
-            const isEditing = editingId === log.id;
+            const isEditing = editingId === log.id; // only one row can be in edit mode at a time.
             return (
               <tr key={log.id} className="hover:bg-slate-50/70 transition-colors group">
                 <td className="px-4 py-3.5 text-sm text-slate-600 whitespace-nowrap align-middle">

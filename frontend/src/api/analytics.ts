@@ -13,6 +13,7 @@ import type {
   AnalyticsFilters,
 } from '../types/analytic';
 
+// Serialize filters into strings, strip undefined values.
 function toParams(filters: AnalyticsFilters): Record<string, string> {
   const out: Record<string, string> = {};
   if (filters.date_from)  out.date_from = filters.date_from;
@@ -82,16 +83,20 @@ export const getAISummary = async (projectId: number): Promise<AISummaryResponse
 
 async function downloadBlob(url: string, filename: string) {
   const token = localStorage.getItem('access_token');
+  // Fetch the file as a binary blob from the API.
   const resp  = await fetch(`${API_BASE_URL}${url}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!resp.ok) throw new Error('Export failed');
+  // Convert the response body into a Blob (binary large object, browser's way of holding a file in memory).
   const blob    = await resp.blob();
   const href    = URL.createObjectURL(blob);
-  const anchor  = document.createElement('a');
-  anchor.href   = href;
-  anchor.download = filename;
-  anchor.click();
+  // Create an invisible anchor tag, set it to download mode attach it to the DOM, click it, then immediately clean up.
+  const anchor  = document.createElement('a'); // Create invisible link.
+  anchor.href   = href; // Point it at the blob.
+  anchor.download = filename; // Tells the browser to save it instead of opening.
+  anchor.click(); // Fake mouse click.
+  // Revoke the object URL to free memory.
   URL.revokeObjectURL(href);
 }
 

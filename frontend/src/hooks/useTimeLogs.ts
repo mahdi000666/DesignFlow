@@ -38,7 +38,7 @@ export const useActiveTimers = () =>
   useQuery({
     queryKey:        ['timers', 'active'],
     queryFn:         api.getActiveTimers,
-    refetchInterval: 30_000,   // heartbeat — keeps session state fresh
+    refetchInterval: 30_000,   // heartbeat/syncro — keeps session state fresh
   });
  
 export const useTimerMutations = (projectId: number) => {

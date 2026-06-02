@@ -118,7 +118,7 @@ interface Props {
 
 export default function KanbanBoard({ tasks, onStatusChange, renderCard, isLoading }: Props) {
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }), // 5 pixel threshold before drag activates to prevent accidental drages when click a button on the card.
   );
 
   const [activeTask, setActiveTask] = useState<Task | null>(null);
@@ -130,8 +130,8 @@ export default function KanbanBoard({ tasks, onStatusChange, renderCard, isLoadi
   const handleDragEnd = ({ active, over }: DragEndEvent) => {
     setActiveTask(null);
     if (!over) return;
-    const taskId    = Number(active.id);
-    const newStatus = over.id as Task['status'];
+    const taskId    = Number(active.id); // dragged task's ID 
+    const newStatus = over.id as Task['status']; // over.id is the column it was dropped into
     const task      = tasks.find(t => t.id === taskId);
     if (task && task.status !== newStatus) {
       // The page owns side effects such as timer starts/stops before it persists status.
@@ -152,7 +152,7 @@ export default function KanbanBoard({ tasks, onStatusChange, renderCard, isLoadi
     );
   }
 
-  return (
+  return ( // onDragStart fires when a card is picked up. onDragEnd fires when its dropped.
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div className="grid grid-cols-3 gap-5">
         {COLUMNS.map(col => (
@@ -165,7 +165,7 @@ export default function KanbanBoard({ tasks, onStatusChange, renderCard, isLoadi
           </DroppableColumn>
         ))}
       </div>
-      <DragOverlay>
+      <DragOverlay> // Renders a copy of the card at the cursor while dragging.
         {activeTask && (
           <div className="rotate-2 scale-[1.03] shadow-2xl opacity-95">
             {renderCard(activeTask, COLUMNS.find(c => c.id === activeTask.status)?.dotColor ?? 'bg-slate-400')}

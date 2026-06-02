@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import apiClient from '../api/clients';
 import type { ProjectPayload } from '../types/project';
 
+// Handles values that are optional but must be positive in cases they are provided.
 const optionalPositiveNumber = (label: string) =>
   z.string().optional().refine(
     value => value == null || value === '' || Number(value) > 0,

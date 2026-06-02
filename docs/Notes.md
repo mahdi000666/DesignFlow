@@ -116,6 +116,10 @@ useQueryClient - The brain that holds all caches
 useQuery — Used for reading data (GET requests).
 useMutation — Used for writing data (POST, PATCH, DELETE).
 
+onSettled - success or failure.
+
+Zod is a library that lets you describe the shape and rules of your data, then validates any value against those rules.
+
 onMutate: async ({ id, status }) => { // Before the API even responds, we immediately update the UI.
 await queryClient.cancelQueries({ queryKey: ['projects'] }); // Stop any background refetch of the projects list so it doesn't overwrite our change.
 

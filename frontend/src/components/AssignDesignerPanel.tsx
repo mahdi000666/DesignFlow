@@ -43,6 +43,7 @@ export default function AssignDesignerPanel({ project, onClose }: Props) {
   });
 
   const { data: utilizationData = [] } = useDesignerUtilization();
+  // returns e.g. [{ designer_id: 3, utilization_pct: 87.5 }, { designer_id: 7, utilization_pct: 42.0 }]
   const utilizationMap = useMemo(() => {
     const map = new Map<number, number>();
     (utilizationData as DesignerUtilizationItem[]).forEach(u => {
@@ -50,17 +51,20 @@ export default function AssignDesignerPanel({ project, onClose }: Props) {
     });
     return map;
   }, [utilizationData]);
+  // result: Map { 3 → 88, 7 → 42 }
 
   if (!project) return null;
 
+  // Get an array of assignment objects and wrap it in a set.
   const assignedIds = new Set(project.assignments.map(a => a.designer_id));
 
   const allDesigners = designers.map(d => ({
-    ...d,
+    ...d, // Chck if they are on this project and whats their workload.
     isAssigned:  assignedIds.has(d.id),
     utilization: utilizationMap.get(d.id) ?? null,
   }));
 
+  // Puts assigned designers at the top.
   const sorted = [
     ...allDesigners.filter(d => d.isAssigned),
     ...allDesigners.filter(d => !d.isAssigned),

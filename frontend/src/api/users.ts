@@ -37,6 +37,8 @@ export const inviteUser = async (
 export const uploadAvatar = async (file: File): Promise<MeData> => {
   const form = new FormData();
   form.append('profile_picture', file);
+  // Content-Type is intentionally omitted — Axios sets it automatically with
+  // the correct multipart boundary when the body is a FormData instance.
   const { data } = await apiClient.patch('/users/me/', form, {
     headers: { 'Content-Type': undefined },
   });
