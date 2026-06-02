@@ -214,6 +214,7 @@ export default function AnalyticsDashboard() {
   );
   
   // ── Revenue-weighted portfolio average ─────────────────────────────────
+  // // Revenue-weighted average: a 50K project at 10% margin contributes more to portfolio health than a 5K project at 50%
   const avgMargin = useMemo(() => {
     if (!validMargins.length) return null;
     const totalRevenue = validMargins.reduce((s, r) => s + (r.budget_amount || 0), 0);

@@ -1,13 +1,69 @@
-check timer sessions in admin panel
-try 2 timer sessions at the same time. Check if another designer can mess with current session
-test pdf upload in fileupload
-Estimation Variance
+// desingner
+amine.karray@designflow.tn
 
-what does a deisnger with full capacity indicate and could they still be assigned?
-is hourly_rate mean how much to pay a designer each hour?
-is it correct to have designer their available hours and manager set hourly rate? (do they both agree on this beforehand)?
+// client
+aziz.chaabane@chaabaneimmo.tn
 
-whats the diff between designers returned from the query and allDesigners? how is utlization map/data being used in assign panel?
-how is const assignedIds = new Set(project.assignments.map(a => a.designer_id));?
-whats handleFileChange?
-whats  click-outside handler?
+mahdimlika2022@gmail.com
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+avgx_resolution_duration = (
+    Feedback.objects
+    .filter(status='Resolved', resolved_at__isnull=False)
+    .annotate(
+        resolution_time=ExpressionWrapper(
+            DbF('resolved_at') - DbF('submitted_at'),
+            output_field=DurationField(),
+        )
+    )
+    .aggregate(avg=Avg('resolution_time'))['avg']
+)
+
+avgx_resolution_hours = (
+    round(avxg_resolution_duration.total_seconds() / 3600, 1)
+    if avxg_resolution_duration is not None
+    else None
+)

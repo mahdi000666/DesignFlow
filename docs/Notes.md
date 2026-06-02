@@ -3,6 +3,9 @@
 DRF - the middleman between the database and the React app, it speaks Python to the database and JSON to the frontend.
 REST - Representational State Transfer. It's an architectural style for designing networked applications. The backend exposes resources as URLs and we use standard HTTP methods such as GET, POST, DELETE etc.
 
+REST API + SPA split.
+relational database design
+
 ORM - python code that django translates to raw sql
 
 indexes - database optimization to avoid scanning every row (slow). example: ['client', 'status'] "get all Active projects for client X"
@@ -180,3 +183,32 @@ Projected EHR - `budget_amount / budget_hours` - Project creation / planning - "
 Raw EHR - `budget_amount / actual_hours` - Live project - "This is the revenue rate we are currently generating — watch it fall as hours accumulate."
 
 Weighted EHR - `raw EHR - weighted avg designer hourly rate` - Analytics - "This is what we actually keep per hour after paying the designers — the true profit signal."
+
+Avg. EHR = "How much money comes in per hour on average?"
+
+
+
+
+
+"My stack was selected around two constraints: solo development and a 3-month timeline. Django + DRF provided the backend scaffolding, ORM, and admin panel I needed to build 8 related models quickly. PostgreSQL handled the analytical queries for BI. React 19 + TypeScript + Vite gave me a type-safe, fast frontend. TanStack Query eliminated manual state management for server data. Tailwind and React Hook Form accelerated UI development. JWT fit the SPA architecture. ReportLab and openpyxl let me generate reports server-side without external services. Groq provided accessible AI inference for the two LLM features without requiring GPU infrastructure."
+
+
+Design Agency System Prevents Scope Creep and Provides Analytics
+The user is asking for a concise, natural-sounding "elevator pitch" or project summary they can use during a technical defense. They want to know what to say when someone asks "what's the project?"
+I need to synthesize the information from the three uploaded documents (PROJECT_CONTEXT.md, DATA_MODEL.md, DEVELOPMENT.md) into a clear, confident, academic defense-style response. The key elements to cover:
+
+    What it is (DesignFlow - a project management + BI system for a graphic design agency)
+    The problem it solves (agencies lose money due to scope creep and lack of visibility into actual vs budgeted hours)
+    Tech stack (Django 5 + DRF, React 19/TypeScript/Vite, PostgreSQL, JWT auth, Tailwind, Recharts, etc.)
+    Key features (project/task management, time tracking with timers, client feedback portal, BI dashboards with analytics, AI features)
+    Architecture highlights (role-based access control with 3 roles, custom User model with email login, invitation-based onboarding, no public signup)
+    Academic context (final year IT internship, solo developer, 3 months, 5 sprints)
+
+I should make it sound like spoken defense language - natural, not reading from a doc, but covering all the important technical and business points. I should keep it to roughly 1-2 minutes of speaking time (150-250 words), structured so they can deliver it smoothly.
+Let me draft this in a conversational but technically precisetone.
+Here's a natural, defense-ready summary you can deliver in about 90 seconds:
+"This is DesignFlow — a project management and business intelligence platform I built for a graphic design agency as my final-year internship project."
+The Problem: "Design agencies typically lose money because of scope creep and poor visibility into actual hours versus budgeted hours. Managers often don't know a project is bleeding until it's too late."
+The Solution: "I built a full-stack web application over three months using Django 5 with Django REST Framework on the backend, and a React 19 TypeScript SPA on the frontend, backed by PostgreSQL. The system supports three distinct roles — Manager, Designer, and Client — with strict RBAC on every endpoint."
+Key Features: "Managers create projects and tasks, assign designers, and get real-time BI dashboards showing metrics like Effective Hourly Rate, budget variance, scope creep index, and designer utilisation. Designers track time via an integrated start/pause/stop timer that auto-logs hours against tasks, and they manage work through a Kanban board. Clients can view their project status, submit feedback and revisions, and upload reference materials. There's also an AI layer using Groq's LLM that suggests task hour estimates based on historical data and generates project health narratives for managers."
+Architecture: "Notable technical decisions include a custom User model with email-based authentication and JWT tokens, an invitation-only onboarding flow with expiring UUID tokens, and an analytics app with no models — it runs complex PostgreSQL aggregations across the operational data. I also implemented PDF and Excel report generation, and the entire project was delivered across five two-week sprints."

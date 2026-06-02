@@ -37,6 +37,7 @@ const DONUT_COLORS = {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+// Granular to minute for first hour, then hour/day — matches user expectation for recent activity
 const timeAgo = (d: string): string => {
   const mins = Math.floor((Date.now() - new Date(d).getTime()) / 60000);
   if (mins < 1)  return 'just now';
@@ -246,6 +247,7 @@ export default function ManagerDashboard() {
     () => budgetData.reduce((max, row) => Math.max(max, row.budget_hours, row.actual_hours), 0),
     [budgetData],
   );
+  // Forces Y-axis to multiples of 10 with at least 4 ticks; prevents fractional-hour labels
   const budgetTickStep = useMemo(
     () => {
       if (budgetChartMax <= 0) return 10;
@@ -679,12 +681,18 @@ export default function ManagerDashboard() {
                                 : 'text-slate-500'
                               }`}
                             title={
-                              p.status !== 'Completed'
-                                ? `Interim EHR — will decline toward target ${formatEHR(targetEHR)} as more hours are logged`
-                                : undefined
+                              p.status !== 'Completed' && pm?.projected_ehr != null
+                                ? `Projected final EHR vs target ${formatEHR(targetEHR)}`
+                                : p.status !== 'Completed'
+                                  ? `Interim EHR — will decline toward target ${formatEHR(targetEHR)} as more hours are logged`
+                                  : undefined
                             }
                           >
-                            {formatEHR(currentEHR)}
+                            {p.status === 'Completed'
+                              ? formatEHR(currentEHR)
+                              : pm?.projected_ehr != null
+                                ? formatEHR(pm.projected_ehr)
+                                : formatEHR(currentEHR)}
                           </span>
                         ) : (
                           <span className="font-mono text-xs text-slate-300">—</span>

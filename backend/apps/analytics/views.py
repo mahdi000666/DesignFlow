@@ -2,7 +2,7 @@ import datetime
 import os
 from datetime import timedelta
 
-from django.db.models import Count, Q, Sum
+from django.db.models import F, Avg, Count, Q, DurationField, ExpressionWrapper, Sum
 from django.db.models.functions import TruncDate
 from django.utils import timezone
 from django.utils.dateparse import parse_date
