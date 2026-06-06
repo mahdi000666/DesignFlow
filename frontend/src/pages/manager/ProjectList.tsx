@@ -74,6 +74,48 @@ export default function ProjectList() {
     return map;
   }, [scopeCreepData]);
 
+  const profitMarginMap = useMemo(() => {
+  const map = new Map<number, { projectedEHR: number | null; ehr: number | null; targetEHR: number | null }>();
+  profitMargin.forEach(r => {
+    map.set(r.project_id, {
+      projectedEHR: r.projected_ehr,
+      ehr:          r.ehr,
+      targetEHR:    r.target_ehr,
+    });
+  });
+  return map;
+}, [profitMargin]);
+
+const ehrDisplay = (p: Project) => {
+  const pm = profitMarginMap.get(p.id);
+  const targetEHR = p.budget_amount && p.budget_hours
+    ? Number(p.budget_amount) / Number(p.budget_hours)
+    : null;
+
+  if (p.status === 'Completed') {
+    // Raw = final for completed projects
+    const ehr = pm?.ehr ?? null;
+    if (ehr === null) return { text: '—', cls: 'text-slate-300', title: undefined };
+    return {
+      text:  formatEHR(ehr),
+      cls:   targetEHR !== null && ehr >= targetEHR ? 'text-emerald-700' : 'text-rose-600',
+      title: `Final EHR vs target ${formatEHR(targetEHR ?? 0)}`,
+    };
+  }
+
+  // Active / OnHold — use projected if available, else suppress
+  const displayEHR = pm?.projectedEHR ?? null;
+  if (displayEHR === null) return { text: '—', cls: 'text-slate-300', title: 'Insufficient data for projection' };
+
+  return {
+    text:  formatEHR(displayEHR),
+    cls:   targetEHR !== null && displayEHR >= targetEHR ? 'text-emerald-700' : 'text-rose-600',
+    title: targetEHR !== null
+      ? `Projected final EHR vs target ${formatEHR(targetEHR)}`
+      : 'Projected final EHR',
+  };
+};
+
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
     return projects
@@ -210,26 +252,18 @@ export default function ProjectList() {
                       </button>
                     </td>
 
-                                        <td className="px-4 py-3.5">
+                    <td className="px-4 py-3.5">
                       {(() => {
-                        const pm = profitMargin.find(r => r.project_id === p.id);
-                        if (!pm || pm.ehr == null) {
+                        const display = ehrDisplay(p);
+                        if (display.text === '—') {
                           return <span className="text-slate-300 text-sm">—</span>;
                         }
-                        const target = pm.target_ehr;
-                        const isCompleted = p.status === 'Completed';
-                        const val = isCompleted ? pm.ehr : (pm.projected_ehr ?? pm.ehr);
-                        if (val == null) return <span className="text-slate-300 text-sm">—</span>;
-                        const cls = target != null && val >= target ? 'text-emerald-700' : 'text-rose-600';
-                        const title = isCompleted
-                          ? `Final EHR vs target ${formatEHR(target ?? 0)}`
-                          : `Projected final EHR vs target ${formatEHR(target ?? 0)}`;
                         return (
                           <span
-                            className={`font-mono text-sm font-semibold ${cls}`}
-                            title={title}
+                            className={`font-mono text-sm font-semibold ${display.cls}`}
+                            title={display.title}
                           >
-                            {formatEHR(val)}
+                            {display.text}
                           </span>
                         );
                       })()}

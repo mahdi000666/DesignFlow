@@ -50,6 +50,38 @@ mahdimlika2022@gmail.com
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 avgx_resolution_duration = (
     Feedback.objects
     .filter(status='Resolved', resolved_at__isnull=False)

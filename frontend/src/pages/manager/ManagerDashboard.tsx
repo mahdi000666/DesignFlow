@@ -452,7 +452,6 @@ export default function ManagerDashboard() {
           )}
         </div>
       </div>
-
       {/* ── Row 3: Designer Util + Tasks by Status + Upcoming Deadlines ─────── */}
       <div className="grid grid-cols-3 gap-3.5 mb-3.5">
 
@@ -562,7 +561,7 @@ export default function ManagerDashboard() {
             <ul className="space-y-3.5">
               {upcomingDeadlines.map(p => {
                 const daysLeft = Math.ceil(
-                  (new Date(p.deadline!).getTime() - nowMs) / 86400000,
+                  (new Date(p.deadline!).getTime() - nowMs) / 86400000, // Days 1000ms × 60s × 60min × 24hr
                 );
                 const urgent = daysLeft <= 7;
                 return (

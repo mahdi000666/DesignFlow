@@ -135,7 +135,7 @@ const ProjectForm = ({ onSubmit, isLoading, defaults }: Props) => {
           <label className={labelCls}>Budget (TND)</label>
           <input
             type="number"
-            min="0.01"
+            min="2000"
             step="0.01"
             placeholder="e.g. 15000"
             {...register('budget_amount')}
